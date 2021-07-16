@@ -22,6 +22,6 @@ For frontend: `JS`, `TS`, `VUE.JS`, `NUXT.JS`
 
 Others: `Python`, `PHP`, `C/C++`, `Pascal`
 
-Contact me -> [catfishlty@qq.com](mailto:catfishlty@qq.com)
+Contact me -> [catfish_lty@qq.com](mailto:catfish_lty@qq.com)
 
 Follow me on Github! -> [https://github.com/catfishlty](https://github.com/catfishlty)
