@@ -4,12 +4,11 @@ description: MIT 6.824 系列
 date: 2017-09-07T01:21:00+0800
 lastmod: '2021-07-15T16:36:00+0800'
 image: hadoop.png
-series:
-    - "MapReduce"
 categories:
-    - 分布式
+    - mit6.824
+tags:
     - MapReduce
-    - MIT 6.824
+    - GO
 ---
 
 

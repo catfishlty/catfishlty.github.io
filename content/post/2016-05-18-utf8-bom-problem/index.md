@@ -5,6 +5,8 @@ date: 2016-05-18T00:36:00+0800
 lastmod: '2021-07-15T16:36:00+0800'
 image: bom.jpg
 categories:
+    - others
+tags:
     - Encoding
     - BOM
     - UTF-8
