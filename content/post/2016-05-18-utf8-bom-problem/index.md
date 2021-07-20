@@ -4,6 +4,7 @@ description: UFT-8编码文件下存在的BOM问题
 date: 2016-05-18T00:36:00+0800
 lastmod: '2021-07-15T16:36:00+0800'
 image: bom.jpg
+slug: bom
 categories:
     - others
 tags:
