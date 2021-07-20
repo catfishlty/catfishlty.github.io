@@ -15,7 +15,10 @@ tags:
 ---
 
 # Kubernetes初探（一） - 启动一个单节点集群
-> https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster
+> Katacoda在线课：https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster
+> 
+> 本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
+> 本系列教程将使用 [Katacoda在线学习平台](https://www.katacoda.com) 完成学习。
 
 `Minikube` 是一个可以轻松在本地运行 `Kubernetes` 的工具。 `Minikube` 是一个在本地上计算机的虚拟机内运行一个单节点 `Kubernetes` 集群，便于用户能够完成日常开发工作，同时也能够让新用户快速了解`Kubernetes`。 
 
