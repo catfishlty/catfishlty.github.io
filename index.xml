@@ -1,4 +1,120 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Tue, 28 May 2019 00:00:00 +0000</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>MIT 6.824 分布式系统初探（一）</title><link>https://www.catfish.top/p/mit-6.824-%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%88%9D%E6%8E%A2%E4%B8%80/</link><pubDate>Thu, 07 Sep 2017 01:21:00 +0800</pubDate><guid>https://www.catfish.top/p/mit-6.824-%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%88%9D%E6%8E%A2%E4%B8%80/</guid><description>&lt;img src="https://www.catfish.top/p/mit-6.824-%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%88%9D%E6%8E%A2%E4%B8%80/hadoop.png" alt="Featured image of post MIT 6.824 分布式系统初探（一）" />&lt;h2 id="概述">概述&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Tue, 20 Jul 2021 10:21:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes初探（一） - 启动一个单节点集群</title><link>https://www.catfish.top/p/k8s-basic-1/</link><pubDate>Tue, 20 Jul 2021 10:21:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-1/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-1/kubernetes-horizontal-color.png" alt="Featured image of post Kubernetes初探（一） - 启动一个单节点集群" />&lt;h1 id="kubernetes初探一---启动一个单节点集群">Kubernetes初探（一） - 启动一个单节点集群&lt;/h1>
+&lt;blockquote>
+&lt;p>&lt;a href="https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster">https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster&lt;/a>&lt;/p>
+&lt;/blockquote>
+&lt;p>&lt;code>Minikube&lt;/code> 是一个可以轻松在本地运行 &lt;code>Kubernetes&lt;/code> 的工具。 &lt;code>Minikube&lt;/code> 是一个在本地上计算机的虚拟机内运行一个单节点 &lt;code>Kubernetes&lt;/code> 集群，便于用户能够完成日常开发工作，同时也能够让新用户快速了解&lt;code>Kubernetes&lt;/code>。&lt;/p>
+&lt;p>详情见： &lt;a href="https://github.com/kubernetes/minikube">https://github.com/kubernetes/minikube&lt;/a>&lt;/p>
+&lt;h2 id="步骤-1---启动minikube">步骤 1 - 启动&lt;code>Minikube&lt;/code>&lt;/h2>
+&lt;p>&lt;code>Minikube&lt;/code>已经安装并配置到环境中。通过运行 &lt;code>minikube version&lt;/code> 命令检查它是否已正确安装。&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-bash" data-lang="bash">$ minikube version
+minikube version: v1.8.1
+commit: cbda04cf6bbe65e987ae52bb393c10099ab62014
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>通过运行 &lt;code>minikube start&lt;/code> 命令启动集群。&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-bash" data-lang="bash">$ minikube start --wait&lt;span class="o">=&lt;/span>&lt;span class="nb">false&lt;/span>
+* minikube v1.8.1 on Ubuntu 18.04
+* Using the none driver based on user configuration
+* Running on localhost &lt;span class="o">(&lt;/span>&lt;span class="nv">CPUs&lt;/span>&lt;span class="o">=&lt;/span>2, &lt;span class="nv">Memory&lt;/span>&lt;span class="o">=&lt;/span>2460MB, &lt;span class="nv">Disk&lt;/span>&lt;span class="o">=&lt;/span>145651MB&lt;span class="o">)&lt;/span> ...
+* OS release is Ubuntu 18.04.4 LTS
+* Preparing Kubernetes v1.17.3 on Docker 19.03.6 ...
+- kubelet.resolv-conf&lt;span class="o">=&lt;/span>/run/systemd/resolve/resolv.conf
+* Launching Kubernetes ...
+* Enabling addons: default-storageclass, storage-provisioner
+* Configuring &lt;span class="nb">local&lt;/span> host environment ...
+* Done! kubectl is now configured to use &lt;span class="s2">&amp;#34;minikube&amp;#34;&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>现在，您的在线终端中有一个正在运行的 &lt;code>Kubernetes&lt;/code> 集群。 &lt;code>Minikube&lt;/code>会启动一个虚拟机为&lt;code>K8S&lt;/code>集群提供运行环境。&lt;/p>
+&lt;h2 id="步骤-2---集群信息">步骤 2 - 集群信息&lt;/h2>
+&lt;p>用户使用 &lt;code>kubectl&lt;/code> 客户端与集群交互。该工具用于管理 &lt;code>Kubernetes&lt;/code> 和在集群上运行的应用程序.&lt;/p>
+&lt;p>通过&lt;code>kubectl cluster-info&lt;/code>命令查看集群详情信息和健康状态。&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl cluster-info
+Kubernetes master is running at https://172.17.0.10:8443
+KubeDNS is running at https://172.17.0.10:8443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+To further debug and diagnose cluster problems, use &lt;span class="s1">&amp;#39;kubectl cluster-info dump&amp;#39;&lt;/span>.
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>通过&lt;code>kubectl get nodes&lt;/code>查看集群中的各节点信息。&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get nodes
+NAME STATUS ROLES AGE VERSION
+minikube Ready master 9m15s v1.17.3
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>如果节点被标记为 &lt;strong>NotReady&lt;/strong> 则它仍在启动组件阶段。&lt;/p>
+&lt;p>此命令显示可用于托管我们的应用程序的所有节点。现在我们只有一个节点，可以看到它的状态是&lt;code>Ready&lt;/code>。&lt;/p>
+&lt;h2 id="步骤-3---部署容器">步骤 3 - 部署容器&lt;/h2>
+&lt;p>现在可以通过 &lt;code>Kubernetes&lt;/code> 集群来部署容器。&lt;/p>
+&lt;p>&lt;code>kubectl run&lt;/code>命令能够将容器部署到集群中。&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl create deployment first-deployment --image&lt;span class="o">=&lt;/span>katacoda/docker-http-server
+deployment.apps/first-deployment created
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>部署状态可以通过&lt;code>Pods&lt;/code>的运行状态得知。&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get pods
+NAME READY STATUS RESTARTS AGE
+first-deployment-666c48b44-n7qjz 1/1 Running &lt;span class="m">0&lt;/span> 60s
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>容器运行后，可以根据需求使用不同的网络选项公开暴露接口。其中的一种解决方案是 &lt;code>NodePort&lt;/code>，它为容器提供动态端口。&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl expose deployment first-deployment --port&lt;span class="o">=&lt;/span>&lt;span class="m">80&lt;/span> --type&lt;span class="o">=&lt;/span>NodePort
+service/first-deployment exposed
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>下面的命令能够查询到绑定的端口，并且能够发送HTTP请求进行测试。&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-bash" data-lang="bash">$ &lt;span class="nb">export&lt;/span> &lt;span class="nv">PORT&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="k">$(&lt;/span>kubectl get svc first-deployment -o go-template&lt;span class="o">=&lt;/span>&lt;span class="s1">&amp;#39;{{range.spec.ports}}{{if .nodePort}}{{.nodePort}}{{&amp;#34;\n&amp;#34;}}{{end}}{{end}}&amp;#39;&lt;/span>&lt;span class="k">)&lt;/span>
+$ &lt;span class="nb">echo&lt;/span> &lt;span class="s2">&amp;#34;Accessing host01:&lt;/span>&lt;span class="nv">$PORT&lt;/span>&lt;span class="s2">&amp;#34;&lt;/span>
+Accessing host01:32492
+$ curl host01:&lt;span class="nv">$PORT&lt;/span>
+&amp;lt;h1&amp;gt;This request was processed by host: first-deployment-666c48b44-n7qjz&amp;lt;/h1&amp;gt;
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>结果显示的是处理请求的容器。&lt;/p>
+&lt;h2 id="步骤-4---仪表盘">步骤 4 - 仪表盘&lt;/h2>
+&lt;p>使用 &lt;code>Minikube&lt;/code>命令启用仪表板&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-bash" data-lang="bash">$ minikube addons &lt;span class="nb">enable&lt;/span> dashboard
+* The &lt;span class="s1">&amp;#39;dashboard&amp;#39;&lt;/span> addon is enabled
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>通过使用&lt;code>yaml&lt;/code>文件来定义部署Kubernetes Dashboard。&lt;strong>该配置仅适用于&lt;code>Katacoda&lt;/code>&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>/opt/kubernetes-dashboard.yaml&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Namespace&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">addonmanager.kubernetes.io/mode&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Reconcile&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">kubernetes.io/minikube-addons&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">dashboard&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">kubernetes-dashboard&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selfLink&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">/api/v1/namespaces/kubernetes-dashboard&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">finalizers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="l">kubernetes&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">status&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">phase&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Active&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nn">---&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Service&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">kubernetes-dashboard&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">kubernetes-dashboard-katacoda&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">namespace&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">kubernetes-dashboard&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">port&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">protocol&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">TCP&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">targetPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">9090&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">nodePort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">30000&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">k8s-app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">kubernetes-dashboard&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">type&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">NodePort&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl apply -f /opt/kubernetes-dashboard.yaml
+namespace/kubernetes-dashboard configured
+service/kubernetes-dashboard-katacoda created
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>可以使用&lt;code>Kubernetes&lt;/code>仪表板查看部署到集群中的应用程序。仪表板将部署在 &lt;code>30000&lt;/code> 端口，但需要一段时间才能完成启动。&lt;/p>
+&lt;p>要查看 &lt;code>Dashboard&lt;/code>启动的进度，请使用 &lt;code>kubectl get pods -n kubernetes-dashboard -w&lt;/code> 查看 &lt;code>kube-system&lt;/code>命名空间中的 &lt;code>Pod&lt;/code>&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get pods -n kubernetes-dashboard -w
+NAME READY STATUS RESTARTS AGE
+dashboard-metrics-scraper-7b64584c5c-jmkls 1/1 Running &lt;span class="m">0&lt;/span> 6m15s
+kubernetes-dashboard-79d9cd965-fcb4t 1/1 Running &lt;span class="m">0&lt;/span> 6m14s
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>启动好后，仪表盘的在线访问地址为： &lt;a href="https://2886795306-30000-ollie07.environments.katacoda.com/">https://2886795306-30000-ollie07.environments.katacoda.com/&lt;/a>&lt;/p></description></item><item><title>Katacoda 在线学习神器</title><link>https://www.catfish.top/p/katacoda/</link><pubDate>Mon, 19 Jul 2021 17:57:00 +0800</pubDate><guid>https://www.catfish.top/p/katacoda/</guid><description>&lt;img src="https://www.catfish.top/p/katacoda/katacoda.jpg" alt="Featured image of post Katacoda 在线学习神器" />&lt;h2 id="介绍">介绍&lt;/h2>
+&lt;p>&lt;code>Katacoda&lt;/code> 是一个面向软件工程师的交互式学习和培训平台，可在浏览器中使用真实环境学习和测试新技术，帮助开发人员学习，并掌握最佳实践。&lt;/p>
+&lt;p>&lt;code>Katacoda&lt;/code> 的目标是消除新技术和技能的障碍。&lt;/p>
+&lt;p>&lt;code>Katacoda&lt;/code> 提供了一个平台来构建实时交互式演示和培训环境。运行环境可以根据应用要求进行定制。分步指导路径旨在确保用户以最佳方式学习。用户可以根据设计好的引导步骤，通过浏览器上的终端界面操作一套完整的环境，一步步的学习和实践。&lt;code>Katacoda&lt;/code> 的出现很好的解决了这些问题。课程设计者可以定制应用程序所需环境，并设计循序渐进的指导路径，旨在确保用户以最佳方式学习。&lt;/p>
+&lt;p>&lt;code>Katacoda&lt;/code> 同样也是&lt;code>Kubernetes&lt;/code>官网的学习工具，能够快速帮助开发者掌握&lt;code>K8s&lt;/code>知识与应用，同时能够节省大量搭建部署环境的时间与精力，能够让开发者专注于学习掌握&lt;code>K8s&lt;/code>。&lt;/p>
+&lt;p>&lt;code>Playground&lt;/code>功能更是为开发者带来一种新的开发体验。借助于&lt;code>Katacoda&lt;/code>平台，能够快速构建满足应用要求的各类环境，开发者能够在这之中，专注于完成创造、验证等工作。&lt;/p>
+&lt;h2 id="使用体验">使用体验&lt;/h2>
+&lt;h3 id="课程">课程&lt;/h3>
+&lt;h3 id="playground">Playground&lt;/h3>
+&lt;h2 id="中文翻译-目录">中文翻译-目录&lt;/h2>
+&lt;h3 id="kubernetes-basic">Kubernetes Basic&lt;/h3>
+&lt;p>原文：&lt;a class="link" href="https://www.katacoda.com/courses/kubernetes" target="_blank" rel="noopener"
+>https://www.katacoda.com/courses/kubernetes&lt;/a>&lt;/p>
+&lt;h4 id="launch-a-single-node-cluster">Launch A Single Node Cluster&lt;/h4>
+&lt;p>原文：&lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster" target="_blank" rel="noopener"
+>https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster&lt;/a>&lt;/p></description></item><item><title>MIT 6.824 分布式系统初探（一）</title><link>https://www.catfish.top/p/mit6.824-1/</link><pubDate>Thu, 07 Sep 2017 01:21:00 +0800</pubDate><guid>https://www.catfish.top/p/mit6.824-1/</guid><description>&lt;img src="https://www.catfish.top/p/mit6.824-1/hadoop.png" alt="Featured image of post MIT 6.824 分布式系统初探（一）" />&lt;h2 id="概述">概述&lt;/h2>
 &lt;p>Google工程师Jeffrey Dean 和 Sanjay Ghemawat在2004年发表了一篇论文&lt;a class="link" href="https://pdos.csail.mit.edu/6.824/papers/mapreduce.pdf" target="_blank" rel="noopener"
 >MapReduce: Simplified Data Processing on Large Clusters&lt;/a>，MapReduce作为大规模数据处理的需求下孕育而生的产物，被创造的初衷是为了解决Google公司内部搜索引擎中大规模数据的并行化处理。&lt;/p>
 &lt;p>引用&lt;a class="link" href="https://zh.wikipedia.org/wiki/MapReduce" target="_blank" rel="noopener"
@@ -13,8 +129,8 @@ MapReduce&lt;/p>
 &lt;hr>
 &lt;p>简单看来，MapReduce的架构正如其名，分为Map和Reduce两部分。&lt;/p>
 &lt;p>&lt;figure style="flex-grow: 139; flex-basis: 334px">
-&lt;a href="https://www.catfish.top/p/mit-6.824-%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%88%9D%E6%8E%A2%E4%B8%80/mapreduce_1.png" data-size="631x453">&lt;img src="https://www.catfish.top/p/mit-6.824-%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%88%9D%E6%8E%A2%E4%B8%80/mapreduce_1.png"
-srcset="https://www.catfish.top/p/mit-6.824-%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%88%9D%E6%8E%A2%E4%B8%80/mapreduce_1_hu5bd887eb443ed765e1e333d85ebea25c_47658_480x0_resize_box_2.png 480w, https://www.catfish.top/p/mit-6.824-%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E5%88%9D%E6%8E%A2%E4%B8%80/mapreduce_1_hu5bd887eb443ed765e1e333d85ebea25c_47658_1024x0_resize_box_2.png 1024w"
+&lt;a href="https://www.catfish.top/p/mit6.824-1/mapreduce_1.png" data-size="631x453">&lt;img src="https://www.catfish.top/p/mit6.824-1/mapreduce_1.png"
+srcset="https://www.catfish.top/p/mit6.824-1/mapreduce_1_hu5bd887eb443ed765e1e333d85ebea25c_47658_480x0_resize_box_2.png 480w, https://www.catfish.top/p/mit6.824-1/mapreduce_1_hu5bd887eb443ed765e1e333d85ebea25c_47658_1024x0_resize_box_2.png 1024w"
 width="631"
 height="453"
 loading="lazy"
@@ -220,7 +336,7 @@ lab1主要是对MapReduce模型进行初步的学习，实现一个本机的&lt;
 &lt;li>操作间数据交换使用文件，在性能上可能会有一定影响&lt;/li>
 &lt;li>任务划分的科学性也应该是性能上应该考虑的问题，集群中计算机算力各不相同的时候，能者多劳，任务的划分应更加合理，才可能避免水桶原理造成的性能上的损失&lt;/li>
 &lt;/ol>
-&lt;p>如有不足之处，恳请提出批评！&lt;/p></description></item><item><title>Blog 第一帖 - 字符坑 BOM</title><link>https://www.catfish.top/p/blog-%E7%AC%AC%E4%B8%80%E5%B8%96-%E5%AD%97%E7%AC%A6%E5%9D%91-bom/</link><pubDate>Wed, 18 May 2016 00:36:00 +0800</pubDate><guid>https://www.catfish.top/p/blog-%E7%AC%AC%E4%B8%80%E5%B8%96-%E5%AD%97%E7%AC%A6%E5%9D%91-bom/</guid><description>&lt;img src="https://www.catfish.top/p/blog-%E7%AC%AC%E4%B8%80%E5%B8%96-%E5%AD%97%E7%AC%A6%E5%9D%91-bom/bom.jpg" alt="Featured image of post Blog 第一帖 - 字符坑 BOM" />&lt;h2 id="字符编码">字符编码&lt;/h2>
+&lt;p>如有不足之处，恳请提出批评！&lt;/p></description></item><item><title>Blog 第一帖 - 字符坑 BOM</title><link>https://www.catfish.top/p/bom/</link><pubDate>Wed, 18 May 2016 00:36:00 +0800</pubDate><guid>https://www.catfish.top/p/bom/</guid><description>&lt;img src="https://www.catfish.top/p/bom/bom.jpg" alt="Featured image of post Blog 第一帖 - 字符坑 BOM" />&lt;h2 id="字符编码">字符编码&lt;/h2>
 &lt;p>字集码是把字符集中的字符编码为指定集合中某一对象（例如：比特模式、自然数序列、8位组或者电脉冲），以便文本在计算机中存储和通过通信网络的传递。&lt;/p>
 &lt;p>常见的例子包括将拉丁字母表编码成摩斯电码和ASCII。其中，ASCII将字母、数字和其它符号编号，并用7比特的二进制来表示这个整数。通常会额外使用一个扩充的比特，以便于以1个字节的方式存储。
 常见的字符编码有： ASCII、UTF-8、Unicode、GBK等&lt;/p>
