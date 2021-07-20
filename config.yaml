@@ -134,6 +134,11 @@ menu:
           url: /
           weight: -100
           pre: home
+        - identifier: github
+          name: Github
+          url: https://github.com/catfishlty
+          weight: -80
+          pre: brand-github
 
 related:
     includeNewer: true
