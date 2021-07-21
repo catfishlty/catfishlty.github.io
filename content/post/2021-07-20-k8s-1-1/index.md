@@ -1,9 +1,9 @@
 ---
-title: Kubernetes初探（一） - 启动一个单节点集群
-description: K8S 在线课
+title: Kubernetes初探（一）
+description: 启动一个单节点集群
 date: 2021-07-20T10:21:00+0800
 lastmod: '2021-07-20T10:21:00+0800'
-image: kubernetes-horizontal-color.png
+image: /image/kubernates.png
 slug: k8s-basic-1
 categories:
     - k8s-basic
@@ -14,7 +14,6 @@ tags:
     - Katacoda
 ---
 
-# Kubernetes初探（一） - 启动一个单节点集群
 > Katacoda在线课：https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster
 > 
 > 本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
