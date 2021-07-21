@@ -46,10 +46,6 @@ jobs:
       - name: Copy CNAME
         run: cp ./CNAME ./public/CNAME
 
-      # 复制favicon
-      - name: Copy Favicon
-        run: cp ./assets/img/favicon.ico ./public/
-
       # 发布
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
