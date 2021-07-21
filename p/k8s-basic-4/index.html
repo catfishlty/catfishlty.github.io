@@ -1,0 +1,128 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="使用 Yaml 启动容器"><title>Kubernetes初探（四）</title><link rel=canonical href=https://www.catfish.top/p/k8s-basic-4/><link rel=stylesheet href=/scss/style.min.css><meta property="og:title" content="Kubernetes初探（四）"><meta property="og:description" content="使用 Yaml 启动容器"><meta property="og:url" content="https://www.catfish.top/p/k8s-basic-4/"><meta property="og:site_name" content="Catfish"><meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="K8S"><meta property="article:tag" content="容器"><meta property="article:tag" content="Katacoda"><meta property="article:tag" content="YAML"><meta property="article:published_time" content="2021-07-20T11:39:00+08:00"><meta property="article:modified_time" content="2021-07-21T17:52:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/k8s-basic-4/kubernates.png"><meta name=twitter:title content="Kubernetes初探（四）"><meta name=twitter:description content="使用 Yaml 启动容器"><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content="https://www.catfish.top/p/k8s-basic-4/kubernates.png"><link rel="shortcut icon" href=/favicon.ico><script async src="https://www.googletagmanager.com/gtag/js?id=G-MPS4W3GMH8"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-MPS4W3GMH8')</script></head><body class="article-page has-toc"><script>(function(){const a='StackColorScheme';localStorage.getItem(a)||localStorage.setItem(a,"auto")})()</script><script>(function(){const b='StackColorScheme',a=localStorage.getItem(b),c=window.matchMedia('(prefers-color-scheme: dark)').matches===!0;a=='dark'||a==='auto'&&c?document.documentElement.dataset.scheme='dark':document.documentElement.dataset.scheme='light'})()</script><div class="container main-container flex
+extended"><div id=article-toolbar><a href=https://www.catfish.top class=back-home><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="15 6 9 12 15 18"/></svg><span>返回</span></a></div><main class="main full-width"><article class="has-image main-article"><header class=article-header><div class=article-image><a href=/p/k8s-basic-4/><img src=/p/k8s-basic-4/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_2.png srcset="/p/k8s-basic-4/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_2.png 800w, /p/k8s-basic-4/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_1600x0_resize_box_2.png 1600w" width=800 height=173 loading=lazy alt="Featured image of post Kubernetes初探（四）"></a></div><div class=article-details><header class=article-category><a href=/categories/k8s-basic/>Kubernate 初探</a>
+<a href=/categories/katacoda/>Katacoda</a></header><h2 class=article-title><a href=/p/k8s-basic-4/>Kubernetes初探（四）</a></h2><h3 class=article-subtitle>使用 Yaml 启动容器</h3><footer class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><time class=article-time--published>Jul 20, 2021</time></footer></div></header><section class=article-content><blockquote><p>Katacoda在线课：https://www.katacoda.com/courses/kubernetes/creating-kubernetes-yaml-definitions</p><p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
+本系列教程将使用 <a class=link href=https://www.katacoda.com target=_blank rel=noopener>Katacoda在线学习平台</a> 完成学习。</p></blockquote><p>在此场景中，您将学习如何使用 <em>Kubectl</em> 创建和启动<code>Deployment</code>、<code>Replication Controller</code>，并通过编写 <em>yaml</em> 定义使用服务开暴露它们。</p><p>YAML 定义了计划部署的 Kubernetes 对象。可以以更新对象并将其重新部署到集群的方式来更改配置。</p><h2 id=创建-deployment>创建 Deployment</h2><p><em>Deployment</em> 对象是最常见的 <em>Kubernetes</em> 对象之一。<em>Deployment</em> 对象定义了所需的容器规范，以及 <em>Kubernetes</em> 其他部分用来发现和连接到应用程序的名称和标签。</p><h3 id=任务>任务</h3><p>将以下定义复制到编辑器的<em>YAML</em>文件中。该 <em>YAML</em> 定义了如何使用在端口 80 上运行的应用，该应用使用 Docker 映像 <em>katacoda/docker-http-server</em> ，启动名为 <em>webapp1</em> 。</p><p><strong>deployment.yaml</strong></p><pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webapp1
+  template:
+    metadata:
+      labels:
+        app: webapp1
+    spec:
+      containers:
+      - name: webapp1
+        image: katacoda/docker-http-server:latest
+        ports:
+        - containerPort: 80
+</code></pre><p>使用<code>kubectl create -f deployment.yaml</code>命令向集群部署。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl create -f deployment.yaml
+deployment.apps/webapp1 created
+</code></pre></div><p>由于它是一个 <em>Deployment</em> 对象，因此可以通过 <code>kubectl get deployment</code> 获取所有已部署的<em>Deployment</em>对象的列表。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl get deployment
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+webapp1   1/1     <span class=m>1</span>            <span class=m>1</span>           10s
+</code></pre></div><p>可以使用 <code>kubectl describe deployment webapp1</code> 输出单个部署的详细信息。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl describe deployment webapp1
+Name:                   webapp1
+Namespace:              default
+CreationTimestamp:      Wed, <span class=m>21</span> Jul <span class=m>2021</span> 09:31:47 +0000
+Labels:                 &lt;none&gt;
+Annotations:            deployment.kubernetes.io/revision: <span class=m>1</span>
+Selector:               <span class=nv>app</span><span class=o>=</span>webapp1
+Replicas:               <span class=m>1</span> desired <span class=p>|</span> <span class=m>1</span> updated <span class=p>|</span> <span class=m>1</span> total <span class=p>|</span> <span class=m>1</span> available <span class=p>|</span> <span class=m>0</span> unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        <span class=m>0</span>
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  <span class=nv>app</span><span class=o>=</span>webapp1
+  Containers:
+   webapp1:
+    Image:        katacoda/docker-http-server:latest
+    Port:         80/TCP
+    Host Port:    0/TCP
+    Environment:  &lt;none&gt;
+    Mounts:       &lt;none&gt;
+  Volumes:        &lt;none&gt;
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  &lt;none&gt;
+NewReplicaSet:   webapp1-6b54fb89d9 <span class=o>(</span>1/1 replicas created<span class=o>)</span>
+Events:
+  Type    Reason             Age   From                   Message
+  ----    ------             ----  ----                   -------
+  Normal  ScalingReplicaSet  49s   deployment-controller  Scaled up replica <span class=nb>set</span> webapp1-6b54fb89d9 to <span class=m>1</span>
+</code></pre></div><p>Details of individual deployments can be outputted with <code>kubectl describe deployment webapp1</code></p><h2 id=创建service>创建Service</h2><p><em>Kubernetes</em> 具有强大的网络功能，可以控制应用程序的通信方式。这些网络配置也可以通过 <em>YAML</em> 定义。</p><h3 id=任务-1>任务</h3><p>将 <em>Service</em> 定义复制到编辑器。该 <em>Service</em> 选择带有标签 <em>webapp1</em> 的所有应用程序。当部署多个副本或实例时，它们将根据此公共标签自动进行负载平衡。该 <em>Service</em> 通过 <em>NodePort</em> 的网络连接方式部署。</p><p><strong>service.yaml</strong></p><pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: webapp1-svc
+  labels:
+    app: webapp1
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    nodePort: 30080
+  selector:
+    app: webapp1
+</code></pre><p>所有 Kubernetes 对象都一致使用 <em>kubectl</em> 完成部署。</p><p>使用 <code>kubectl create -f service.yaml</code> 命令部署<em>Service</em></p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl create -f service.yaml
+service/webapp1-svc created
+</code></pre></div><p>和以往一样，使用 <code>kubectl get svc</code> 可以查看所有已部署的 <em>Service</em> 对象的信息。通过<code>kubectl describe svc webapp1-svc</code>命令可以查看该 <em>Service</em> 对象更多的配置信息。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl get svc
+NAME          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT<span class=o>(</span>S<span class=o>)</span>        AGE
+kubernetes    ClusterIP   10.96.0.1       &lt;none&gt;        443/TCP        6m38s
+webapp1-svc   NodePort    10.111.56.111   &lt;none&gt;        80:30080/TCP   20s
+</code></pre></div><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl describe svc webapp1-svc
+Name:                     webapp1-svc
+Namespace:                default
+Labels:                   <span class=nv>app</span><span class=o>=</span>webapp1
+Annotations:              &lt;none&gt;
+Selector:                 <span class=nv>app</span><span class=o>=</span>webapp1
+Type:                     NodePort
+IP:                       10.111.56.111
+Port:                     &lt;unset&gt;  80/TCP
+TargetPort:               80/TCP
+NodePort:                 &lt;unset&gt;  30080/TCP
+Endpoints:                172.18.0.4:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:                   &lt;none&gt;
+</code></pre></div><pre><code>$ curl host01:30080
+&lt;h1&gt;This request was processed by host: webapp1-6b54fb89d9-5rzpv&lt;/h1&gt;
+</code></pre><h2 id=缩放-deployment>缩放 Deployment</h2><p>由于 <em>Deployment</em> 需要不同的配置，因此可以更改 <em>YAML</em> 的详细信息。这遵循基础设施即代码的思维方式。清单应在源代码控制下，并且保证生产环境的配置和源代码控制中的配置一致。</p><h3 id=任务-2>任务</h3><p>更新 <em>deployment.yaml</em> 文件以增加运行的实例数。例如，该文件应如下所示：</p><div class=highlight><pre class=chroma><code class=language-yaml data-lang=yaml><span class=nt>replicas: 1  --&gt;  replicas</span><span class=p>:</span><span class=w> </span><span class=m>4</span><span class=w>
+</span></code></pre></div><p>使用 <em>kubectl apply</em> 提交对现有定义的更新。要扩展副本数量，请使用 <code>kubectl apply -f deployment.yaml</code> 部署更新的 <em>YAML</em> 文件</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl apply -f deployment.yaml
+Warning: kubectl apply should be used on resource created by either kubectl create --save-config or kubectl apply
+deployment.apps/webapp1 configured
+</code></pre></div><p>集群的状态将立即更新，可通过 <code>kubectl get deployment</code>命令 查看</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl get deployment
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+webapp1   4/4     <span class=m>4</span>            <span class=m>4</span>           15m
+</code></pre></div><p>根据定义将有额外的<code>Pods</code>被调度到集群中， 使用<code>kubectl get pods</code>查看 <em>Pod</em> 信息</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl get pods
+NAME                       READY   STATUS    RESTARTS   AGE
+webapp1-6b54fb89d9-5rzpv   1/1     Running   <span class=m>0</span>          16m
+webapp1-6b54fb89d9-ktvz4   1/1     Running   <span class=m>0</span>          2m15s
+webapp1-6b54fb89d9-kzdjw   1/1     Running   <span class=m>0</span>          2m15s
+webapp1-6b54fb89d9-x8vtv   1/1     Running   <span class=m>0</span>          2m15s
+</code></pre></div><p>由于所有 <code>Pod</code> 具有相同的标签选择器，因此将由已部署的 <em>Service</em> <em>NodePort</em> 为这些 <em>Pod</em> 提供负载平衡能力。</p><p>向目标端口发出多个请求，可以通过返回信息发现，请求是由多个容器进行处理的。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ curl host01:30080
+&lt;h1&gt;This request was processed by host: webapp1-6b54fb89d9-5rzpv&lt;/h1&gt;
+$ curl host01:30080
+&lt;h1&gt;This request was processed by host: webapp1-6b54fb89d9-kzdjw&lt;/h1&gt;
+$ curl host01:30080
+&lt;h1&gt;This request was processed by host: webapp1-6b54fb89d9-kzdjw&lt;/h1&gt;
+$ curl host01:30080
+&lt;h1&gt;This request was processed by host: webapp1-6b54fb89d9-x8vtv&lt;/h1&gt;
+$ curl host01:30080
+&lt;h1&gt;This request was processed by host: webapp1-6b54fb89d9-ktvz4&lt;/h1&gt;
+</code></pre></div><p>其他 Kubernetes 网络细节和对象定义将在未来的其他场景中介绍。</p></section><footer class=article-footer><section class=article-tags><a href=/tags/k8s/>K8S</a>
+<a href=/tags/%E5%AE%B9%E5%99%A8/>容器</a>
+<a href=/tags/katacoda/>Katacoda</a>
+<a href=/tags/yaml/>YAML</a></section><section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg><span>Licensed under CC BY-NC-SA 4.0</span></section><section class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><span class=article-time--modified>最后更新于 Jul 21, 2021 17:52 +0800</span></section></footer></article><aside class=related-contents--wrapper><h2 class=section-title>相关文章</h2><div class=related-contents><div class="flex article-list--tile"><article class=has-image><a href=/p/k8s-basic-3/><div class=article-image><img src=/p/k8s-basic-3/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_2.png width=250 height=150 loading=lazy data-key=k8s-basic-3 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg=="></div><div class=article-details><h2 class=article-title>Kubernetes初探（三）</h2></div></a></article><article class=has-image><a href=/p/k8s-basic-2/><div class=article-image><img src=/p/k8s-basic-2/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_2.png width=250 height=150 loading=lazy data-key=k8s-basic-2 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg=="></div><div class=article-details><h2 class=article-title>Kubernetes初探（二）</h2></div></a></article><article class=has-image><a href=/p/k8s-basic-1/><div class=article-image><img src=/p/k8s-basic-1/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_2.png width=250 height=150 loading=lazy data-key=k8s-basic-1 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg=="></div><div class=article-details><h2 class=article-title>Kubernetes初探（一）</h2></div></a></article><article class=has-image><a href=/p/katacoda/><div class=article-image><img src=/p/katacoda/katacoda.7dda66de484872bd6de01ffc1b36abc7_huf47240e26664e9c6e2f7130233d16c2d_114448_250x150_fill_q75_box_smart1.jpg width=250 height=150 loading=lazy data-key=katacoda data-hash="md5-fdpm3khIcr1t4B/8Gzarxw=="></div><div class=article-details><h2 class=article-title>Katacoda 在线学习神器</h2></div></a></article></div></div></aside><footer class=site-footer><section class=copyright>&copy;
+2016 -
+2021 Catfish</section><section class=powerby>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=2.5.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a></section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css integrity="sha256-c0uckgykQ9v5k+IqViZOZKc47Jn7KQil4/MP3ySA3F8=" crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE=" crossorigin=anonymous></main><aside class="sidebar right-sidebar sticky"><section class="widget archives"><div class=widget-icon><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg></div><h2 class="widget-title section-title">目录</h2><div class=widget--toc><nav id=TableOfContents><ol><li><a href=#创建-deployment>创建 Deployment</a><ol><li><a href=#任务>任务</a></li></ol></li><li><a href=#创建service>创建Service</a><ol><li><a href=#任务-1>任务</a></li></ol></li><li><a href=#缩放-deployment>缩放 Deployment</a><ol><li><a href=#任务-2>任务</a></li></ol></li></ol></nav></div></section></aside></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g=" crossorigin=anonymous defer></script><script type=text/javascript src=/ts/main.js defer></script><script>(function(){const a=document.createElement('link');a.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",a.type="text/css",a.rel="stylesheet",document.head.appendChild(a)})()</script></body></html>
