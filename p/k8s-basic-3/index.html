@@ -1,0 +1,119 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="使用 Kubectl 启动容器"><title>Kubernetes初探（三）</title><link rel=canonical href=https://www.catfish.top/p/k8s-basic-3/><link rel=stylesheet href=/scss/style.min.css><meta property="og:title" content="Kubernetes初探（三）"><meta property="og:description" content="使用 Kubectl 启动容器"><meta property="og:url" content="https://www.catfish.top/p/k8s-basic-3/"><meta property="og:site_name" content="Catfish"><meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="K8S"><meta property="article:tag" content="容器"><meta property="article:tag" content="Katacoda"><meta property="article:published_time" content="2021-07-20T11:05:00+08:00"><meta property="article:modified_time" content="2021-07-20T11:05:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/k8s-basic-3/kubernates.png"><meta name=twitter:title content="Kubernetes初探（三）"><meta name=twitter:description content="使用 Kubectl 启动容器"><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content="https://www.catfish.top/p/k8s-basic-3/kubernates.png"><link rel="shortcut icon" href=/favicon.ico><script async src="https://www.googletagmanager.com/gtag/js?id=G-MPS4W3GMH8"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-MPS4W3GMH8')</script></head><body class="article-page has-toc"><script>(function(){const a='StackColorScheme';localStorage.getItem(a)||localStorage.setItem(a,"auto")})()</script><script>(function(){const b='StackColorScheme',a=localStorage.getItem(b),c=window.matchMedia('(prefers-color-scheme: dark)').matches===!0;a=='dark'||a==='auto'&&c?document.documentElement.dataset.scheme='dark':document.documentElement.dataset.scheme='light'})()</script><div class="container main-container flex
+extended"><div id=article-toolbar><a href=https://www.catfish.top class=back-home><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="15 6 9 12 15 18"/></svg><span>返回</span></a></div><main class="main full-width"><article class="has-image main-article"><header class=article-header><div class=article-image><a href=/p/k8s-basic-3/><img src=/p/k8s-basic-3/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_2.png srcset="/p/k8s-basic-3/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_2.png 800w, /p/k8s-basic-3/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_1600x0_resize_box_2.png 1600w" width=800 height=173 loading=lazy alt="Featured image of post Kubernetes初探（三）"></a></div><div class=article-details><header class=article-category><a href=/categories/k8s-basic/>Kubernate 初探</a>
+<a href=/categories/katacoda/>Katacoda</a></header><h2 class=article-title><a href=/p/k8s-basic-3/>Kubernetes初探（三）</a></h2><h3 class=article-subtitle>使用 Kubectl 启动容器</h3><footer class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><time class=article-time--published>Jul 20, 2021</time></footer></div></header><section class=article-content><blockquote><p>Katacoda在线课：https://www.katacoda.com/courses/kubernetes/kubectl-run-containers</p><p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
+本系列教程将使用 <a class=link href=https://www.katacoda.com target=_blank rel=noopener>Katacoda在线学习平台</a> 完成学习。</p></blockquote><p>在此场景中，将学习如何使用 <code>Kubectl</code> 创建和启动<code>Deployments</code>, <code>Replication Controllers</code>并通过<code>Services</code>对外开放接口，而无需编写 <em>yaml</em> 定义。这样便可以快速将容器启动到集群上。</p><h2 id=启动集群>启动集群</h2><p>首先，我们需要启动一个 Kubernetes 集群。</p><p>执行以下命令启动集群并下载<code>Kubectl CLI</code>。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ minikube start --wait<span class=o>=</span><span class=nb>false</span>
+* minikube v1.8.1 on Ubuntu 18.04
+* Using the none driver based on user configuration
+* Running on localhost <span class=o>(</span><span class=nv>CPUs</span><span class=o>=</span>2, <span class=nv>Memory</span><span class=o>=</span>2460MB, <span class=nv>Disk</span><span class=o>=</span>145651MB<span class=o>)</span> ...
+* OS release is Ubuntu 18.04.4 LTS
+* Preparing Kubernetes v1.17.3 on Docker 19.03.6 ...
+  - kubelet.resolv-conf<span class=o>=</span>/run/systemd/resolve/resolv.conf
+* Launching Kubernetes ... 
+* Enabling addons: default-storageclass, storage-provisioner
+* Configuring <span class=nb>local</span> host environment ...
+* Done! kubectl is now configured to use <span class=s2>&#34;minikube&#34;</span>
+</code></pre></div><p>通过<code>kubectl get nodes</code>命令来检查节点是否准备就绪。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl get nodes
+NAME       STATUS   ROLES    AGE   VERSION
+minikube   Ready    master   19s   v1.17.3
+</code></pre></div><h2 id=kubectl-run>Kubectl Run</h2><p>Run 命令根据指定的参数（例如映像或副本）创建部署。该部署发布给Kubernetes 主节点，启动所需 Pod 和容器的 。 <em>Kubectl run</em> 类似于 <em>docker run</em>，但<em>Kubectl run</em> 是在集群中运行的。</p><p>命令的格式为 <code>kubectl run &lt;name of deployment> &lt;properties></code></p><h3 id=任务>任务</h3><p>以下命令将启动一个名为 <em>http</em> 的部署，它将启动一个基于 Docker 镜像 <em>katacoda/docker-http-server:latest</em> 的容器。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl run http --image<span class=o>=</span>katacoda/docker-http-server:latest --replicas<span class=o>=</span><span class=m>1</span>
+kubectl run --generator<span class=o>=</span>deployment/apps.v1 is DEPRECATED and will be removed in a future version. Use kubectl run --generator<span class=o>=</span>run-pod/v1 or kubectl create instead.
+deployment.apps/http created
+</code></pre></div><p>使用<em>kubectl</em>查看各部署的状态。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl get deployments
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+http   1/1     <span class=m>1</span>            <span class=m>1</span>           2m7s
+</code></pre></div><p>可以通过 <em>describe</em> 查看 <em>Kubernetes</em> 创建了哪些内容。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl describe deployment http
+Name:                   http
+Namespace:              default
+CreationTimestamp:      Wed, <span class=m>21</span> Jul <span class=m>2021</span> 08:04:55 +0000
+Labels:                 <span class=nv>run</span><span class=o>=</span>http
+Annotations:            deployment.kubernetes.io/revision: <span class=m>1</span>
+Selector:               <span class=nv>run</span><span class=o>=</span>http
+Replicas:               <span class=m>1</span> desired <span class=p>|</span> <span class=m>1</span> updated <span class=p>|</span> <span class=m>1</span> total <span class=p>|</span> <span class=m>1</span> available <span class=p>|</span> <span class=m>0</span> unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        <span class=m>0</span>
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  <span class=nv>run</span><span class=o>=</span>http
+  Containers:
+   http:
+    Image:        katacoda/docker-http-server:latest
+    Port:         &lt;none&gt;
+    Host Port:    &lt;none&gt;
+    Environment:  &lt;none&gt;
+    Mounts:       &lt;none&gt;
+  Volumes:        &lt;none&gt;
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  &lt;none&gt;
+NewReplicaSet:   http-774bb756bb <span class=o>(</span>1/1 replicas created<span class=o>)</span>
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  4m16s  deployment-controller  Scaled up replica <span class=nb>set</span> http-774bb756bb to <span class=m>1</span>
+</code></pre></div><p>描述中包含有多少副本可用、指定的标签以及与部署相关的事件等信息。这些事件将突出显示可能发生的任何问题和错误。</p><p>在下一步中，我们将开放正在运行的服务。</p><h2 id=kubectl-expose>Kubectl Expose</h2><p>创建部署后，我们可以使用 <em>kubectl</em> 创建一个服务，该服务在特定端口上开放 <em>Pod</em>。</p><p>通过 <em>kubectl expose</em> 开放新部署的 <em>http</em> 部署。该命令允许定义服务的不同参数以及如何开放该部署。</p><h3 id=任务-1>任务</h3><p>使用以下命令将主机上的容器端口 <em>80</em> 公开 <em>8000</em> 绑定到主机的 <em>external-ip</em>。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl expose deployment http --external-ip<span class=o>=</span><span class=s2>&#34;172.17.0.44&#34;</span> --port<span class=o>=</span><span class=m>8000</span> --target-port<span class=o>=</span><span class=m>80</span>
+service/http exposed
+</code></pre></div><p>接下来就能 ping 主机查看 HTTP 服务返回的结果。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ curl http://172.17.0.44:8000
+&lt;h1&gt;This request was processed by host: http-774bb756bb-m6tjp&lt;/h1&gt;
+</code></pre></div><h2 id=kubectl-run-and-expose>Kubectl Run and Expose</h2><p>可以单独使用命令 <em>kubectl run</em> 来创建部署并将其开放。</p><h3 id=任务-2>任务</h3><p>使用命令创建在端口 <em>8001</em> 上开放的第二个 http 服务。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl run httpexposed --image<span class=o>=</span>katacoda/docker-http-server:latest --replicas<span class=o>=</span><span class=m>1</span> --port<span class=o>=</span><span class=m>80</span> --hostport<span class=o>=</span><span class=m>8001</span>
+kubectl run --generator<span class=o>=</span>deployment/apps.v1 is DEPRECATED and will be removed in a future version. Use kubectl run --generator<span class=o>=</span>run-pod/v1 or kubectl create instead.
+deployment.apps/httpexposed created
+</code></pre></div><p>接下来可以使用 <code>curl http://172.17.0.41:8001</code> 来访问该服务。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ curl http://172.17.0.44:8001
+&lt;h1&gt;This request was processed by host: httpexposed-68cb8c8d4-r7qtt&lt;/h1&gt;
+</code></pre></div><p>在服务内，通过 Docker 端口映射开放了 Pod。因此，您将看不到使用 <code>kubectl get svc</code> 列出的服务</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl get svc
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT<span class=o>(</span>S<span class=o>)</span>    AGE
+http         ClusterIP   10.97.103.237   172.17.0.44   8000/TCP   4m47s
+kubernetes   ClusterIP   10.96.0.1       &lt;none&gt;        443/TCP    44m
+</code></pre></div><p>可以通过 <code>docker ps | grep httpexposed</code>命令查看详细信息。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ docker ps <span class=p>|</span> grep httpexposed
+1690c6682f93        katacoda/docker-http-server   <span class=s2>&#34;/app&#34;</span>                   <span class=m>2</span> minutes ago       Up <span class=m>2</span> minutes                               k8s_httpexposed_httpexposed-68cb8c8d4-r7qtt_default_6fb23c14-277e-4298-b325-c52ef4eb09a9_0
+d9ae0076a0d4        k8s.gcr.io/pause:3.1          <span class=s2>&#34;/pause&#34;</span>                 <span class=m>2</span> minutes ago       Up <span class=m>2</span> minutes        0.0.0.0:8001-&gt;80/tcp   k8s_POD_httpexposed-68cb8c8d4-r7qtt_default_6fb23c14-277e-4298-b325-c52ef4eb09a9_0
+</code></pre></div><h3 id=暂停容器>暂停容器</h3><p>运行上面的命令，你会注意到端口暴露在 Pod 上，而不是 http 容器本身。 Pause 容器负责为 Pod 定义网络。 Pod 中的其他容器共享相同的网络命名空间。允许多个容器通过同一网络接口进行通信，提高了网络性能。</p><h2 id=容器扩展>容器扩展</h2><p>随着我们的部署运行，我们现在可以使用 <em>kubectl</em> 来扩展副本的数量。</p><p>扩展部署将请求 Kubernetes 启动额外的 Pod。然后，这些 Pod 将使用开放服务自动进行负载平衡。</p><h3 id=任务-3>任务</h3><p><em>kubectl scale</em> 命令能够为特定 <code>Deployment</code>或 <code>Replication Controller</code> 调整运行的 Pod 数量。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl scale --replicas<span class=o>=</span><span class=m>3</span> deployment http
+deployment.apps/http scaled
+</code></pre></div><p>列出所有 pod，能够看到三个正在运行的 <em>http</em> 部署。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl get pods
+NAME                          READY   STATUS    RESTARTS   AGE
+http-774bb756bb-m6tjp         1/1     Running   <span class=m>0</span>          20m
+http-774bb756bb-q29v8         1/1     Running   <span class=m>0</span>          45s
+http-774bb756bb-x2xxv         1/1     Running   <span class=m>0</span>          45s
+httpexposed-68cb8c8d4-r7qtt   1/1     Running   <span class=m>0</span>          9m3s
+</code></pre></div><p>一旦每个 Pod 启动，就会被添加到负载均衡器服务中。通过<code>describe</code>，可以查看包含的端点和与之关联的 Pod。
+Once each Pod starts it will be added to the load balancer service. By describing the service you can view the endpoint and the associated Pods which are included.</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl describe svc http
+Name:              http
+Namespace:         default
+Labels:            <span class=nv>run</span><span class=o>=</span>http
+Annotations:       &lt;none&gt;
+Selector:          <span class=nv>run</span><span class=o>=</span>http
+Type:              ClusterIP
+IP:                10.97.103.237
+External IPs:      172.17.0.44
+Port:              &lt;unset&gt;  8000/TCP
+TargetPort:        80/TCP
+Endpoints:         172.18.0.4:80,172.18.0.6:80,172.18.0.7:80
+Session Affinity:  None
+Events:            &lt;none&gt;
+</code></pre></div><p>向服务发出多次请求，可以通过返回信息看出请求将在不同的节点处理。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ curl http://172.17.0.44:8000
+&lt;h1&gt;This request was processed by host: http-774bb756bb-x2xxv&lt;/h1&gt;
+$ curl http://172.17.0.44:8000
+&lt;h1&gt;This request was processed by host: http-774bb756bb-q29v8&lt;/h1&gt;
+$ curl http://172.17.0.44:8000
+&lt;h1&gt;This request was processed by host: http-774bb756bb-q29v8&lt;/h1&gt;
+$ curl http://172.17.0.44:8000
+&lt;h1&gt;This request was processed by host: http-774bb756bb-x2xxv&lt;/h1&gt;
+$ curl http://172.17.0.44:8000
+&lt;h1&gt;This request was processed by host: http-774bb756bb-q29v8&lt;/h1&gt;
+$ curl http://172.17.0.44:8000
+&lt;h1&gt;This request was processed by host: http-774bb756bb-q29v8&lt;/h1&gt;
+$ curl http://172.17.0.44:8000
+&lt;h1&gt;This request was processed by host: http-774bb756bb-m6tjp&lt;/h1&gt;
+$ curl http://172.17.0.44:8000
+&lt;h1&gt;This request was processed by host: http-774bb756bb-x2xxv&lt;/h1&gt;
+</code></pre></div></section><footer class=article-footer><section class=article-tags><a href=/tags/k8s/>K8S</a>
+<a href=/tags/%E5%AE%B9%E5%99%A8/>容器</a>
+<a href=/tags/katacoda/>Katacoda</a></section><section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg><span>Licensed under CC BY-NC-SA 4.0</span></section></footer></article><aside class=related-contents--wrapper><h2 class=section-title>相关文章</h2><div class=related-contents><div class="flex article-list--tile"><article class=has-image><a href=/p/k8s-basic-2/><div class=article-image><img src=/p/k8s-basic-2/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_2.png width=250 height=150 loading=lazy data-key=k8s-basic-2 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg=="></div><div class=article-details><h2 class=article-title>Kubernetes初探（二）</h2></div></a></article><article class=has-image><a href=/p/k8s-basic-1/><div class=article-image><img src=/p/k8s-basic-1/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_2.png width=250 height=150 loading=lazy data-key=k8s-basic-1 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg=="></div><div class=article-details><h2 class=article-title>Kubernetes初探（一）</h2></div></a></article><article class=has-image><a href=/p/katacoda/><div class=article-image><img src=/p/katacoda/katacoda.7dda66de484872bd6de01ffc1b36abc7_huf47240e26664e9c6e2f7130233d16c2d_114448_250x150_fill_q75_box_smart1.jpg width=250 height=150 loading=lazy data-key=katacoda data-hash="md5-fdpm3khIcr1t4B/8Gzarxw=="></div><div class=article-details><h2 class=article-title>Katacoda 在线学习神器</h2></div></a></article></div></div></aside><footer class=site-footer><section class=copyright>&copy;
+2016 -
+2021 Catfish</section><section class=powerby>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=2.5.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a></section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css integrity="sha256-c0uckgykQ9v5k+IqViZOZKc47Jn7KQil4/MP3ySA3F8=" crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE=" crossorigin=anonymous></main><aside class="sidebar right-sidebar sticky"><section class="widget archives"><div class=widget-icon><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg></div><h2 class="widget-title section-title">目录</h2><div class=widget--toc><nav id=TableOfContents><ol><li><a href=#启动集群>启动集群</a></li><li><a href=#kubectl-run>Kubectl Run</a><ol><li><a href=#任务>任务</a></li></ol></li><li><a href=#kubectl-expose>Kubectl Expose</a><ol><li><a href=#任务-1>任务</a></li></ol></li><li><a href=#kubectl-run-and-expose>Kubectl Run and Expose</a><ol><li><a href=#任务-2>任务</a></li><li><a href=#暂停容器>暂停容器</a></li></ol></li><li><a href=#容器扩展>容器扩展</a><ol><li><a href=#任务-3>任务</a></li></ol></li></ol></nav></div></section></aside></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g=" crossorigin=anonymous defer></script><script type=text/javascript src=/ts/main.js defer></script><script>(function(){const a=document.createElement('link');a.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",a.type="text/css",a.rel="stylesheet",document.head.appendChild(a)})()</script></body></html>
