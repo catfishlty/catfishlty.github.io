@@ -3,7 +3,7 @@ title: Kubernetes初探（二）
 description: 使用 Kubeadm 启动一个多节点集群
 date: 2021-07-20T11:05:00+0800
 lastmod: '2021-07-20T11:05:00+0800'
-image: /image/kubernates.png
+image: kubernates.png
 slug: k8s-basic-2
 categories:
     - k8s-basic

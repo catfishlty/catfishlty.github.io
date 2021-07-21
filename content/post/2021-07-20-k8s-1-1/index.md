@@ -3,7 +3,7 @@ title: Kubernetes初探（一）
 description: 启动一个单节点集群
 date: 2021-07-20T10:21:00+0800
 lastmod: '2021-07-20T10:21:00+0800'
-image: /image/kubernates.png
+image: kubernates.png
 slug: k8s-basic-1
 categories:
     - k8s-basic
