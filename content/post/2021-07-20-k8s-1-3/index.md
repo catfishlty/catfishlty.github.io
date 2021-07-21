@@ -1,8 +1,8 @@
 ---
 title: Kubernetes初探（三）
 description: 使用 Kubectl 启动容器
-date: 2021-07-20T11:05:00+0800
-lastmod: '2021-07-20T11:05:00+0800'
+date: 2021-07-20T11:27:00+0800
+lastmod: '2021-07-21T16:29:00+0800'
 image: kubernates.png
 slug: k8s-basic-3
 categories:
