@@ -21,7 +21,6 @@ tags:
 
 在此场景中，您将学习如何使用 `Kubeadm` 启动 `Kubernetes` 集群。
 
-Kubeadm solves the problem of handling TLS encryption configuration, deploying the core Kubernetes components and ensuring that additional nodes can easily join the cluster. The resulting cluster is secured out of the box via mechanisms such as RBAC.
 `Kubeadm` 解决了TLS 加密配置、 Kubernetes 核心组件部署和额外节点集群加入的问题。启动的集群通过 RBAC 等机制开箱即用。
 
 关于`Kubeadm`的更多信息可以参考： https://github.com/kubernetes/kubeadm
