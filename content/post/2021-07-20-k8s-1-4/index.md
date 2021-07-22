@@ -15,7 +15,7 @@ tags:
     - YAML
 ---
 
-> Katacoda在线课：https://www.katacoda.com/courses/kubernetes/creating-kubernetes-yaml-definitions
+> Katacoda在线课：[Creating Kubernetes Yaml Definitions](https://www.katacoda.com/courses/kubernetes/creating-kubernetes-yaml-definitions)
 > 
 > 本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
 > 本系列教程将使用 [Katacoda在线学习平台](https://www.katacoda.com) 完成学习。
