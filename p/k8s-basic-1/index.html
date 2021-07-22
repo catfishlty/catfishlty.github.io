@@ -1,11 +1,71 @@
-<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="启动一个单节点集群"><title>Kubernetes初探（一）</title><link rel=canonical href=https://www.catfish.top/p/k8s-basic-1/><link rel=stylesheet href=/scss/style.min.css><meta property="og:title" content="Kubernetes初探（一）"><meta property="og:description" content="启动一个单节点集群"><meta property="og:url" content="https://www.catfish.top/p/k8s-basic-1/"><meta property="og:site_name" content="Catfish"><meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="K8S"><meta property="article:tag" content="容器"><meta property="article:tag" content="Katacoda"><meta property="article:published_time" content="2021-07-20T10:21:00+08:00"><meta property="article:modified_time" content="2021-07-20T10:21:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/k8s-basic-1/kubernates.png"><meta name=twitter:title content="Kubernetes初探（一）"><meta name=twitter:description content="启动一个单节点集群"><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content="https://www.catfish.top/p/k8s-basic-1/kubernates.png"><link rel="shortcut icon" href=/favicon.ico><script async src="https://www.googletagmanager.com/gtag/js?id=G-MPS4W3GMH8"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-MPS4W3GMH8')</script></head><body class="article-page has-toc"><script>(function(){const a='StackColorScheme';localStorage.getItem(a)||localStorage.setItem(a,"auto")})()</script><script>(function(){const b='StackColorScheme',a=localStorage.getItem(b),c=window.matchMedia('(prefers-color-scheme: dark)').matches===!0;a=='dark'||a==='auto'&&c?document.documentElement.dataset.scheme='dark':document.documentElement.dataset.scheme='light'})()</script><div class="container main-container flex
-extended"><div id=article-toolbar><a href=https://www.catfish.top class=back-home><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="15 6 9 12 15 18"/></svg><span>返回</span></a></div><main class="main full-width"><article class="has-image main-article"><header class=article-header><div class=article-image><a href=/p/k8s-basic-1/><img src=/p/k8s-basic-1/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_2.png srcset="/p/k8s-basic-1/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_2.png 800w, /p/k8s-basic-1/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_1600x0_resize_box_2.png 1600w" width=800 height=173 loading=lazy alt="Featured image of post Kubernetes初探（一）"></a></div><div class=article-details><header class=article-category><a href=/categories/k8s-basic/>Kubernate 初探</a>
-<a href=/categories/katacoda/>Katacoda</a></header><h2 class=article-title><a href=/p/k8s-basic-1/>Kubernetes初探（一）</a></h2><h3 class=article-subtitle>启动一个单节点集群</h3><footer class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><time class=article-time--published>Jul 20, 2021</time></footer></div></header><section class=article-content><blockquote><p>Katacoda在线课：https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster</p><p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
-本系列教程将使用 <a class=link href=https://www.katacoda.com target=_blank rel=noopener>Katacoda在线学习平台</a> 完成学习。</p></blockquote><p><code>Minikube</code> 是一个可以轻松在本地运行 <code>Kubernetes</code> 的工具。 <code>Minikube</code> 是一个在本地上计算机的虚拟机内运行一个单节点 <code>Kubernetes</code> 集群，便于用户能够完成日常开发工作，同时也能够让新用户快速了解<code>Kubernetes</code>。</p><p>详情见： <a href=https://github.com/kubernetes/minikube>https://github.com/kubernetes/minikube</a></p><h2 id=步骤-1---启动minikube>步骤 1 - 启动<code>Minikube</code></h2><p><code>Minikube</code>已经安装并配置到环境中。通过运行 <code>minikube version</code> 命令检查它是否已正确安装。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ minikube version
+<!doctype html><html lang=zh-cn>
+<head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="启动一个单节点集群"><title>Kubernetes初探（一）</title>
+<link rel=canonical href=https://www.catfish.top/p/k8s-basic-1/>
+<link rel=stylesheet href=/scss/style.min.css><meta property="og:title" content="Kubernetes初探（一）">
+<meta property="og:description" content="启动一个单节点集群">
+<meta property="og:url" content="https://www.catfish.top/p/k8s-basic-1/">
+<meta property="og:site_name" content="Catfish">
+<meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="K8S"><meta property="article:tag" content="容器"><meta property="article:tag" content="Katacoda"><meta property="article:published_time" content="2021-07-20T10:21:00+08:00"><meta property="article:modified_time" content="2021-07-20T10:21:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/k8s-basic-1/kubernates.png">
+<meta name=twitter:title content="Kubernetes初探（一）">
+<meta name=twitter:description content="启动一个单节点集群"><meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://www.catfish.top/p/k8s-basic-1/kubernates.png">
+<link rel="shortcut icon" href=/favicon.ico>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MPS4W3GMH8"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-MPS4W3GMH8')</script>
+</head>
+<body class="article-page has-toc">
+<script>(function(){const a='StackColorScheme';localStorage.getItem(a)||localStorage.setItem(a,"auto")})()</script><script>(function(){const b='StackColorScheme',a=localStorage.getItem(b),c=window.matchMedia('(prefers-color-scheme: dark)').matches===!0;a=='dark'||a==='auto'&&c?document.documentElement.dataset.scheme='dark':document.documentElement.dataset.scheme='light'})()</script>
+<div class="container main-container flex
+extended">
+<div id=article-toolbar>
+<a href=https://www.catfish.top class=back-home><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="15 6 9 12 15 18"/></svg>
+<span>返回</span>
+</a>
+</div>
+<main class="main full-width">
+<article class="has-image main-article">
+<header class=article-header>
+<div class=article-image>
+<a href=/p/k8s-basic-1/>
+<img src=/p/k8s-basic-1/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_3.png srcset="/p/k8s-basic-1/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_3.png 800w, /p/k8s-basic-1/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_1600x0_resize_box_3.png 1600w" width=800 height=173 loading=lazy alt="Featured image of post Kubernetes初探（一）">
+</a>
+</div>
+<div class=article-details>
+<header class=article-category>
+<a href=/categories/k8s-basic/>
+Kubernate 初探
+</a>
+<a href=/categories/katacoda/>
+Katacoda
+</a>
+</header>
+<h2 class=article-title>
+<a href=/p/k8s-basic-1/>Kubernetes初探（一）</a>
+</h2>
+<h3 class=article-subtitle>
+启动一个单节点集群
+</h3>
+<footer class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--published>Jul 20, 2021</time>
+</footer></div>
+</header>
+<section class=article-content>
+<blockquote>
+<p>Katacoda在线课：<a class=link href=https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster target=_blank rel=noopener>Launch Single Node Cluster</a></p>
+<p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
+本系列教程将使用 <a class=link href=https://www.katacoda.com target=_blank rel=noopener>Katacoda在线学习平台</a> 完成学习。</p>
+</blockquote>
+<p><code>Minikube</code> 是一个可以轻松在本地运行 <code>Kubernetes</code> 的工具。 <code>Minikube</code> 是一个在本地上计算机的虚拟机内运行一个单节点 <code>Kubernetes</code> 集群，便于用户能够完成日常开发工作，同时也能够让新用户快速了解<code>Kubernetes</code>。</p>
+<p>详情见： <a class=link href=https://github.com/kubernetes/minikube target=_blank rel=noopener>https://github.com/kubernetes/minikube</a></p>
+<h2 id=步骤-1---启动minikube>步骤 1 - 启动<code>Minikube</code></h2>
+<p><code>Minikube</code>已经安装并配置到环境中。通过运行 <code>minikube version</code> 命令检查它是否已正确安装。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ minikube version
 
 minikube version: v1.8.1
 commit: cbda04cf6bbe65e987ae52bb393c10099ab62014
-</code></pre></div><p>通过运行 <code>minikube start</code> 命令启动集群。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ minikube start --wait<span class=o>=</span><span class=nb>false</span>
+</code></pre></div><p>通过运行 <code>minikube start</code> 命令启动集群。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ minikube start --wait<span class=o>=</span><span class=nb>false</span>
 
 * minikube v1.8.1 on Ubuntu 18.04
 * Using the none driver based on user configuration
@@ -17,29 +77,47 @@ commit: cbda04cf6bbe65e987ae52bb393c10099ab62014
 * Enabling addons: default-storageclass, storage-provisioner
 * Configuring <span class=nb>local</span> host environment ...
 * Done! kubectl is now configured to use <span class=s2>&#34;minikube&#34;</span>
-</code></pre></div><p>现在，您的在线终端中有一个正在运行的 <code>Kubernetes</code> 集群。 <code>Minikube</code>会启动一个虚拟机为<code>K8S</code>集群提供运行环境。</p><h2 id=步骤-2---集群信息>步骤 2 - 集群信息</h2><p>用户使用 <code>kubectl</code> 客户端与集群交互。该工具用于管理 <code>Kubernetes</code> 和在集群上运行的应用程序.</p><p>通过<code>kubectl cluster-info</code>命令查看集群详情信息和健康状态。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl cluster-info
+</code></pre></div><p>现在，您的在线终端中有一个正在运行的 <code>Kubernetes</code> 集群。 <code>Minikube</code>会启动一个虚拟机为<code>K8S</code>集群提供运行环境。</p>
+<h2 id=步骤-2---集群信息>步骤 2 - 集群信息</h2>
+<p>用户使用 <code>kubectl</code> 客户端与集群交互。该工具用于管理 <code>Kubernetes</code> 和在集群上运行的应用程序.</p>
+<p>通过<code>kubectl cluster-info</code>命令查看集群详情信息和健康状态。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl cluster-info
 Kubernetes master is running at https://172.17.0.10:8443
 KubeDNS is running at https://172.17.0.10:8443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
 To further debug and diagnose cluster problems, use <span class=s1>&#39;kubectl cluster-info dump&#39;</span>.
-</code></pre></div><p>通过<code>kubectl get nodes</code>查看集群中的各节点信息。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl get nodes
+</code></pre></div><p>通过<code>kubectl get nodes</code>查看集群中的各节点信息。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl get nodes
 NAME       STATUS   ROLES    AGE     VERSION
 minikube   Ready    master   9m15s   v1.17.3
-</code></pre></div><p>如果节点被标记为 <strong>NotReady</strong> 则它仍在启动组件阶段。</p><p>此命令显示可用于托管我们的应用程序的所有节点。现在我们只有一个节点，可以看到它的状态是<code>Ready</code>。</p><h2 id=步骤-3---部署容器>步骤 3 - 部署容器</h2><p>现在可以通过 <code>Kubernetes</code> 集群来部署容器。</p><p><code>kubectl run</code>命令能够将容器部署到集群中。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl create deployment first-deployment --image<span class=o>=</span>katacoda/docker-http-server
+</code></pre></div><p>如果节点被标记为 <strong>NotReady</strong> 则它仍在启动组件阶段。</p>
+<p>此命令显示可用于托管我们的应用程序的所有节点。现在我们只有一个节点，可以看到它的状态是<code>Ready</code>。</p>
+<h2 id=步骤-3---部署容器>步骤 3 - 部署容器</h2>
+<p>现在可以通过 <code>Kubernetes</code> 集群来部署容器。</p>
+<p><code>kubectl run</code>命令能够将容器部署到集群中。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl create deployment first-deployment --image<span class=o>=</span>katacoda/docker-http-server
 deployment.apps/first-deployment created
-</code></pre></div><p>部署状态可以通过<code>Pods</code>的运行状态得知。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl get pods
+</code></pre></div><p>部署状态可以通过<code>Pods</code>的运行状态得知。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl get pods
 NAME                               READY   STATUS    RESTARTS   AGE
 first-deployment-666c48b44-n7qjz   1/1     Running   <span class=m>0</span>          60s
-</code></pre></div><p>容器运行后，可以根据需求使用不同的网络选项公开暴露接口。其中的一种解决方案是 <code>NodePort</code>，它为容器提供动态端口。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl expose deployment first-deployment --port<span class=o>=</span><span class=m>80</span> --type<span class=o>=</span>NodePort
+</code></pre></div><p>容器运行后，可以根据需求使用不同的网络选项公开暴露接口。其中的一种解决方案是 <code>NodePort</code>，它为容器提供动态端口。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl expose deployment first-deployment --port<span class=o>=</span><span class=m>80</span> --type<span class=o>=</span>NodePort
 service/first-deployment exposed
-</code></pre></div><p>下面的命令能够查询到绑定的端口，并且能够发送HTTP请求进行测试。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ <span class=nb>export</span> <span class=nv>PORT</span><span class=o>=</span><span class=k>$(</span>kubectl get svc first-deployment -o go-template<span class=o>=</span><span class=s1>&#39;{{range.spec.ports}}{{if .nodePort}}{{.nodePort}}{{&#34;\n&#34;}}{{end}}{{end}}&#39;</span><span class=k>)</span>
+</code></pre></div><p>下面的命令能够查询到绑定的端口，并且能够发送HTTP请求进行测试。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ <span class=nb>export</span> <span class=nv>PORT</span><span class=o>=</span><span class=k>$(</span>kubectl get svc first-deployment -o go-template<span class=o>=</span><span class=s1>&#39;{{range.spec.ports}}{{if .nodePort}}{{.nodePort}}{{&#34;\n&#34;}}{{end}}{{end}}&#39;</span><span class=k>)</span>
 $ <span class=nb>echo</span> <span class=s2>&#34;Accessing host01:</span><span class=nv>$PORT</span><span class=s2>&#34;</span>
 Accessing host01:32492
 $ curl host01:<span class=nv>$PORT</span>
 &lt;h1&gt;This request was processed by host: first-deployment-666c48b44-n7qjz&lt;/h1&gt;
-</code></pre></div><p>结果显示的是处理请求的容器。</p><h2 id=步骤-4---仪表盘>步骤 4 - 仪表盘</h2><p>使用 <code>Minikube</code>命令启用仪表板</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ minikube addons <span class=nb>enable</span> dashboard
+</code></pre></div><p>结果显示的是处理请求的容器。</p>
+<h2 id=步骤-4---仪表盘>步骤 4 - 仪表盘</h2>
+<p>使用 <code>Minikube</code>命令启用仪表板</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ minikube addons <span class=nb>enable</span> dashboard
 * The <span class=s1>&#39;dashboard&#39;</span> addon is enabled
-</code></pre></div><p>通过使用<code>yaml</code>文件来定义部署Kubernetes Dashboard。<strong>该配置仅适用于<code>Katacoda</code></strong></p><p><strong>/opt/kubernetes-dashboard.yaml</strong></p><div class=highlight><pre class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</code></pre></div><p>通过使用<code>yaml</code>文件来定义部署Kubernetes Dashboard。<strong>该配置仅适用于<code>Katacoda</code></strong></p>
+<p><strong>/opt/kubernetes-dashboard.yaml</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
 </span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Namespace</span><span class=w>
 </span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
 </span><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
@@ -69,19 +147,142 @@ $ curl host01:<span class=nv>$PORT</span>
 </span><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
 </span><span class=w>    </span><span class=nt>k8s-app</span><span class=p>:</span><span class=w> </span><span class=l>kubernetes-dashboard</span><span class=w>
 </span><span class=w>  </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>NodePort</span><span class=w>
-</span></code></pre></div><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl apply -f /opt/kubernetes-dashboard.yaml
+</span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl apply -f /opt/kubernetes-dashboard.yaml
 namespace/kubernetes-dashboard configured
 service/kubernetes-dashboard-katacoda created
-</code></pre></div><p>可以使用<code>Kubernetes</code>仪表板查看部署到集群中的应用程序。仪表板将部署在 <code>30000</code> 端口，但需要一段时间才能完成启动。</p><p>要查看 <code>Dashboard</code>启动的进度，请使用 <code>kubectl get pods -n kubernetes-dashboard -w</code> 查看 <code>kube-system</code>命名空间中的 <code>Pod</code></p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>$ kubectl get pods -n kubernetes-dashboard -w
+</code></pre></div><p>可以使用<code>Kubernetes</code>仪表板查看部署到集群中的应用程序。仪表板将部署在 <code>30000</code> 端口，但需要一段时间才能完成启动。</p>
+<p>要查看 <code>Dashboard</code>启动的进度，请使用 <code>kubectl get pods -n kubernetes-dashboard -w</code> 查看 <code>kube-system</code>命名空间中的 <code>Pod</code></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl get pods -n kubernetes-dashboard -w
 NAME                                         READY   STATUS    RESTARTS   AGE
 dashboard-metrics-scraper-7b64584c5c-jmkls   1/1     Running   <span class=m>0</span>          6m15s
 kubernetes-dashboard-79d9cd965-fcb4t         1/1     Running   <span class=m>0</span>          6m14s
-</code></pre></div><p>启动好后，仪表盘的在线访问地址为： <a href=https://2886795306-30000-ollie07.environments.katacoda.com/>https://2886795306-30000-ollie07.environments.katacoda.com/</a></p></section><footer class=article-footer><section class=article-tags><a href=/tags/k8s/>K8S</a>
+</code></pre></div><p>启动好后，仪表盘的在线访问地址为： <a class=link href=https://2886795306-30000-ollie07.environments.katacoda.com/ target=_blank rel=noopener>https://2886795306-30000-ollie07.environments.katacoda.com/</a></p>
+</section>
+<footer class=article-footer>
+<section class=article-tags>
+<a href=/tags/k8s/>K8S</a>
 <a href=/tags/%E5%AE%B9%E5%99%A8/>容器</a>
-<a href=/tags/katacoda/>Katacoda</a></section><section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg><span>Licensed under CC BY-NC-SA 4.0</span></section></footer></article><aside class=related-contents--wrapper><h2 class=section-title>相关文章</h2><div class=related-contents><div class="flex article-list--tile"><article class=has-image><a href=/p/k8s-basic-4/><div class=article-image><img src=/p/k8s-basic-4/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_2.png width=250 height=150 loading=lazy data-key=k8s-basic-4 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg=="></div><div class=article-details><h2 class=article-title>Kubernetes初探（四）</h2></div></a></article><article class=has-image><a href=/p/k8s-basic-3/><div class=article-image><img src=/p/k8s-basic-3/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_2.png width=250 height=150 loading=lazy data-key=k8s-basic-3 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg=="></div><div class=article-details><h2 class=article-title>Kubernetes初探（三）</h2></div></a></article><article class=has-image><a href=/p/k8s-basic-2/><div class=article-image><img src=/p/k8s-basic-2/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_2.png width=250 height=150 loading=lazy data-key=k8s-basic-2 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg=="></div><div class=article-details><h2 class=article-title>Kubernetes初探（二）</h2></div></a></article><article class=has-image><a href=/p/katacoda/><div class=article-image><img src=/p/katacoda/katacoda.7dda66de484872bd6de01ffc1b36abc7_huf47240e26664e9c6e2f7130233d16c2d_114448_250x150_fill_q75_box_smart1.jpg width=250 height=150 loading=lazy data-key=katacoda data-hash="md5-fdpm3khIcr1t4B/8Gzarxw=="></div><div class=article-details><h2 class=article-title>Katacoda 在线学习神器</h2></div></a></article></div></div></aside><footer class=site-footer><section class=copyright>&copy;
+<a href=/tags/katacoda/>Katacoda</a>
+</section>
+<section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span>
+</section>
+</footer>
+</article>
+<aside class=related-contents--wrapper>
+<h2 class=section-title>相关文章</h2>
+<div class=related-contents>
+<div class="flex article-list--tile">
+<article class=has-image>
+<a href=/p/k8s-basic-4/>
+<div class=article-image>
+<img src=/p/k8s-basic-4/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-4 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（四）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-3/>
+<div class=article-image>
+<img src=/p/k8s-basic-3/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-3 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（三）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-2/>
+<div class=article-image>
+<img src=/p/k8s-basic-2/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-2 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（二）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/katacoda/>
+<div class=article-image>
+<img src=/p/katacoda/katacoda.7dda66de484872bd6de01ffc1b36abc7_huf47240e26664e9c6e2f7130233d16c2d_114448_250x150_fill_q75_box_smart1.jpg width=250 height=150 loading=lazy data-key=katacoda data-hash="md5-fdpm3khIcr1t4B/8Gzarxw==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Katacoda 在线学习神器</h2>
+</div>
+</a>
+</article>
+</div>
+</div>
+</aside>
+<footer class=site-footer>
+<section class=copyright>
+&copy;
 2016 -
-2021 Catfish</section><section class=powerby>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=2.5.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a></section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+2021 Catfish
+</section>
+<section class=powerby>
+Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a> <br>
+Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=2.5.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a>
+</section>
+</footer>
+<div class=pswp tabindex=-1 role=dialog aria-hidden=true>
+<div class=pswp__bg></div>
+<div class=pswp__scroll-wrap>
+<div class=pswp__container>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+</div>
+<div class="pswp__ui pswp__ui--hidden">
+<div class=pswp__top-bar>
+<div class=pswp__counter></div>
+<button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
 <button class="pswp__button pswp__button--share" title=Share></button>
 <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
-<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
-<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css integrity="sha256-c0uckgykQ9v5k+IqViZOZKc47Jn7KQil4/MP3ySA3F8=" crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE=" crossorigin=anonymous></main><aside class="sidebar right-sidebar sticky"><section class="widget archives"><div class=widget-icon><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg></div><h2 class="widget-title section-title">目录</h2><div class=widget--toc><nav id=TableOfContents><ol><li><a href=#步骤-1---启动minikube>步骤 1 - 启动<code>Minikube</code></a></li><li><a href=#步骤-2---集群信息>步骤 2 - 集群信息</a></li><li><a href=#步骤-3---部署容器>步骤 3 - 部署容器</a></li><li><a href=#步骤-4---仪表盘>步骤 4 - 仪表盘</a></li></ol></nav></div></section></aside></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g=" crossorigin=anonymous defer></script><script type=text/javascript src=/ts/main.js defer></script><script>(function(){const a=document.createElement('link');a.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",a.type="text/css",a.rel="stylesheet",document.head.appendChild(a)})()</script></body></html>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+<div class=pswp__preloader>
+<div class=pswp__preloader__icn>
+<div class=pswp__preloader__cut>
+<div class=pswp__preloader__donut></div>
+</div>
+</div>
+</div>
+</div>
+<div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+<div class=pswp__share-tooltip></div>
+</div>
+<button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+</button>
+<div class=pswp__caption>
+<div class=pswp__caption__center></div>
+</div>
+</div>
+</div>
+</div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css integrity="sha256-c0uckgykQ9v5k+IqViZOZKc47Jn7KQil4/MP3ySA3F8=" crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE=" crossorigin=anonymous>
+</main>
+<aside class="sidebar right-sidebar sticky">
+<section class="widget archives">
+<div class=widget-icon><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg>
+</div>
+<h2 class="widget-title section-title">目录</h2>
+<div class=widget--toc>
+<nav id=TableOfContents>
+<ol>
+<li><a href=#步骤-1---启动minikube>步骤 1 - 启动<code>Minikube</code></a></li>
+<li><a href=#步骤-2---集群信息>步骤 2 - 集群信息</a></li>
+<li><a href=#步骤-3---部署容器>步骤 3 - 部署容器</a></li>
+<li><a href=#步骤-4---仪表盘>步骤 4 - 仪表盘</a></li>
+</ol>
+</nav>
+</div>
+</section>
+</aside>
+</div>
+<script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g=" crossorigin=anonymous defer></script><script type=text/javascript src=/ts/main.js defer></script>
+<script>(function(){const a=document.createElement('link');a.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",a.type="text/css",a.rel="stylesheet",document.head.appendChild(a)})()</script>
+</body>
+</html>

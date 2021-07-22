@@ -1,7 +1,70 @@
-<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="使用 Kubeadm 启动一个多节点集群"><title>Kubernetes初探（二）</title><link rel=canonical href=https://www.catfish.top/p/k8s-basic-2/><link rel=stylesheet href=/scss/style.min.css><meta property="og:title" content="Kubernetes初探（二）"><meta property="og:description" content="使用 Kubeadm 启动一个多节点集群"><meta property="og:url" content="https://www.catfish.top/p/k8s-basic-2/"><meta property="og:site_name" content="Catfish"><meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="K8S"><meta property="article:tag" content="容器"><meta property="article:tag" content="Katacoda"><meta property="article:published_time" content="2021-07-20T11:05:00+08:00"><meta property="article:modified_time" content="2021-07-20T11:05:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/k8s-basic-2/kubernates.png"><meta name=twitter:title content="Kubernetes初探（二）"><meta name=twitter:description content="使用 Kubeadm 启动一个多节点集群"><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content="https://www.catfish.top/p/k8s-basic-2/kubernates.png"><link rel="shortcut icon" href=/favicon.ico><script async src="https://www.googletagmanager.com/gtag/js?id=G-MPS4W3GMH8"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-MPS4W3GMH8')</script></head><body class="article-page has-toc"><script>(function(){const a='StackColorScheme';localStorage.getItem(a)||localStorage.setItem(a,"auto")})()</script><script>(function(){const b='StackColorScheme',a=localStorage.getItem(b),c=window.matchMedia('(prefers-color-scheme: dark)').matches===!0;a=='dark'||a==='auto'&&c?document.documentElement.dataset.scheme='dark':document.documentElement.dataset.scheme='light'})()</script><div class="container main-container flex
-extended"><div id=article-toolbar><a href=https://www.catfish.top class=back-home><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="15 6 9 12 15 18"/></svg><span>返回</span></a></div><main class="main full-width"><article class="has-image main-article"><header class=article-header><div class=article-image><a href=/p/k8s-basic-2/><img src=/p/k8s-basic-2/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_2.png srcset="/p/k8s-basic-2/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_2.png 800w, /p/k8s-basic-2/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_1600x0_resize_box_2.png 1600w" width=800 height=173 loading=lazy alt="Featured image of post Kubernetes初探（二）"></a></div><div class=article-details><header class=article-category><a href=/categories/k8s-basic/>Kubernate 初探</a>
-<a href=/categories/katacoda/>Katacoda</a></header><h2 class=article-title><a href=/p/k8s-basic-2/>Kubernetes初探（二）</a></h2><h3 class=article-subtitle>使用 Kubeadm 启动一个多节点集群</h3><footer class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><time class=article-time--published>Jul 20, 2021</time></footer></div></header><section class=article-content><blockquote><p>Katacoda在线课：https://www.katacoda.com/courses/kubernetes/getting-started-with-kubeadm</p><p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
-本系列教程将使用 <a class=link href=https://www.katacoda.com target=_blank rel=noopener>Katacoda在线学习平台</a> 完成学习。</p></blockquote><p>在此场景中，您将学习如何使用 <code>Kubeadm</code> 启动 <code>Kubernetes</code> 集群。</p><p><code>Kubeadm</code> 解决了TLS 加密配置、 Kubernetes 核心组件部署和额外节点集群加入的问题。启动的集群通过 RBAC 等机制开箱即用。</p><p>关于<code>Kubeadm</code>的更多信息可以参考： <a href=https://github.com/kubernetes/kubeadm>https://github.com/kubernetes/kubeadm</a></p><h2 id=初始化-master>初始化 Master</h2><p><code>Kubeadm</code> 已经安装在节点上。软件包适用于 Ubuntu 16.04+、CentOS 7 或 HypriotOS v1.0.1+。</p><p>初始化集群的第一步是启动<code>Master节点</code>。 <code>Master节点</code> 负责运行控制平面组件、<code>etcd</code> 和 API 服务器。客户端能够与 API 通信，能够完成工作负载的调度和集群状态的管理。</p><h3 id=任务>任务</h3><p>下面的命令将使用已知的<code>Token</code>简化初始化集群的步骤。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>controlplane $ kubeadm init --token<span class=o>=</span>102952.1a7dd4cc8d1f4cc5 --kubernetes-version <span class=k>$(</span>kubeadm version -o short<span class=k>)</span>
+<!doctype html><html lang=zh-cn>
+<head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="使用 Kubeadm 启动一个多节点集群"><title>Kubernetes初探（二）</title>
+<link rel=canonical href=https://www.catfish.top/p/k8s-basic-2/>
+<link rel=stylesheet href=/scss/style.min.css><meta property="og:title" content="Kubernetes初探（二）">
+<meta property="og:description" content="使用 Kubeadm 启动一个多节点集群">
+<meta property="og:url" content="https://www.catfish.top/p/k8s-basic-2/">
+<meta property="og:site_name" content="Catfish">
+<meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="K8S"><meta property="article:tag" content="容器"><meta property="article:tag" content="Katacoda"><meta property="article:published_time" content="2021-07-20T11:05:00+08:00"><meta property="article:modified_time" content="2021-07-20T11:05:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/k8s-basic-2/kubernates.png">
+<meta name=twitter:title content="Kubernetes初探（二）">
+<meta name=twitter:description content="使用 Kubeadm 启动一个多节点集群"><meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://www.catfish.top/p/k8s-basic-2/kubernates.png">
+<link rel="shortcut icon" href=/favicon.ico>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MPS4W3GMH8"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-MPS4W3GMH8')</script>
+</head>
+<body class="article-page has-toc">
+<script>(function(){const a='StackColorScheme';localStorage.getItem(a)||localStorage.setItem(a,"auto")})()</script><script>(function(){const b='StackColorScheme',a=localStorage.getItem(b),c=window.matchMedia('(prefers-color-scheme: dark)').matches===!0;a=='dark'||a==='auto'&&c?document.documentElement.dataset.scheme='dark':document.documentElement.dataset.scheme='light'})()</script>
+<div class="container main-container flex
+extended">
+<div id=article-toolbar>
+<a href=https://www.catfish.top class=back-home><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="15 6 9 12 15 18"/></svg>
+<span>返回</span>
+</a>
+</div>
+<main class="main full-width">
+<article class="has-image main-article">
+<header class=article-header>
+<div class=article-image>
+<a href=/p/k8s-basic-2/>
+<img src=/p/k8s-basic-2/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_3.png srcset="/p/k8s-basic-2/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_3.png 800w, /p/k8s-basic-2/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_1600x0_resize_box_3.png 1600w" width=800 height=173 loading=lazy alt="Featured image of post Kubernetes初探（二）">
+</a>
+</div>
+<div class=article-details>
+<header class=article-category>
+<a href=/categories/k8s-basic/>
+Kubernate 初探
+</a>
+<a href=/categories/katacoda/>
+Katacoda
+</a>
+</header>
+<h2 class=article-title>
+<a href=/p/k8s-basic-2/>Kubernetes初探（二）</a>
+</h2>
+<h3 class=article-subtitle>
+使用 Kubeadm 启动一个多节点集群
+</h3>
+<footer class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--published>Jul 20, 2021</time>
+</footer></div>
+</header>
+<section class=article-content>
+<blockquote>
+<p>Katacoda在线课：<a class=link href=https://www.katacoda.com/courses/kubernetes/getting-started-with-kubeadm target=_blank rel=noopener>Getting Started With Kubeadm</a></p>
+<p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
+本系列教程将使用 <a class=link href=https://www.katacoda.com target=_blank rel=noopener>Katacoda在线学习平台</a> 完成学习。</p>
+</blockquote>
+<p>在此场景中，您将学习如何使用 <code>Kubeadm</code> 启动 <code>Kubernetes</code> 集群。</p>
+<p><code>Kubeadm</code> 解决了TLS 加密配置、 Kubernetes 核心组件部署和额外节点集群加入的问题。启动的集群通过 RBAC 等机制开箱即用。</p>
+<p>关于<code>Kubeadm</code>的更多信息可以参考： <a class=link href=https://github.com/kubernetes/kubeadm target=_blank rel=noopener>https://github.com/kubernetes/kubeadm</a></p>
+<h2 id=初始化-master>初始化 Master</h2>
+<p><code>Kubeadm</code> 已经安装在节点上。软件包适用于 Ubuntu 16.04+、CentOS 7 或 HypriotOS v1.0.1+。</p>
+<p>初始化集群的第一步是启动<code>Master节点</code>。 <code>Master节点</code> 负责运行控制平面组件、<code>etcd</code> 和 API 服务器。客户端能够与 API 通信，能够完成工作负载的调度和集群状态的管理。</p>
+<h3 id=任务>任务</h3>
+<p>下面的命令将使用已知的<code>Token</code>简化初始化集群的步骤。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubeadm init --token<span class=o>=</span>102952.1a7dd4cc8d1f4cc5 --kubernetes-version <span class=k>$(</span>kubeadm version -o short<span class=k>)</span>
 <span class=o>[</span>init<span class=o>]</span> Using Kubernetes version: v1.14.0
 <span class=o>[</span>preflight<span class=o>]</span> Running pre-flight checks
 <span class=o>[</span>preflight<span class=o>]</span> Pulling images required <span class=k>for</span> setting up a Kubernetes cluster
@@ -67,11 +130,18 @@ Then you can join any number of worker nodes by running the following on each as
 
 kubeadm join 172.17.0.86:6443 --token 102952.1a7dd4cc8d1f4cc5 <span class=se>\
 </span><span class=se></span>    --discovery-token-ca-cert-hash sha256:ab56a643a2d683bc1deeb483f0f946d4a774c4
-</code></pre></div><p>在生产环境中，建议排除使用 <code>kubeadm</code> 生成的令牌。</p><p>需要客户端配置和证书来管理 Kubernetes 集群。这个配置是在 <em>kubeadm</em> 初始化集群时创建的。该命令将配置复制到用户主目录并设置用于 CLI 的环境变量。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>controlplane $ sudo cp /etc/kubernetes/admin.conf <span class=nv>$HOME</span>/
+</code></pre></div><p>在生产环境中，建议排除使用 <code>kubeadm</code> 生成的令牌。</p>
+<p>需要客户端配置和证书来管理 Kubernetes 集群。这个配置是在 <em>kubeadm</em> 初始化集群时创建的。该命令将配置复制到用户主目录并设置用于 CLI 的环境变量。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ sudo cp /etc/kubernetes/admin.conf <span class=nv>$HOME</span>/
 controlplane $ sudo chown <span class=k>$(</span>id -u<span class=k>)</span>:<span class=k>$(</span>id -g<span class=k>)</span> <span class=nv>$HOME</span>/admin.conf
 controlplane $ <span class=nb>export</span> <span class=nv>KUBECONFIG</span><span class=o>=</span><span class=nv>$HOME</span>/admin.conf
-</code></pre></div><h2 id=部署容器网络接口-container-networking-interface-cni>部署容器网络接口 Container Networking Interface (CNI)</h2><p>容器网络接口 (CNI) 定义了不同节点及其工作负载是如何通信的。有多个网络提供商可用，其中一些在 <a class=link href=https://kubernetes.io/docs/admin/addons/ target=_blank rel=noopener>here</a> 中列出。</p><h3 id=任务-1>任务</h3><p>在这个场景中，我们将使用 <code>WeaveWorks</code>的<code>CNI</code>。</p><p><strong>/opt/weave-kube.yaml</strong>
-可以通过<code>cat /opt/weave-kube.yaml</code>命令查看部署定义。</p><div class=highlight><pre class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</code></pre></div><h2 id=部署容器网络接口-container-networking-interface-cni>部署容器网络接口 Container Networking Interface (CNI)</h2>
+<p>容器网络接口 (CNI) 定义了不同节点及其工作负载是如何通信的。有多个网络提供商可用，其中一些在 <a class=link href=https://kubernetes.io/docs/admin/addons/ target=_blank rel=noopener>here</a> 中列出。</p>
+<h3 id=任务-1>任务</h3>
+<p>在这个场景中，我们将使用 <code>WeaveWorks</code>的<code>CNI</code>。</p>
+<p><strong>/opt/weave-kube.yaml</strong>
+可以通过<code>cat /opt/weave-kube.yaml</code>命令查看部署定义。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
 </span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>List</span><span class=w>
 </span><span class=w></span><span class=nt>items</span><span class=p>:</span><span class=w>
 </span><span class=w>  </span>- <span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
@@ -324,7 +394,8 @@ controlplane $ <span class=nb>export</span> <span class=nv>KUBECONFIG</span><spa
 </span><span class=w>                </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>FileOrCreate</span><span class=w>
 </span><span class=w>      </span><span class=nt>updateStrategy</span><span class=p>:</span><span class=w>
 </span><span class=w>        </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>RollingUpdate</span><span class=w>
-</span></code></pre></div><p>使用<code>kubectl apply</code>命令来完成部署工作。.</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl apply -f /opt/weave-kube.yaml
+</span></code></pre></div><p>使用<code>kubectl apply</code>命令来完成部署工作。.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl apply -f /opt/weave-kube.yaml
 serviceaccount/weave-net created
 clusterrole.rbac.authorization.k8s.io/weave-net created
 clusterrolebinding.rbac.authorization.k8s.io/weave-net created
@@ -332,7 +403,8 @@ role.rbac.authorization.k8s.io/weave-net created
 rolebinding.rbac.authorization.k8s.io/weave-net created
 daemonset.apps/weave-net created
 </code></pre></div><p><code>Weave</code> 现在将在集群上部署为一系列的 <code>Pod</code>。
-可以通过 <code>kubectl get pod -n kube-system</code>命令查看状态。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pod -n kube-system
+可以通过 <code>kubectl get pod -n kube-system</code>命令查看状态。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pod -n kube-system
 NAME                                   READY   STATUS    RESTARTS   AGE
 coredns-fb8b8dccf-gw8z6                1/1     Running   <span class=m>0</span>          12m
 coredns-fb8b8dccf-qzd49                1/1     Running   <span class=m>0</span>          12m
@@ -342,10 +414,15 @@ kube-controller-manager-controlplane   1/1     Running   <span class=m>0</span> 
 kube-proxy-2kjsl                       1/1     Running   <span class=m>0</span>          13m
 kube-scheduler-controlplane            1/1     Running   <span class=m>1</span>          11m
 weave-net-2dtbs                        2/2     Running   <span class=m>0</span>          82s
-</code></pre></div><p>需要安装Weave在你的集群中时，可以在 <a href=https://www.weave.works/docs/net/latest/kube-addon/>https://www.weave.works/docs/net/latest/kube-addon/</a> 找到更多详细信息。</p><h2 id=加入集群>加入集群</h2><p>一旦 <code>Master</code> 和 <code>CNI</code> 初始化完成，其他节点只要拥有正确的令牌就可以加入集群。令牌可以通过 <code>kubeadm token</code> 进行管理，例如 <code>kubeadm token list</code>。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>controlplane $ kubeadm token list
+</code></pre></div><p>需要安装Weave在你的集群中时，可以在 <a class=link href=https://www.weave.works/docs/net/latest/kube-addon/ target=_blank rel=noopener>https://www.weave.works/docs/net/latest/kube-addon/</a> 找到更多详细信息。</p>
+<h2 id=加入集群>加入集群</h2>
+<p>一旦 <code>Master</code> 和 <code>CNI</code> 初始化完成，其他节点只要拥有正确的令牌就可以加入集群。令牌可以通过 <code>kubeadm token</code> 进行管理，例如 <code>kubeadm token list</code>。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubeadm token list
 TOKEN                     TTL       EXPIRES                USAGES                   DESCRIPTION                                                EXTRA GROUPS
 102952.1a7dd4cc8d1f4cc5   23h       2021-07-21T10:00:20Z   authentication,signing   The default bootstrap token generated by <span class=s1>&#39;kubeadm init&#39;</span>.   system:bootstrappers:kubeadm:default-node-token
-</code></pre></div><h3 id=任务-2>任务</h3><p>在第二个节点上，使用主节点的 IP 地址，运行命令加入集群。</p><pre><code>node01 $ kubeadm join --discovery-token-unsafe-skip-ca-verification --token=102952.1a7dd4cc8d1f4cc5 172.17.0.86:6443
+</code></pre></div><h3 id=任务-2>任务</h3>
+<p>在第二个节点上，使用主节点的 IP 地址，运行命令加入集群。</p>
+<pre><code>node01 $ kubeadm join --discovery-token-unsafe-skip-ca-verification --token=102952.1a7dd4cc8d1f4cc5 172.17.0.86:6443
 [preflight] Running pre-flight checks
 [preflight] Reading configuration from the cluster...
 [preflight] FYI: You can look at this config file with 'kubectl -n kube-system get cm kubeadm-config -oyaml'
@@ -360,25 +437,42 @@ This node has joined the cluster:
 * The Kubelet was informed of the new secure connection details.
 
 Run 'kubectl get nodes' on the control-plane to see this node join the cluster.
-</code></pre><p><code>Node01</code>节点与 <code>Master</code> 节点初始化提供的命令相同。</p><p><code>--discovery-token-unsafe-skip-ca-verification</code> 标签用于绕过 Discovery Token 验证。由于此令牌是动态生成的，因此我们无法将其包含在步骤中。在生产环境中，使用 <code>kubeadm init</code> 提供的令牌。</p><h2 id=查看节点>查看节点</h2><p>集群现已初始化。主节点将负责管理集群，另一个工作节点将负责运行我们的容器工作负载。</p><h3 id=任务-3>任务</h3><p>Kubernetes CLI，称为 <em>kubectl</em>，现在可以使用配置访问集群。例如，下面的命令将返回我们集群中的两个节点信息。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get nodes
+</code></pre><p><code>Node01</code>节点与 <code>Master</code> 节点初始化提供的命令相同。</p>
+<p><code>--discovery-token-unsafe-skip-ca-verification</code> 标签用于绕过 Discovery Token 验证。由于此令牌是动态生成的，因此我们无法将其包含在步骤中。在生产环境中，使用 <code>kubeadm init</code> 提供的令牌。</p>
+<h2 id=查看节点>查看节点</h2>
+<p>集群现已初始化。主节点将负责管理集群，另一个工作节点将负责运行我们的容器工作负载。</p>
+<h3 id=任务-3>任务</h3>
+<p>Kubernetes CLI，称为 <em>kubectl</em>，现在可以使用配置访问集群。例如，下面的命令将返回我们集群中的两个节点信息。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get nodes
 NAME           STATUS   ROLES    AGE   VERSION
 controlplane   Ready    master   25m   v1.14.0
 node01         Ready    &lt;none&gt;   2m    v1.14.0
-</code></pre></div><h2 id=部署-pod>部署 Pod</h2><p>集群中两个节点的状态现在应该是 <code>Ready</code>。这表示接下来可以进行调度和启动部署。</p><p>使用 <code>Kubectl</code>，可以部署 <code>Pod</code>。命令总是由 <code>Master</code> 发出，每个节点只负责运行工作负载。</p><p>下面的命令是基于 <code>Docker</code> 镜像 <em>katacoda/docker-http-server</em> 创建一个 <code>Pod</code>。</p><pre><code>controlplane $ kubectl create deployment http --image=katacoda/docker-http-server:latest
+</code></pre></div><h2 id=部署-pod>部署 Pod</h2>
+<p>集群中两个节点的状态现在应该是 <code>Ready</code>。这表示接下来可以进行调度和启动部署。</p>
+<p>使用 <code>Kubectl</code>，可以部署 <code>Pod</code>。命令总是由 <code>Master</code> 发出，每个节点只负责运行工作负载。</p>
+<p>下面的命令是基于 <code>Docker</code> 镜像 <em>katacoda/docker-http-server</em> 创建一个 <code>Pod</code>。</p>
+<pre><code>controlplane $ kubectl create deployment http --image=katacoda/docker-http-server:latest
 deployment.apps/http created
-</code></pre><p>可以使用<code>kubectl get pods</code>查看<code>Pod</code>创建的状态</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pods
+</code></pre><p>可以使用<code>kubectl get pods</code>查看<code>Pod</code>创建的状态</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pods
 NAME                    READY   STATUS    RESTARTS   AGE
 http-7f8cbdf584-jcdrj   1/1     Running   <span class=m>0</span>          70s
-</code></pre></div><p>运行后，可以看到节点上<code>Docker</code> 容器的运行状态。</p><pre><code>node01 $ docker ps | grep docker-http-server
+</code></pre></div><p>运行后，可以看到节点上<code>Docker</code> 容器的运行状态。</p>
+<pre><code>node01 $ docker ps | grep docker-http-server
 d874d8c3151b        katacoda/docker-http-server   &quot;/app&quot;                   About a minute ago   Up About a minute                       k8s_docker-http-server_http-7f8cbdf584-jcdrj_default_2894ce10-e945-11eb-b87f-0242ac110056_0
-</code></pre><h2 id=部署仪表盘>部署仪表盘</h2><p>Kubernetes 有一个基于 Web 的仪表板应用，提供对 Kubernetes 集群的查看与管理能力。</p><h3 id=任务-4>任务</h3><p>使用 <code>kubectl apply -f dashboard.yaml</code> 命令部署仪表板。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl apply -f dashboard.yaml
+</code></pre><h2 id=部署仪表盘>部署仪表盘</h2>
+<p>Kubernetes 有一个基于 Web 的仪表板应用，提供对 Kubernetes 集群的查看与管理能力。</p>
+<h3 id=任务-4>任务</h3>
+<p>使用 <code>kubectl apply -f dashboard.yaml</code> 命令部署仪表板。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl apply -f dashboard.yaml
 secret/kubernetes-dashboard-certs created
 serviceaccount/kubernetes-dashboard created
 role.rbac.authorization.k8s.io/kubernetes-dashboard-minimal created
 rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard-minimal created
 deployment.apps/kubernetes-dashboard created
 service/kubernetes-dashboard created
-</code></pre></div><p>仪表板将部署到 <em>kube-system</em> 命名空间中。使用 <code>kubectl get pods -n kube-system</code>命令 查看部署状态。</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pods -n kube-system
+</code></pre></div><p>仪表板将部署到 <em>kube-system</em> 命名空间中。使用 <code>kubectl get pods -n kube-system</code>命令 查看部署状态。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pods -n kube-system
 NAME                                    READY   STATUS    RESTARTS   AGE
 coredns-fb8b8dccf-rjzxp                 1/1     Running   <span class=m>1</span>          88s
 coredns-fb8b8dccf-tw8cm                 1/1     Running   <span class=m>1</span>          88s
@@ -391,7 +485,8 @@ kube-scheduler-controlplane             1/1     Running   <span class=m>2</span>
 kubernetes-dashboard-5f57845f9d-jblx7   1/1     Running   <span class=m>0</span>          5s
 weave-net-6gcbd                         2/2     Running   <span class=m>1</span>          88s
 weave-net-8s6bt                         2/2     Running   <span class=m>1</span>          84s
-</code></pre></div><p>需要 <code>ServiceAccount</code> 才能登录。 <code>ClusterRoleBinding</code> 用于为新的 ServiceAccount (<em>admin-user</em>) 分配集群上的 <em>cluster-admin</em> 角色。</p><pre><code>cat &lt;&lt;EOF | kubectl create -f - 
+</code></pre></div><p>需要 <code>ServiceAccount</code> 才能登录。 <code>ClusterRoleBinding</code> 用于为新的 ServiceAccount (<em>admin-user</em>) 分配集群上的 <em>cluster-admin</em> 角色。</p>
+<pre><code>cat &lt;&lt;EOF | kubectl create -f - 
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -411,7 +506,9 @@ subjects:
   name: admin-user
   namespace: kube-system
 EOF
-</code></pre><p><code>Dashboard</code>可以控制 Kubernetes 的所有方面。通过 <code>ClusterRoleBinding</code> 和 <code>RBAC</code>，可以根据安全要求来定义不同级别的权限。有关为仪表板创建用户的更多信息，请参考 <a class=link href=https://github.com/kubernetes/dashboard/wiki/Creating-sample-user target=_blank rel=noopener>Dashboard documentation</a>。</p><p>创建 <code>ServiceAccount</code> 后，可以通过以下方式获取登录令牌：</p><div class=highlight><pre class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl -n kube-system describe secret <span class=k>$(</span>kubectl -n kube-system get secret <span class=p>|</span> grep admin-user <span class=p>|</span> awk <span class=s1>&#39;{print $1}&#39;</span><span class=k>)</span>
+</code></pre><p><code>Dashboard</code>可以控制 Kubernetes 的所有方面。通过 <code>ClusterRoleBinding</code> 和 <code>RBAC</code>，可以根据安全要求来定义不同级别的权限。有关为仪表板创建用户的更多信息，请参考 <a class=link href=https://github.com/kubernetes/dashboard/wiki/Creating-sample-user target=_blank rel=noopener>Dashboard documentation</a>。</p>
+<p>创建 <code>ServiceAccount</code> 后，可以通过以下方式获取登录令牌：</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl -n kube-system describe secret <span class=k>$(</span>kubectl -n kube-system get secret <span class=p>|</span> grep admin-user <span class=p>|</span> awk <span class=s1>&#39;{print $1}&#39;</span><span class=k>)</span>
 Name:         attachdetach-controller-token-bltlp
 Namespace:    kube-system
 Labels:       &lt;none&gt;
@@ -931,12 +1028,157 @@ Type:  kubernetes.io/service-account-token
 ca.crt:     <span class=m>1025</span> bytes
 namespace:  <span class=m>11</span> bytes
 token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJ3ZWF2ZS1uZXQtdG9rZW4tZm4yOGgiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoid2VhdmUtbmV0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiMGQ0NTVhNzctZTlkNC0xMWViLWIyNWItMDI0MmFjMTEwMDA5Iiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50Omt1YmUtc3lzdGVtOndlYXZlLW5ldCJ9.PpqFn31z-GiFAdE-Nd9-R8xuW8ESiisX53Vn_niAvFQ2DPII8q4150iNJDedLZ6nZiXBgV4e7b3NcZzNGhwRVAUyRgLrIqjdgNk-04YJ40bdP4d_5hSUylEn_QH1dgON6tMV9cK6skC0weFZzpPptGhA0bhyFdNl3DvGKGGmMgfyQsf3tEjZjEyqOuPLPtW0TPF2h98UmSsBzWbn-tCM_GEZTVY-3uxzfn2AfkuSI-e9ri1W4X8_W1z_cFIXk4Pwg0q7RWcJi44BCBJE079ezRLIWbowjXOXpqrZwe_jw_F-fJI_7ddxWDx68-wBwhjVIdNqnnMvzB-RKfgaIcWEiw
-</code></pre></div><p>部署仪表板时，它使用 externalIPs 将服务绑定到端口 8443。这使得仪表板可供集群外部使用，并可在 <a href=https://2886795309-8443-elsy05.environments.katacoda.com/>https://2886795309-8443-elsy05.environments.katacoda.com/</a> 中查看</p><p>使用 <em>admin-user</em> 令牌访问仪表板。</p><p>对于生产环境，建议使用 <code>kubectl proxy</code> 来访问仪表板，而不是 externalIP。在 <a href=https://github.com/kubernetes/dashboard>https://github.com/kubernetes/dashboard</a> 上查看更多详细信息。</p></section><footer class=article-footer><section class=article-tags><a href=/tags/k8s/>K8S</a>
+</code></pre></div><p>部署仪表板时，它使用 externalIPs 将服务绑定到端口 8443。这使得仪表板可供集群外部使用，并可在 <a class=link href=https://2886795309-8443-elsy05.environments.katacoda.com/ target=_blank rel=noopener>https://2886795309-8443-elsy05.environments.katacoda.com/</a> 中查看</p>
+<p>使用 <em>admin-user</em> 令牌访问仪表板。</p>
+<p>对于生产环境，建议使用 <code>kubectl proxy</code> 来访问仪表板，而不是 externalIP。在 <a class=link href=https://github.com/kubernetes/dashboard target=_blank rel=noopener>https://github.com/kubernetes/dashboard</a> 上查看更多详细信息。</p>
+</section>
+<footer class=article-footer>
+<section class=article-tags>
+<a href=/tags/k8s/>K8S</a>
 <a href=/tags/%E5%AE%B9%E5%99%A8/>容器</a>
-<a href=/tags/katacoda/>Katacoda</a></section><section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg><span>Licensed under CC BY-NC-SA 4.0</span></section></footer></article><aside class=related-contents--wrapper><h2 class=section-title>相关文章</h2><div class=related-contents><div class="flex article-list--tile"><article class=has-image><a href=/p/k8s-basic-4/><div class=article-image><img src=/p/k8s-basic-4/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_2.png width=250 height=150 loading=lazy data-key=k8s-basic-4 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg=="></div><div class=article-details><h2 class=article-title>Kubernetes初探（四）</h2></div></a></article><article class=has-image><a href=/p/k8s-basic-3/><div class=article-image><img src=/p/k8s-basic-3/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_2.png width=250 height=150 loading=lazy data-key=k8s-basic-3 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg=="></div><div class=article-details><h2 class=article-title>Kubernetes初探（三）</h2></div></a></article><article class=has-image><a href=/p/k8s-basic-1/><div class=article-image><img src=/p/k8s-basic-1/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_2.png width=250 height=150 loading=lazy data-key=k8s-basic-1 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg=="></div><div class=article-details><h2 class=article-title>Kubernetes初探（一）</h2></div></a></article><article class=has-image><a href=/p/katacoda/><div class=article-image><img src=/p/katacoda/katacoda.7dda66de484872bd6de01ffc1b36abc7_huf47240e26664e9c6e2f7130233d16c2d_114448_250x150_fill_q75_box_smart1.jpg width=250 height=150 loading=lazy data-key=katacoda data-hash="md5-fdpm3khIcr1t4B/8Gzarxw=="></div><div class=article-details><h2 class=article-title>Katacoda 在线学习神器</h2></div></a></article></div></div></aside><footer class=site-footer><section class=copyright>&copy;
+<a href=/tags/katacoda/>Katacoda</a>
+</section>
+<section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span>
+</section>
+</footer>
+</article>
+<aside class=related-contents--wrapper>
+<h2 class=section-title>相关文章</h2>
+<div class=related-contents>
+<div class="flex article-list--tile">
+<article class=has-image>
+<a href=/p/k8s-basic-4/>
+<div class=article-image>
+<img src=/p/k8s-basic-4/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-4 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（四）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-3/>
+<div class=article-image>
+<img src=/p/k8s-basic-3/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-3 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（三）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-1/>
+<div class=article-image>
+<img src=/p/k8s-basic-1/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-1 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（一）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/katacoda/>
+<div class=article-image>
+<img src=/p/katacoda/katacoda.7dda66de484872bd6de01ffc1b36abc7_huf47240e26664e9c6e2f7130233d16c2d_114448_250x150_fill_q75_box_smart1.jpg width=250 height=150 loading=lazy data-key=katacoda data-hash="md5-fdpm3khIcr1t4B/8Gzarxw==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Katacoda 在线学习神器</h2>
+</div>
+</a>
+</article>
+</div>
+</div>
+</aside>
+<footer class=site-footer>
+<section class=copyright>
+&copy;
 2016 -
-2021 Catfish</section><section class=powerby>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=2.5.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a></section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+2021 Catfish
+</section>
+<section class=powerby>
+Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a> <br>
+Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=2.5.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a>
+</section>
+</footer>
+<div class=pswp tabindex=-1 role=dialog aria-hidden=true>
+<div class=pswp__bg></div>
+<div class=pswp__scroll-wrap>
+<div class=pswp__container>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+</div>
+<div class="pswp__ui pswp__ui--hidden">
+<div class=pswp__top-bar>
+<div class=pswp__counter></div>
+<button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
 <button class="pswp__button pswp__button--share" title=Share></button>
 <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
-<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
-<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css integrity="sha256-c0uckgykQ9v5k+IqViZOZKc47Jn7KQil4/MP3ySA3F8=" crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE=" crossorigin=anonymous></main><aside class="sidebar right-sidebar sticky"><section class="widget archives"><div class=widget-icon><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg></div><h2 class="widget-title section-title">目录</h2><div class=widget--toc><nav id=TableOfContents><ol><li><a href=#初始化-master>初始化 Master</a><ol><li><a href=#任务>任务</a></li></ol></li><li><a href=#部署容器网络接口-container-networking-interface-cni>部署容器网络接口 Container Networking Interface (CNI)</a><ol><li><a href=#任务-1>任务</a></li></ol></li><li><a href=#加入集群>加入集群</a><ol><li><a href=#任务-2>任务</a></li></ol></li><li><a href=#查看节点>查看节点</a><ol><li><a href=#任务-3>任务</a></li></ol></li><li><a href=#部署-pod>部署 Pod</a></li><li><a href=#部署仪表盘>部署仪表盘</a><ol><li><a href=#任务-4>任务</a></li></ol></li></ol></nav></div></section></aside></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g=" crossorigin=anonymous defer></script><script type=text/javascript src=/ts/main.js defer></script><script>(function(){const a=document.createElement('link');a.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",a.type="text/css",a.rel="stylesheet",document.head.appendChild(a)})()</script></body></html>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+<div class=pswp__preloader>
+<div class=pswp__preloader__icn>
+<div class=pswp__preloader__cut>
+<div class=pswp__preloader__donut></div>
+</div>
+</div>
+</div>
+</div>
+<div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+<div class=pswp__share-tooltip></div>
+</div>
+<button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+</button>
+<div class=pswp__caption>
+<div class=pswp__caption__center></div>
+</div>
+</div>
+</div>
+</div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css integrity="sha256-c0uckgykQ9v5k+IqViZOZKc47Jn7KQil4/MP3ySA3F8=" crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE=" crossorigin=anonymous>
+</main>
+<aside class="sidebar right-sidebar sticky">
+<section class="widget archives">
+<div class=widget-icon><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg>
+</div>
+<h2 class="widget-title section-title">目录</h2>
+<div class=widget--toc>
+<nav id=TableOfContents>
+<ol>
+<li><a href=#初始化-master>初始化 Master</a>
+<ol>
+<li><a href=#任务>任务</a></li>
+</ol>
+</li>
+<li><a href=#部署容器网络接口-container-networking-interface-cni>部署容器网络接口 Container Networking Interface (CNI)</a>
+<ol>
+<li><a href=#任务-1>任务</a></li>
+</ol>
+</li>
+<li><a href=#加入集群>加入集群</a>
+<ol>
+<li><a href=#任务-2>任务</a></li>
+</ol>
+</li>
+<li><a href=#查看节点>查看节点</a>
+<ol>
+<li><a href=#任务-3>任务</a></li>
+</ol>
+</li>
+<li><a href=#部署-pod>部署 Pod</a></li>
+<li><a href=#部署仪表盘>部署仪表盘</a>
+<ol>
+<li><a href=#任务-4>任务</a></li>
+</ol>
+</li>
+</ol>
+</nav>
+</div>
+</section>
+</aside>
+</div>
+<script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g=" crossorigin=anonymous defer></script><script type=text/javascript src=/ts/main.js defer></script>
+<script>(function(){const a=document.createElement('link');a.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",a.type="text/css",a.rel="stylesheet",document.head.appendChild(a)})()</script>
+</body>
+</html>
