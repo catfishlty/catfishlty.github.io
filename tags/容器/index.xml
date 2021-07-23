@@ -1,4 +1,14 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>容器 on Catfish</title><link>https://www.catfish.top/tags/%E5%AE%B9%E5%99%A8/</link><description>Recent content in 容器 on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Tue, 20 Jul 2021 13:18:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/tags/%E5%AE%B9%E5%99%A8/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes初探（五）</title><link>https://www.catfish.top/p/k8s-basic-5/</link><pubDate>Tue, 20 Jul 2021 13:18:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-5/</guid><description>Katacoda在线课：Deploy Guestbook Web App Example
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>容器 on Catfish</title><link>https://www.catfish.top/tags/%E5%AE%B9%E5%99%A8/</link><description>Recent content in 容器 on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Tue, 20 Jul 2021 13:36:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/tags/%E5%AE%B9%E5%99%A8/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes初探（六）</title><link>https://www.catfish.top/p/k8s-basic-6/</link><pubDate>Tue, 20 Jul 2021 13:36:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-6/</guid><description>Katacoda在线课：Networking Introduction
+本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。 本系列教程将使用 Katacoda在线学习平台 完成学习。
+Kubernetes 具有先进的网络功能，允许 Pod 和 Service 在集群网络内部和外部进行通信。
+在此场景中，您将学习以下类型的 Kubernetes Service。
+Cluster IP Target Ports NodePort External IPs Load Balancer Kubernetes 服务是一个抽象，它定义了如何访问一组 Pod 的策略和方法。可以通过 Service 访问基于标签选择器的 Pod 集合。
+Cluster IP Cluster IP 是创建 Kubernetes 服务时的默认方法。该服务被分配了一个内部 IP，其他组件可以使用它来访问 Pod。
+Service 能够通过单个 IP 地址在多个 Pod 之间进行负载平衡。
+通过 kubectl apply -f clusterip.yaml 命令部署服务。
+在 cat clusterip.yaml 可以查看相关定义。
+clusterip.yaml
+apiVersion:v1kind:Servicemetadata:name:webapp1-clusterip-svclabels:app:webapp1-clusteripspec:ports:- port:80selector:app:webapp1-clusterip---apiVersion:extensions/v1beta1kind:Deploymentmetadata:name:webapp1-clusterip-deploymentspec:replicas:2template:metadata:labels:app:webapp1-clusteripspec:containers:- name:webapp1-clusterip-podimage:katacoda/docker-http-server:latestports:- containerPort:80---controlplane $ kubectl apply -f clusterip.</description></item><item><title>Kubernetes初探（五）</title><link>https://www.catfish.top/p/k8s-basic-5/</link><pubDate>Tue, 20 Jul 2021 13:18:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-5/</guid><description>Katacoda在线课：Deploy Guestbook Web App Example
 本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。 本系列教程将使用 Katacoda在线学习平台 完成学习。
 本场景说明了如何使用 Kubernetes 和 Docker 启动简单的多层 Web 应用。留言簿示例应用程序通过调用* JavaScript API* 将访客的笔记存储在 *Redis* 中。 *Redis* 包含一个 master（用于存储）和一组 *slave* 复制集。
 核心概念 在此场景中将涵盖以下核心概念。这些是理解 Kubernetes 的基础。

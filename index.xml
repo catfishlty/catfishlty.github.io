@@ -1,4 +1,529 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Tue, 20 Jul 2021 13:18:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes初探（五）</title><link>https://www.catfish.top/p/k8s-basic-5/</link><pubDate>Tue, 20 Jul 2021 13:18:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-5/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-5/kubernates.png" alt="Featured image of post Kubernetes初探（五）" />&lt;blockquote>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Tue, 20 Jul 2021 13:36:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes初探（六）</title><link>https://www.catfish.top/p/k8s-basic-6/</link><pubDate>Tue, 20 Jul 2021 13:36:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-6/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-6/kubernates.png" alt="Featured image of post Kubernetes初探（六）" />&lt;blockquote>
+&lt;p>Katacoda在线课：&lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/networking-introduction" target="_blank" rel="noopener"
+>Networking Introduction&lt;/a>&lt;/p>
+&lt;p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
+本系列教程将使用 &lt;a class="link" href="https://www.katacoda.com" target="_blank" rel="noopener"
+>Katacoda在线学习平台&lt;/a> 完成学习。&lt;/p>
+&lt;/blockquote>
+&lt;p>&lt;em>Kubernetes&lt;/em> 具有先进的网络功能，允许 &lt;em>Pod&lt;/em> 和 &lt;em>Service&lt;/em> 在集群网络内部和外部进行通信。&lt;/p>
+&lt;p>在此场景中，您将学习以下类型的 &lt;em>Kubernetes&lt;/em> &lt;em>Service&lt;/em>。&lt;/p>
+&lt;ul>
+&lt;li>Cluster IP&lt;/li>
+&lt;li>Target Ports&lt;/li>
+&lt;li>NodePort&lt;/li>
+&lt;li>External IPs&lt;/li>
+&lt;li>Load Balancer&lt;/li>
+&lt;/ul>
+&lt;p>&lt;em>Kubernetes&lt;/em> 服务是一个抽象，它定义了如何访问一组 &lt;em>Pod&lt;/em> 的策略和方法。可以通过 &lt;em>Service&lt;/em> 访问基于标签选择器的 &lt;em>Pod&lt;/em> 集合。&lt;/p>
+&lt;h2 id="cluster-ip">Cluster IP&lt;/h2>
+&lt;p>&lt;em>Cluster IP&lt;/em> 是创建 &lt;em>Kubernetes&lt;/em> 服务时的默认方法。该服务被分配了一个内部 IP，其他组件可以使用它来访问 &lt;em>Pod&lt;/em>。&lt;/p>
+&lt;p>&lt;em>Service&lt;/em> 能够通过单个 &lt;em>IP&lt;/em> 地址在多个 &lt;em>Pod&lt;/em> 之间进行负载平衡。&lt;/p>
+&lt;p>通过 &lt;code>kubectl apply -f clusterip.yaml&lt;/code> 命令部署服务。&lt;/p>
+&lt;p>在 &lt;em>cat clusterip.yaml&lt;/em> 可以查看相关定义。&lt;/p>
+&lt;p>&lt;strong>clusterip.yaml&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Service&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-clusterip-svc&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-clusterip&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">port&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-clusterip&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nn">---&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">extensions/v1beta1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-clusterip-deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">2&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-clusterip&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-clusterip-pod&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">katacoda/docker-http-server:latest&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">containerPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nn">---&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl apply -f clusterip.yaml
+service/webapp1-clusterip-svc created
+deployment.extensions/webapp1-clusterip-deployment created
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>该文件定义了部署具有两个副本的 &lt;em>Web&lt;/em> 应用程序，用来展示负载平衡和服务。
+可以通过 &lt;code>kubectl get pods&lt;/code> 命令查看 &lt;em>Pod&lt;/em> 状态。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get pods
+NAME READY STATUS RESTARTS AGE
+webapp1-clusterip-deployment-669c7c65c4-r6k2l 1/1 Running &lt;span class="m">0&lt;/span> 15s
+webapp1-clusterip-deployment-669c7c65c4-xdsd4 1/1 Running &lt;span class="m">0&lt;/span> 15s
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>同时也部署了一个 &lt;em>Service&lt;/em>，可以通过 &lt;code>kubectl get svc&lt;/code> 命令查看。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">NAME TYPE CLUSTER-IP EXTERNAL-IP PORT&lt;span class="o">(&lt;/span>S&lt;span class="o">)&lt;/span> AGE
+kubernetes ClusterIP 10.96.0.1 &amp;lt;none&amp;gt; 443/TCP 8m12s
+webapp1-clusterip-svc ClusterIP 10.108.32.169 &amp;lt;none&amp;gt; 80/TCP 39s
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>可以通过 &lt;code>kubectl describe svc/webapp1-clusterip-svc&lt;/code> 命令查看有关服务配置和活动端点 (&lt;em>Pod&lt;/em>) 的更多详细信息&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl describe svc/webapp1-clusterip-svc
+Name: webapp1-clusterip-svc
+Namespace: default
+Labels: &lt;span class="nv">app&lt;/span>&lt;span class="o">=&lt;/span>webapp1-clusterip
+Annotations: kubectl.kubernetes.io/last-applied-configuration:
+&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;apiVersion&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;v1&amp;#34;&lt;/span>,&lt;span class="s2">&amp;#34;kind&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;Service&amp;#34;&lt;/span>,&lt;span class="s2">&amp;#34;metadata&amp;#34;&lt;/span>:&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;annotations&amp;#34;&lt;/span>:&lt;span class="o">{}&lt;/span>,&lt;span class="s2">&amp;#34;labels&amp;#34;&lt;/span>:&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;app&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;webapp1-clusterip&amp;#34;&lt;/span>&lt;span class="o">}&lt;/span>,&lt;span class="s2">&amp;#34;name&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;webapp1-clusterip-svc&amp;#34;&lt;/span>,&lt;span class="s2">&amp;#34;name...
+&lt;/span>&lt;span class="s2">Selector: app=webapp1-clusterip
+&lt;/span>&lt;span class="s2">Type: ClusterIP
+&lt;/span>&lt;span class="s2">IP: 10.108.32.169
+&lt;/span>&lt;span class="s2">Port: &amp;lt;unset&amp;gt; 80/TCP
+&lt;/span>&lt;span class="s2">TargetPort: 80/TCP
+&lt;/span>&lt;span class="s2">Endpoints: 10.32.0.5:80,10.32.0.6:80
+&lt;/span>&lt;span class="s2">Session Affinity: None
+&lt;/span>&lt;span class="s2">Events: &amp;lt;none&amp;gt;
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>部署完成后，可以通过分配的 &lt;em>Cluster IP&lt;/em> 访问该服务。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ &lt;span class="nb">export&lt;/span> &lt;span class="nv">CLUSTER_IP&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="k">$(&lt;/span>kubectl get services/webapp1-clusterip-svc -o go-template&lt;span class="o">=&lt;/span>&lt;span class="s1">&amp;#39;{{(index .spec.clusterIP)}}&amp;#39;&lt;/span>&lt;span class="k">)&lt;/span>
+controlplane $ &lt;span class="nb">echo&lt;/span> &lt;span class="nv">CLUSTER_IP&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="nv">$CLUSTER_IP&lt;/span>
+&lt;span class="nv">CLUSTER_IP&lt;/span>&lt;span class="o">=&lt;/span>10.108.32.169
+controlplane $ curl &lt;span class="nv">$CLUSTER_IP&lt;/span>:80
+&amp;lt;h1&amp;gt;This request was processed by host: webapp1-clusterip-deployment-669c7c65c4-r6k2l&amp;lt;/h1&amp;gt;
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>将通过多个请求来展示基于公共标签选择器的跨多个* Pod* 的负载均衡器。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ curl &lt;span class="nv">$CLUSTER_IP&lt;/span>:80
+&amp;lt;h1&amp;gt;This request was processed by host: webapp1-clusterip-deployment-669c7c65c4-xdsd4&amp;lt;/h1&amp;gt;
+controlplane $ curl &lt;span class="nv">$CLUSTER_IP&lt;/span>:80
+&amp;lt;h1&amp;gt;This request was processed by host: webapp1-clusterip-deployment-669c7c65c4-r6k2l&amp;lt;/h1&amp;gt;
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="target-port">Target Port&lt;/h2>
+&lt;p>&lt;em>TargetPort&lt;/em> 允许我们将服务可用的端口与应用程序正在侦听的端口分开。 &lt;em>TargetPort&lt;/em> 是应用配置为侦听的端口。端口是从外部访问应用的方式。&lt;/p>
+&lt;p>与之前类似，&lt;em>Service&lt;/em> 和额外的 &lt;em>Pod&lt;/em> 是通过 &lt;code>kubectl apply -f clusterip-target.yaml&lt;/code> 命令来部署的。&lt;/p>
+&lt;p>**clusterip-target.yaml **&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Service&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-clusterip-targetport-svc&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-clusterip-targetport&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">port&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">8080&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">targetPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-clusterip-targetport&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nn">---&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">extensions/v1beta1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-clusterip-targetport-deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">2&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-clusterip-targetport&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-clusterip-targetport-pod&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">katacoda/docker-http-server:latest&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">containerPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nn">---&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>以下命令将创建服务。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl apply -f clusterip-target.yaml
+service/webapp1-clusterip-targetport-svc created
+deployment.extensions/webapp1-clusterip-targetport-deployment created
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get svc
+NAME TYPE CLUSTER-IP EXTERNAL-IP PORT&lt;span class="o">(&lt;/span>S&lt;span class="o">)&lt;/span> AGE
+kubernetes ClusterIP 10.96.0.1 &amp;lt;none&amp;gt; 443/TCP 13m
+webapp1-clusterip-svc ClusterIP 10.108.32.169 &amp;lt;none&amp;gt; 80/TCP 5m29s
+webapp1-clusterip-targetport-svc ClusterIP 10.102.59.206 &amp;lt;none&amp;gt; 8080/TCP 40s
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl describe svc/webapp1-clusterip-targetport-svc
+Name: webapp1-clusterip-targetport-svc
+Namespace: default
+Labels: &lt;span class="nv">app&lt;/span>&lt;span class="o">=&lt;/span>webapp1-clusterip-targetport
+Annotations: kubectl.kubernetes.io/last-applied-configuration:
+&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;apiVersion&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;v1&amp;#34;&lt;/span>,&lt;span class="s2">&amp;#34;kind&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;Service&amp;#34;&lt;/span>,&lt;span class="s2">&amp;#34;metadata&amp;#34;&lt;/span>:&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;annotations&amp;#34;&lt;/span>:&lt;span class="o">{}&lt;/span>,&lt;span class="s2">&amp;#34;labels&amp;#34;&lt;/span>:&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;app&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;webapp1-clusterip-targetport&amp;#34;&lt;/span>&lt;span class="o">}&lt;/span>,&lt;span class="s2">&amp;#34;name&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;webapp1-clusterip...
+&lt;/span>&lt;span class="s2">Selector: app=webapp1-clusterip-targetport
+&lt;/span>&lt;span class="s2">Type: ClusterIP
+&lt;/span>&lt;span class="s2">IP: 10.102.59.206
+&lt;/span>&lt;span class="s2">Port: &amp;lt;unset&amp;gt; 8080/TCP
+&lt;/span>&lt;span class="s2">TargetPort: 80/TCP
+&lt;/span>&lt;span class="s2">Endpoints: 10.32.0.7:80,10.32.0.8:80
+&lt;/span>&lt;span class="s2">Session Affinity: None
+&lt;/span>&lt;span class="s2">Events: &amp;lt;none&amp;gt;
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;em>Service&lt;/em> 和 &lt;em>Pod&lt;/em> 部署完成后，可以像以前一样通过 &lt;em>Cluster IP&lt;/em> 访问，但这次是在定义的端口 8080 上。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ &lt;span class="nb">export&lt;/span> &lt;span class="nv">CLUSTER_IP&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="k">$(&lt;/span>kubectl get services/webapp1-clusterip-targetport-svc -o go-template&lt;span class="o">=&lt;/span>&lt;span class="s1">&amp;#39;{{(index .spec.clusterIP)}}&amp;#39;&lt;/span>&lt;span class="k">)&lt;/span>
+controlplane $ &lt;span class="nb">echo&lt;/span> &lt;span class="nv">CLUSTER_IP&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="nv">$CLUSTER_IP&lt;/span>
+&lt;span class="nv">CLUSTER_IP&lt;/span>&lt;span class="o">=&lt;/span>10.102.59.206
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ curl &lt;span class="nv">$CLUSTER_IP&lt;/span>:8080
+&amp;lt;h1&amp;gt;This request was processed by host: webapp1-clusterip-targetport-deployment-5599945ff4-96fqh&amp;lt;/h1&amp;gt;
+controlplane $ curl &lt;span class="nv">$CLUSTER_IP&lt;/span>:8080
+&amp;lt;h1&amp;gt;This request was processed by host: webapp1-clusterip-targetport-deployment-5599945ff4-zwr8f&amp;lt;/h1&amp;gt;
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>应用程序本身仍然配置为侦听 &lt;em>80&lt;/em> 端口。&lt;em>Kubernetes&lt;/em> 服务管理着两者之间的转换。&lt;/p>
+&lt;h2 id="nodeport">NodePort&lt;/h2>
+&lt;p>虽然 &lt;em>TargetPort&lt;/em> 和 &lt;em>ClusterIP&lt;/em> 使其可用于集群内部，但 &lt;em>NodePort&lt;/em> 通过定义的静态端口在每个节点的 &lt;em>IP&lt;/em> 上公开服务。无论访问集群内的哪个节点，都可以通过定义的端口号直接访问该服务。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl apply -f nodeport.yaml
+service/webapp1-nodeport-svc created
+deployment.extensions/webapp1-nodeport-deployment created
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>查看服务定义时，注意定义的附加类型和 &lt;em>NodePort&lt;/em> 属性。&lt;/p>
+&lt;p>&lt;strong>nodeport.yaml&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Service&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-nodeport-svc&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-nodeport&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">type&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">NodePort&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">port&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">nodePort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">30080&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-nodeport&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nn">---&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">extensions/v1beta1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-nodeport-deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">2&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-nodeport&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-nodeport-pod&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">katacoda/docker-http-server:latest&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">containerPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nn">---&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get svc
+NAME TYPE CLUSTER-IP EXTERNAL-IP PORT&lt;span class="o">(&lt;/span>S&lt;span class="o">)&lt;/span> AGE
+kubernetes ClusterIP 10.96.0.1 &amp;lt;none&amp;gt; 443/TCP 22m
+webapp1-clusterip-svc ClusterIP 10.108.32.169 &amp;lt;none&amp;gt; 80/TCP 14m
+webapp1-clusterip-targetport-svc ClusterIP 10.102.59.206 &amp;lt;none&amp;gt; 8080/TCP 9m44s
+webapp1-nodeport-svc NodePort 10.102.135.99 &amp;lt;none&amp;gt; 80:30080/TCP 5m52s
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl describe svc/webapp1-nodeport-svc
+Name: webapp1-nodeport-svc
+Namespace: default
+Labels: &lt;span class="nv">app&lt;/span>&lt;span class="o">=&lt;/span>webapp1-nodeport
+Annotations: kubectl.kubernetes.io/last-applied-configuration:
+&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;apiVersion&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;v1&amp;#34;&lt;/span>,&lt;span class="s2">&amp;#34;kind&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;Service&amp;#34;&lt;/span>,&lt;span class="s2">&amp;#34;metadata&amp;#34;&lt;/span>:&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;annotations&amp;#34;&lt;/span>:&lt;span class="o">{}&lt;/span>,&lt;span class="s2">&amp;#34;labels&amp;#34;&lt;/span>:&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;app&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;webapp1-nodeport&amp;#34;&lt;/span>&lt;span class="o">}&lt;/span>,&lt;span class="s2">&amp;#34;name&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;webapp1-nodeport-svc&amp;#34;&lt;/span>,&lt;span class="s2">&amp;#34;namesp...
+&lt;/span>&lt;span class="s2">Selector: app=webapp1-nodeport
+&lt;/span>&lt;span class="s2">Type: NodePort
+&lt;/span>&lt;span class="s2">IP: 10.102.135.99
+&lt;/span>&lt;span class="s2">Port: &amp;lt;unset&amp;gt; 80/TCP
+&lt;/span>&lt;span class="s2">TargetPort: 80/TCP
+&lt;/span>&lt;span class="s2">NodePort: &amp;lt;unset&amp;gt; 30080/TCP
+&lt;/span>&lt;span class="s2">Endpoints: 10.32.0.10:80,10.32.0.9:80
+&lt;/span>&lt;span class="s2">Session Affinity: None
+&lt;/span>&lt;span class="s2">External Traffic Policy: Cluster
+&lt;/span>&lt;span class="s2">Events: &amp;lt;none&amp;gt;
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>可以通过 &lt;em>NodePort&lt;/em> 定义的 &lt;em>Node&lt;/em> 的 &lt;em>IP&lt;/em> 地址访问到服务。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ curl 172.17.0.31:30080
+&amp;lt;h1&amp;gt;This request was processed by host: webapp1-nodeport-deployment-677bd89b96-j256b&amp;lt;/h1&amp;gt;
+controlplane $ curl 172.17.0.31:30080
+&amp;lt;h1&amp;gt;This request was processed by host: webapp1-nodeport-deployment-677bd89b96-88qj5&amp;lt;/h1&amp;gt;
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="external-ip">External IP&lt;/h2>
+&lt;p>另一种方法是通过外部 &lt;em>IP&lt;/em> 地址让服务在集群外可用。&lt;/p>
+&lt;p>将定义中的 &lt;em>externalIPs&lt;/em> 更新为当前集群的 IP 地址&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ sed -i &lt;span class="s1">&amp;#39;s/HOSTIP/172.17.0.31/g&amp;#39;&lt;/span> externalip.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;strong>externalip.yaml&lt;/strong>&lt;/p>
+&lt;pre>&lt;code>apiVersion: v1
+kind: Service
+metadata:
+name: webapp1-externalip-svc
+labels:
+app: webapp1-externalip
+spec:
+ports:
+- port: 80
+externalIPs:
+- 172.17.0.30
+selector:
+app: webapp1-externalip
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+name: webapp1-externalip-deployment
+spec:
+replicas: 2
+template:
+metadata:
+labels:
+app: webapp1-externalip
+spec:
+containers:
+- name: webapp1-externalip-pod
+image: katacoda/docker-http-server:latest
+ports:
+- containerPort: 80
+---
+controlplane $ cat externalip.yaml
+apiVersion: v1
+kind: Service
+metadata:
+name: webapp1-externalip-svc
+labels:
+app: webapp1-externalip
+spec:
+ports:
+- port: 80
+externalIPs:
+- 172.17.0.30
+selector:
+app: webapp1-externalip
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+name: webapp1-externalip-deployment
+spec:
+replicas: 2
+template:
+metadata:
+labels:
+app: webapp1-externalip
+spec:
+containers:
+- name: webapp1-externalip-pod
+image: katacoda/docker-http-server:latest
+ports:
+- containerPort: 80
+---
+&lt;/code>&lt;/pre>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl apply -f externalip.yaml
+service/webapp1-externalip-svc created
+deployment.extensions/webapp1-externalip-deployment created
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get svc
+NAME TYPE CLUSTER-IP EXTERNAL-IP PORT&lt;span class="o">(&lt;/span>S&lt;span class="o">)&lt;/span> AGE
+kubernetes ClusterIP 10.96.0.1 &amp;lt;none&amp;gt; 443/TCP 28m
+webapp1-clusterip-svc ClusterIP 10.108.32.169 &amp;lt;none&amp;gt; 80/TCP 20m
+webapp1-clusterip-targetport-svc ClusterIP 10.102.59.206 &amp;lt;none&amp;gt; 8080/TCP 15m
+webapp1-externalip-svc ClusterIP 10.109.28.108 172.17.0.31 80/TCP 8s
+webapp1-nodeport-svc NodePort 10.102.135.99 &amp;lt;none&amp;gt; 80:30080/TCP 12m
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl describe svc/webapp1-externalip-svc
+Name: webapp1-externalip-svc
+Namespace: default
+Labels: &lt;span class="nv">app&lt;/span>&lt;span class="o">=&lt;/span>webapp1-externalip
+Annotations: kubectl.kubernetes.io/last-applied-configuration:
+&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;apiVersion&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;v1&amp;#34;&lt;/span>,&lt;span class="s2">&amp;#34;kind&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;Service&amp;#34;&lt;/span>,&lt;span class="s2">&amp;#34;metadata&amp;#34;&lt;/span>:&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;annotations&amp;#34;&lt;/span>:&lt;span class="o">{}&lt;/span>,&lt;span class="s2">&amp;#34;labels&amp;#34;&lt;/span>:&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;app&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;webapp1-externalip&amp;#34;&lt;/span>&lt;span class="o">}&lt;/span>,&lt;span class="s2">&amp;#34;name&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;webapp1-externalip-svc&amp;#34;&lt;/span>,&lt;span class="s2">&amp;#34;na...
+&lt;/span>&lt;span class="s2">Selector: app=webapp1-externalip
+&lt;/span>&lt;span class="s2">Type: ClusterIP
+&lt;/span>&lt;span class="s2">IP: 10.109.28.108
+&lt;/span>&lt;span class="s2">External IPs: 172.17.0.31
+&lt;/span>&lt;span class="s2">Port: &amp;lt;unset&amp;gt; 80/TCP
+&lt;/span>&lt;span class="s2">TargetPort: 80/TCP
+&lt;/span>&lt;span class="s2">Endpoints: 10.32.0.11:80,10.32.0.12:80
+&lt;/span>&lt;span class="s2">Session Affinity: None
+&lt;/span>&lt;span class="s2">Events: &amp;lt;none&amp;gt;
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>该服务现在绑定到主节点的 &lt;em>IP&lt;/em> 地址和 &lt;em>80&lt;/em>端口 。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ curl 172.17.0.31
+&amp;lt;h1&amp;gt;This request was processed by host: webapp1-externalip-deployment-6446b488f8-dxdb5&amp;lt;/h1&amp;gt;
+controlplane $ curl 172.17.0.31
+&amp;lt;h1&amp;gt;This request was processed by host: webapp1-externalip-deployment-6446b488f8-2zw2p&amp;lt;/h1&amp;gt;
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="load-balancer">Load Balancer&lt;/h2>
+&lt;p>在例如 &lt;em>EC2&lt;/em> 或 &lt;em>Azure&lt;/em> 的云服务中运行时，可以通过云服务商配置和分配发布的公网 &lt;em>IP&lt;/em> 地址。这将通过负载均衡器（例如 &lt;em>ELB&lt;/em>）发出，允许将额外的公网 &lt;em>IP&lt;/em> 地址分配给 &lt;em>Kubernetes&lt;/em> 集群，而无需直接与云提供商交互。&lt;/p>
+&lt;p>由于 &lt;em>Katacoda&lt;/em> 不是云服务商，因此仍然可以为 &lt;em>LoadBalancer&lt;/em> 类型的服务动态分配 &lt;em>IP&lt;/em> 地址。这是通过使用 &lt;code>kubectl apply -f cloudprovider.yaml&lt;/code> 部署 &lt;em>Cloud Provider&lt;/em> 来完成的。并不是必需在云服务商提供的服务中运行的。&lt;/p>
+&lt;p>&lt;strong>cloudprovider.yaml&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">extensions/v1beta1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">DaemonSet&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">kube-keepalived-vip&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">namespace&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">kube-system&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">kube-keepalived-vip&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">hostNetwork&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kc">true&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">gcr.io/google_containers/kube-keepalived-vip:0.9&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">kube-keepalived-vip&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">imagePullPolicy&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Always&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">securityContext&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">privileged&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kc">true&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">volumeMounts&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">mountPath&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">/lib/modules&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">modules&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">readOnly&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kc">true&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">mountPath&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">/dev&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">dev&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># use downward API&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">env&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">POD_NAME&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">valueFrom&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">fieldRef&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">fieldPath&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">metadata.name&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">POD_NAMESPACE&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">valueFrom&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">fieldRef&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">fieldPath&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">metadata.namespace&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># to use unicast&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">args&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- --&lt;span class="l">services-configmap=kube-system/vip-configmap&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># unicast uses the ip of the nodes instead of multicast&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># this is useful if running in cloud providers (like AWS)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c">#- --use-unicast=true&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">volumes&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">modules&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">hostPath&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">path&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">/lib/modules&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">dev&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">hostPath&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">path&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">/dev&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">nodeSelector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># type: worker # adjust this to match your worker nodes&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nn">---&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="c">## We also create an empty ConfigMap to hold our config&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">ConfigMap&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">vip-configmap&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">namespace&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">kube-system&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">data&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nn">---&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">apps/v1beta1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">keepalived-cloud-provider&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">keepalived-cloud-provider&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">namespace&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">kube-system&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">revisionHistoryLimit&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">2&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">matchLabels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">keepalived-cloud-provider&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">strategy&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">type&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">RollingUpdate&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">annotations&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">scheduler.alpha.kubernetes.io/critical-pod&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">scheduler.alpha.kubernetes.io/tolerations&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s1">&amp;#39;[{&amp;#34;key&amp;#34;:&amp;#34;CriticalAddonsOnly&amp;#34;, &amp;#34;operator&amp;#34;:&amp;#34;Exists&amp;#34;}]&amp;#39;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">keepalived-cloud-provider&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">keepalived-cloud-provider&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">quay.io/munnerz/keepalived-cloud-provider:0.0.1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">imagePullPolicy&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">IfNotPresent&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">env&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">KEEPALIVED_NAMESPACE&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">value&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">kube-system&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">KEEPALIVED_CONFIG_MAP&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">value&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">vip-configmap&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">KEEPALIVED_SERVICE_CIDR&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">value&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">10.10.0.0&lt;/span>&lt;span class="l">/26&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># pick a CIDR that is explicitly reserved for keepalived&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">volumeMounts&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">certs&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">mountPath&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">/etc/ssl/certs&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">resources&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">requests&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">cpu&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">200m&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">livenessProbe&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">httpGet&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">path&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">/healthz&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">port&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">10252&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">host&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">127.0.0.1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">initialDelaySeconds&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">15&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">timeoutSeconds&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">15&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">failureThreshold&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">8&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">volumes&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">certs&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">hostPath&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">path&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">/etc/ssl/certs&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nn">---&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl apply -f cloudprovider.yaml
+daemonset.extensions/kube-keepalived-vip configured
+configmap/vip-configmap configured
+deployment.apps/keepalived-cloud-provider created
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>当服务请求负载均衡时，负载均衡的提供商将从配置中定义的 10.10.0.0/26 范围中分配一个 &lt;em>IP&lt;/em>。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get pods -n kube-system
+NAME READY STATUS RESTARTS AGE
+coredns-fb8b8dccf-6rvjq 1/1 Running &lt;span class="m">0&lt;/span> 39m
+coredns-fb8b8dccf-p5lxm 1/1 Running &lt;span class="m">0&lt;/span> 39m
+etcd-controlplane 1/1 Running &lt;span class="m">0&lt;/span> 38m
+katacoda-cloud-provider-66d7758d5d-bn748 1/1 Running &lt;span class="m">0&lt;/span> 39m
+keepalived-cloud-provider-78fc4468b-bk8wn 1/1 Running &lt;span class="m">0&lt;/span> 6m16s
+kube-apiserver-controlplane 1/1 Running &lt;span class="m">0&lt;/span> 39m
+kube-controller-manager-controlplane 1/1 Running &lt;span class="m">2&lt;/span> 39m
+kube-keepalived-vip-42ql5 1/1 Running &lt;span class="m">0&lt;/span> 38m
+kube-proxy-d5q4m 1/1 Running &lt;span class="m">0&lt;/span> 39m
+kube-scheduler-controlplane 1/1 Running &lt;span class="m">3&lt;/span> 39m
+weave-net-9rc2g 2/2 Running &lt;span class="m">1&lt;/span> 39m
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>该服务是通过负载均衡配置的，如 &lt;em>cat loadbalancer.yaml&lt;/em> 中所定义所示。&lt;/p>
+&lt;p>&lt;strong>loadbalancer.yaml&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Service&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-loadbalancer-svc&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-loadbalancer&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">type&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">LoadBalancer&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">port&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-loadbalancer&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nn">---&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">extensions/v1beta1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-loadbalancer-deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">2&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-loadbalancer&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-loadbalancer-pod&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">katacoda/docker-http-server:latest&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">containerPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl apply -f loadbalancer.yaml
+service/webapp1-loadbalancer-svc created
+deployment.extensions/webapp1-loadbalancer-deployment created
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>在定义 &lt;em>IP&lt;/em> 地址时，服务将显示 &lt;em>Pending&lt;/em>。分配后，它将出现在服务列表中。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get svc
+NAME TYPE CLUSTER-IP EXTERNAL-IP PORT&lt;span class="o">(&lt;/span>S&lt;span class="o">)&lt;/span> AGE
+kubernetes ClusterIP 10.96.0.1 &amp;lt;none&amp;gt; 443/TCP 38m
+webapp1-clusterip-svc ClusterIP 10.108.32.169 &amp;lt;none&amp;gt; 80/TCP 31m
+webapp1-clusterip-targetport-svc ClusterIP 10.102.59.206 &amp;lt;none&amp;gt; 8080/TCP 26m
+webapp1-externalip-svc ClusterIP 10.109.28.108 172.17.0.31 80/TCP 10m
+webapp1-loadbalancer-svc LoadBalancer 10.105.60.108 172.17.0.31 80:30626/TCP 7s
+webapp1-nodeport-svc NodePort 10.102.135.99 &amp;lt;none&amp;gt; 80:30080/TCP 22m
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl describe svc/webapp1-loadbalancer-svc
+Name: webapp1-loadbalancer-svc
+Namespace: default
+Labels: &lt;span class="nv">app&lt;/span>&lt;span class="o">=&lt;/span>webapp1-loadbalancer
+Annotations: kubectl.kubernetes.io/last-applied-configuration:
+&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;apiVersion&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;v1&amp;#34;&lt;/span>,&lt;span class="s2">&amp;#34;kind&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;Service&amp;#34;&lt;/span>,&lt;span class="s2">&amp;#34;metadata&amp;#34;&lt;/span>:&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;annotations&amp;#34;&lt;/span>:&lt;span class="o">{}&lt;/span>,&lt;span class="s2">&amp;#34;labels&amp;#34;&lt;/span>:&lt;span class="o">{&lt;/span>&lt;span class="s2">&amp;#34;app&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;webapp1-loadbalancer&amp;#34;&lt;/span>&lt;span class="o">}&lt;/span>,&lt;span class="s2">&amp;#34;name&amp;#34;&lt;/span>:&lt;span class="s2">&amp;#34;webapp1-loadbalancer-svc&amp;#34;&lt;/span>...
+Selector: &lt;span class="nv">app&lt;/span>&lt;span class="o">=&lt;/span>webapp1-loadbalancer
+Type: LoadBalancer
+IP: 10.105.60.108
+LoadBalancer Ingress: 172.17.0.31
+Port: &amp;lt;unset&amp;gt; 80/TCP
+TargetPort: 80/TCP
+NodePort: &amp;lt;unset&amp;gt; 30626/TCP
+Endpoints: 10.32.0.14:80,10.32.0.15:80
+Session Affinity: None
+External Traffic Policy: Cluster
+Events:
+Type Reason Age From Message
+---- ------ ---- ---- -------
+Normal CreatingLoadBalancer 95s service-controller Creating load balancer
+Normal CreatedLoadBalancer 95s service-controller Created load balancer
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>现在可以通过分配的 &lt;em>IP&lt;/em> 地址访问该服务，在本例中的范围是 &lt;em>10.10.0.0/26&lt;/em> 。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ &lt;span class="nb">export&lt;/span> &lt;span class="nv">LoadBalancerIP&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="k">$(&lt;/span>kubectl get services/webapp1-loadbalancer-svc -o go-template&lt;span class="o">=&lt;/span>&lt;span class="s1">&amp;#39;{{(index .status.loadBalancer.ingress 0).ip}}&amp;#39;&lt;/span>&lt;span class="k">)&lt;/span>
+controlplane $ &lt;span class="nb">echo&lt;/span> &lt;span class="nv">LoadBalancerIP&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="nv">$LoadBalancerIP&lt;/span>
+&lt;span class="nv">LoadBalancerIP&lt;/span>&lt;span class="o">=&lt;/span>172.17.0.31
+controlplane $ curl &lt;span class="nv">$LoadBalancerIP&lt;/span>
+&amp;lt;h1&amp;gt;This request was processed by host: webapp1-externalip-deployment-6446b488f8-2zw2p&amp;lt;/h1&amp;gt;
+controlplane $ curl &lt;span class="nv">$LoadBalancerIP&lt;/span>
+&amp;lt;h1&amp;gt;This request was processed by host: webapp1-externalip-deployment-6446b488f8-dxdb5&amp;lt;/h1&amp;gt;
+&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>Kubernetes初探（五）</title><link>https://www.catfish.top/p/k8s-basic-5/</link><pubDate>Tue, 20 Jul 2021 13:18:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-5/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-5/kubernates.png" alt="Featured image of post Kubernetes初探（五）" />&lt;blockquote>
 &lt;p>Katacoda在线课：&lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/guestbook" target="_blank" rel="noopener"
 >Deploy Guestbook Web App Example&lt;/a>&lt;/p>
 &lt;p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
