@@ -1,0 +1,470 @@
+<!doctype html><html lang=zh-cn>
+<head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="在Kubernetes上运行Stateful服务"><title>Kubernetes初探（九）</title>
+<link rel=canonical href=https://www.catfish.top/p/k8s-basic-9/>
+<link rel=stylesheet href=/scss/style.min.css><meta property="og:title" content="Kubernetes初探（九）">
+<meta property="og:description" content="在Kubernetes上运行Stateful服务">
+<meta property="og:url" content="https://www.catfish.top/p/k8s-basic-9/">
+<meta property="og:site_name" content="Catfish">
+<meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="K8S"><meta property="article:tag" content="容器"><meta property="article:tag" content="Katacoda"><meta property="article:tag" content="YAML"><meta property="article:published_time" content="2021-07-23T14:23:00+08:00"><meta property="article:modified_time" content="2021-07-23T14:51:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/k8s-basic-9/kubernates.png">
+<meta name=twitter:title content="Kubernetes初探（九）">
+<meta name=twitter:description content="在Kubernetes上运行Stateful服务"><meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://www.catfish.top/p/k8s-basic-9/kubernates.png">
+<link rel="shortcut icon" href=/favicon.ico>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MPS4W3GMH8"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-MPS4W3GMH8')</script>
+</head>
+<body class="article-page has-toc">
+<script>(function(){const a='StackColorScheme';localStorage.getItem(a)||localStorage.setItem(a,"auto")})()</script><script>(function(){const b='StackColorScheme',a=localStorage.getItem(b),c=window.matchMedia('(prefers-color-scheme: dark)').matches===!0;a=='dark'||a==='auto'&&c?document.documentElement.dataset.scheme='dark':document.documentElement.dataset.scheme='light'})()</script>
+<div class="container main-container flex
+extended">
+<div id=article-toolbar>
+<a href=https://www.catfish.top class=back-home><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="15 6 9 12 15 18"/></svg>
+<span>返回</span>
+</a>
+</div>
+<main class="main full-width">
+<article class="has-image main-article">
+<header class=article-header>
+<div class=article-image>
+<a href=/p/k8s-basic-9/>
+<img src=/p/k8s-basic-9/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_3.png srcset="/p/k8s-basic-9/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_3.png 800w, /p/k8s-basic-9/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_1600x0_resize_box_3.png 1600w" width=800 height=173 loading=lazy alt="Featured image of post Kubernetes初探（九）">
+</a>
+</div>
+<div class=article-details>
+<header class=article-category>
+<a href=/categories/k8s-basic/>
+Kubernate 初探
+</a>
+<a href=/categories/katacoda/>
+Katacoda
+</a>
+</header>
+<h2 class=article-title>
+<a href=/p/k8s-basic-9/>Kubernetes初探（九）</a>
+</h2>
+<h3 class=article-subtitle>
+在Kubernetes上运行Stateful服务
+</h3>
+<footer class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--published>Jul 23, 2021</time>
+</footer></div>
+</header>
+<section class=article-content>
+<blockquote>
+<p>Katacoda在线课：<a class=link href=https://www.katacoda.com/courses/kubernetes/storage-introduction target=_blank rel=noopener>Running Stateful Services on Kubernetes</a></p>
+<p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
+本系列教程将使用 <a class=link href=https://www.katacoda.com target=_blank rel=noopener>Katacoda在线学习平台</a> 完成学习。</p>
+</blockquote>
+<h2 id=部署-nfs-服务器>部署 NFS 服务器</h2>
+<p><em>NFS</em> 是一种允许节点通过网络读 / 写数据的协议。该协议的工作原理是让主节点运行 <em>NFS</em> 守护程序并存储数据。此主节点使某些目录可通过网络使用。</p>
+<p>客户端访问通过驱动器挂载共享的主服务器。从应用程序的角度来看，它们正在写入本地磁盘。在背后，<em>NFS</em> 协议将其写入主服务器。</p>
+<h3 id=任务>任务</h3>
+<p>在此场景中，出于演示和学习目的，<em>NFS</em> 服务器的角色由自定义容器处理。容器通过 NFS 提供目录并将数据存储在容器内。在生产环境中，建议配置专用的 <em>NFS Server</em>。</p>
+<p>使用 <code>docker run -d --net=host \ --privileged --name nfs-server \ katacoda/contained-nfs-server:centos7 \ /exports/data-0001 /exports/data-0002</code> 命令启动 <em>NFS</em> 服务器</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ docker run -d --net<span class=o>=</span>host <span class=se>\
+</span><span class=se></span>&gt;    --privileged --name nfs-server <span class=se>\
+</span><span class=se></span>&gt;    katacoda/contained-nfs-server:centos7 <span class=se>\
+</span><span class=se></span>&gt;    /exports/data-0001 /exports/data-0002
+Unable to find image <span class=s1>&#39;katacoda/contained-nfs-server:centos7&#39;</span> locally
+centos7: Pulling from katacoda/contained-nfs-server
+8d30e94188e7: Pull <span class=nb>complete</span> 
+2b2b27f1f462: Pull <span class=nb>complete</span> 
+133e63cf95fe: Pull <span class=nb>complete</span> 
+Digest: sha256:5f2ea4737fe27f26be5b5cabaa23e24180079a4dce8d5db235492ec48c5552d1
+Status: Downloaded newer image <span class=k>for</span> katacoda/contained-nfs-server:centos7
+65699a0a96bfc489fe2141a815ef12b03917f9bb667340b1be68dfe838d14bf3
+</code></pre></div><p><em>NFS</em> 服务器公开两个目录，<em>data-0001</em> 和 <em>data-0002</em>。在接下来的步骤中，这将用于存储数据。</p>
+<h2 id=部署-persistent-volume>部署 Persistent Volume</h2>
+<p>为了让 Kubernetes 了解可用的 <em>NFS</em> 共享，它需要一个 <em>PersistentVolume</em> 配置。 <em>PersistentVolume</em> 支持不同的数据存储协议，例如 <em>AWS EBS</em> 卷、<em>GCE</em> 存储、<em>OpenStack Cinder</em>、<em>Glusterfs</em> 和 <em>NFS</em>。该配置提供了存储和 <em>API</em> 之间的抽象，从而实现了一致的体验。</p>
+<p>在使用 <em>NFS</em> 的情况下，一个 <em>PersistentVolume</em> 与一个 <em>NFS</em> 目录相关联。当容器使用完卷后，数据可以 <strong>保留</strong> 以备将来使用，也可以 <strong>回收</strong>，这意味着所有数据都将被删除。该策略由 <em>persistentVolumeReclaimPolicy</em> 选项定义。</p>
+<p><em>YAML</em> 文件结构：</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>PersistentVolume</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>&lt;friendly-name&gt;</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>capacity</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>storage</span><span class=p>:</span><span class=w> </span><span class=l>1Gi</span><span class=w>
+</span><span class=w>  </span><span class=nt>accessModes</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=l>ReadWriteOnce</span><span class=w>
+</span><span class=w>    </span>- <span class=l>ReadWriteMany</span><span class=w>
+</span><span class=w>  </span><span class=nt>persistentVolumeReclaimPolicy</span><span class=p>:</span><span class=w> </span><span class=l>Recycle</span><span class=w>
+</span><span class=w>  </span><span class=nt>nfs</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>server</span><span class=p>:</span><span class=w> </span><span class=l>&lt;server-name&gt;</span><span class=w>
+</span><span class=w>    </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>&lt;shared-path&gt;</span><span class=w>
+</span></code></pre></div><p>该规范定义了关于 <em>PersistentVolume</em> 的额外元数据，包括有多少可用空间以及它是否具有读 / 写访问权限。</p>
+<h3 id=任务-1>任务</h3>
+<p>使用 <code>cat nfs-0001.yaml nfs-0002.yaml</code> 查看 <em>YAML</em> 文件的内容。</p>
+<p><strong>nfs-0001.yaml</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>PersistentVolume</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>nfs-0001</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>capacity</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>storage</span><span class=p>:</span><span class=w> </span><span class=l>2Gi</span><span class=w>
+</span><span class=w>  </span><span class=nt>accessModes</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=l>ReadWriteOnce</span><span class=w>
+</span><span class=w>    </span>- <span class=l>ReadWriteMany</span><span class=w>
+</span><span class=w>  </span><span class=nt>persistentVolumeReclaimPolicy</span><span class=p>:</span><span class=w> </span><span class=l>Recycle</span><span class=w>
+</span><span class=w>  </span><span class=nt>nfs</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>server</span><span class=p>:</span><span class=w> </span><span class=m>172.17.0.45</span><span class=w>
+</span><span class=w>    </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/exports/data-0001</span><span class=w>
+</span></code></pre></div><p><strong>nfs-0002.yaml</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>PersistentVolume</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>nfs-0002</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>capacity</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>storage</span><span class=p>:</span><span class=w> </span><span class=l>5Gi</span><span class=w>
+</span><span class=w>  </span><span class=nt>accessModes</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=l>ReadWriteOnce</span><span class=w>
+</span><span class=w>    </span>- <span class=l>ReadWriteMany</span><span class=w>
+</span><span class=w>  </span><span class=nt>persistentVolumeReclaimPolicy</span><span class=p>:</span><span class=w> </span><span class=l>Recycle</span><span class=w>
+</span><span class=w>  </span><span class=nt>nfs</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>server</span><span class=p>:</span><span class=w> </span><span class=m>172.17.0.45</span><span class=w>
+</span><span class=w>    </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/exports/data-0002</span><span class=w>
+</span></code></pre></div><p>创建两个新的 <em>PersistentVolume</em> 定义并指向两个可用的 NFS 共享。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl create -f nfs-0001.yaml
+persistentvolume/nfs-0001 created
+controlplane $ kubectl create -f nfs-0002.yaml
+persistentvolume/nfs-0002 created
+</code></pre></div><p>创建后，使用 <code>kubectl get pv</code> 命令查看集群中的所有 <em>PersistentVolumes</em></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pv
+NAME       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   REASON   AGE
+nfs-0001   2Gi        RWO,RWX        Recycle          Available                                   66s
+nfs-0002   5Gi        RWO,RWX        Recycle          Available                                   61s
+</code></pre></div><h2 id=部署-persistent-volume-claim>部署 Persistent Volume Claim</h2>
+<p>一旦 <em>PersistentVolume</em> 可用，应用程序就可以声明该卷供其使用。该声明旨在阻止应用程序意外写入同一卷并导致冲突和数据损坏。</p>
+<p><em>Persistent Volume Claim</em> 指定了卷的要求。这包括所需的读/写访问和存储空间。一个例子如下：</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>PersistentVolumeClaim</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>claim-mysql</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>accessModes</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=l>ReadWriteOnce</span><span class=w>
+</span><span class=w>  </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>requests</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>storage</span><span class=p>:</span><span class=w> </span><span class=l>3Gi</span><span class=w>
+</span></code></pre></div><h2 id=任务-2>任务</h2>
+<p>使用 <code>cat pvc-mysql.yaml pvc-http.yaml</code> 查看文件的内容</p>
+<p><strong>pvc-mysql.yaml</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>PersistentVolumeClaim</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>claim-mysql</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>accessModes</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=l>ReadWriteOnce</span><span class=w>
+</span><span class=w>  </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>requests</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>storage</span><span class=p>:</span><span class=w> </span><span class=l>3Gi</span><span class=w>
+</span></code></pre></div><p><strong>pvc-http.yaml</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>PersistentVolumeClaim</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>claim-http</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>accessModes</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=l>ReadWriteOnce</span><span class=w>
+</span><span class=w>  </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>requests</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>storage</span><span class=p>:</span><span class=w> </span><span class=l>1Gi</span><span class=w>
+</span></code></pre></div><p>为两个不同的应用程序创建两个声明。 <em>MySQL Pod</em> 将使用一个声明，另一个由 <em>HTTP</em> 服务器使用。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl create -f pvc-mysql.yaml
+persistentvolumeclaim/claim-mysql created
+controlplane $ kubectl create -f pvc-http.yaml
+persistentvolumeclaim/claim-http created
+</code></pre></div><p>创建后，使用 <code>kubectl get pvc</code> 查看集群中的所有 <em>PersistentVolumesClaims</em>，将打印出声明映射到的卷。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pvc
+NAME          STATUS   VOLUME     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+claim-http    Bound    nfs-0001   2Gi        RWO,RWX                       53s
+claim-mysql   Bound    nfs-0002   5Gi        RWO,RWX                       56s
+</code></pre></div><h2 id=volume-的使用>Volume 的使用</h2>
+<p>定义部署后，它可以将自己分配给先前的声明。以下代码段定义了目录 <em>/var/lib/mysql/data</em> 的卷挂载，该目录映射到存储 <em>mysql-persistent-storage</em>。名为 <em>mysql-persistent-storage</em> 的存储映射到名为 <em>claim-mysql</em> 的声明中。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=w>  </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>volumeMounts</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-persistent-storage</span><span class=w>
+</span><span class=w>          </span><span class=nt>mountPath</span><span class=p>:</span><span class=w> </span><span class=l>/var/lib/mysql/data</span><span class=w>
+</span><span class=w>  </span><span class=nt>volumes</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-persistent-storage</span><span class=w>
+</span><span class=w>      </span><span class=nt>persistentVolumeClaim</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span><span class=nt>claimName</span><span class=p>:</span><span class=w> </span><span class=l>claim-mysql</span><span class=w>
+</span></code></pre></div><h2 id=任务-3>任务</h2>
+<p>使用以下命令查看 <em>Pod</em> 的定义。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ cat pod-mysql.yaml pod-www.yaml
+</code></pre></div><p><strong>pod-mysql.yaml</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Pod</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql</span><span class=w>
+</span><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>containers</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql</span><span class=w>
+</span><span class=w>    </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>openshift/mysql-55-centos7</span><span class=w>
+</span><span class=w>    </span><span class=nt>env</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>MYSQL_ROOT_PASSWORD</span><span class=w>
+</span><span class=w>        </span><span class=nt>value</span><span class=p>:</span><span class=w> </span><span class=l>yourpassword</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>MYSQL_USER</span><span class=w>
+</span><span class=w>        </span><span class=nt>value</span><span class=p>:</span><span class=w> </span><span class=l>wp_user</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>MYSQL_PASSWORD</span><span class=w>
+</span><span class=w>        </span><span class=nt>value</span><span class=p>:</span><span class=w> </span><span class=l>wp_pass</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>MYSQL_DATABASE</span><span class=w>
+</span><span class=w>        </span><span class=nt>value</span><span class=p>:</span><span class=w> </span><span class=l>wp_db</span><span class=w>
+</span><span class=w>    </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>containerPort</span><span class=p>:</span><span class=w> </span><span class=m>3306</span><span class=w>
+</span><span class=w>        </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql</span><span class=w>
+</span><span class=w>    </span><span class=nt>volumeMounts</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-persistent-storage</span><span class=w>
+</span><span class=w>        </span><span class=nt>mountPath</span><span class=p>:</span><span class=w> </span><span class=l>/var/lib/mysql/data</span><span class=w>
+</span><span class=w>  </span><span class=nt>volumes</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-persistent-storage</span><span class=w>
+</span><span class=w>      </span><span class=nt>persistentVolumeClaim</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span><span class=nt>claimName</span><span class=p>:</span><span class=w> </span><span class=l>claim-mysql</span><span class=w>
+</span></code></pre></div><p><strong>pod-http.yaml</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Pod</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>www</span><span class=w>
+</span><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>www</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>containers</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>www</span><span class=w>
+</span><span class=w>    </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>nginx:alpine</span><span class=w>
+</span><span class=w>    </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>containerPort</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>        </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>www</span><span class=w>
+</span><span class=w>    </span><span class=nt>volumeMounts</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>www-persistent-storage</span><span class=w>
+</span><span class=w>        </span><span class=nt>mountPath</span><span class=p>:</span><span class=w> </span><span class=l>/usr/share/nginx/html</span><span class=w>
+</span><span class=w>  </span><span class=nt>volumes</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>www-persistent-storage</span><span class=w>
+</span><span class=w>      </span><span class=nt>persistentVolumeClaim</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span><span class=nt>claimName</span><span class=p>:</span><span class=w> </span><span class=l>claim-http</span><span class=w>
+</span></code></pre></div><p>启动两个具有 <em>Persistent Volume Claims</em> 的新 <em>Pod</em>。当 <em>Pod</em> 开始允许应用程序像本地目录一样读/写时，卷被映射到正确的目录。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl create -f pod-mysql.yaml
+pod/mysql created
+controlplane $ kubectl create -f pod-www.yaml
+pod/www created
+</code></pre></div><p>可以使用 <code>kubectl get pods</code> 开始查看 Pod 的状态</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+mysql   1/1     Running   <span class=m>0</span>          27s
+www     1/1     Running   <span class=m>0</span>          25s
+</code></pre></div><p>如果 <em>Persistent Volume Claim</em> 未分配给 <em>Persistent Volume</em>，则 <em>Pod</em> 将处于 <em>Pending</em> 模式，直到它变为可用。在下一步中，我们将向卷读/写数据。</p>
+<h2 id=数据读写>数据读写</h2>
+<p>我们的 <em>Pod</em> 现在可以进行读/写。 <em>MySQL</em> 将所有数据库更改存储到 <em>NFS</em> 服务器，而 <em>HTTP</em> 服务器将从 <em>NFS</em> 驱动器提供静态服务。升级、重新启动或将容器移动到不同的机器时，数据仍然可以访问。</p>
+<p>要测试 <em>HTTP 服务器</em>，请编写一个“Hello World”<em>index.html</em> 主页。在这种情况下，我们知道 <em>HTTP</em> 目录将基于 <em>data-0001</em>，因为卷定义没有驱动足够的空间来满足 <em>MySQL</em> 大小要求。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ docker <span class=nb>exec</span> -it nfs-server bash -c <span class=s2>&#34;echo &#39;Hello World&#39; &gt; /exports/data-0001/index.html&#34;</span>
+</code></pre></div><p>根据 <em>Pod</em> 的 <em>IP</em>，访问 <em>Pod</em> 时，应该返回预期的响应。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ <span class=nv>ip</span><span class=o>=</span><span class=k>$(</span>kubectl get pod www -o yaml <span class=p>|</span>grep podIP <span class=p>|</span> awk <span class=s1>&#39;{split($0,a,&#34;:&#34;); print a[2]}&#39;</span><span class=k>)</span><span class=p>;</span> <span class=nb>echo</span> <span class=nv>$ip</span>
+10.32.0.6
+controlplane $ curl <span class=nv>$ip</span>
+Hello World
+</code></pre></div><h3 id=更新数据>更新数据</h3>
+<p>当 <em>NFS</em> 共享上的数据发生变化时，<em>Pod</em> 会读取新更新的数据。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ docker <span class=nb>exec</span> -it nfs-server bash -c <span class=s2>&#34;echo &#39;Hello NFS World&#39; &gt; /exports/data-0001/index.html&#34;</span>
+controlplane $ curl <span class=nv>$ip</span>
+Hello NFS World
+</code></pre></div><h2 id=重建-pod>重建 Pod</h2>
+<p>因为使用远程 <em>NFS</em> 服务器存储数据，如果 <em>Pod</em> 或主机宕机，那么数据仍然可用。</p>
+<h3 id=任务-4>任务</h3>
+<p>删除 <em>Pod</em> 将导致它删除对任何持久卷的声明。新 <em>Pod</em> 可以获取并重新使用 <em>NFS</em> 共享。</p>
+<p><strong>pod-www2.yaml</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Pod</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>www2</span><span class=w>
+</span><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>www2</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>containers</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>www2</span><span class=w>
+</span><span class=w>    </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>nginx:alpine</span><span class=w>
+</span><span class=w>    </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>containerPort</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>        </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>www2</span><span class=w>
+</span><span class=w>    </span><span class=nt>volumeMounts</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>www-persistent-storage</span><span class=w>
+</span><span class=w>        </span><span class=nt>mountPath</span><span class=p>:</span><span class=w> </span><span class=l>/usr/share/nginx/html</span><span class=w>
+</span><span class=w>  </span><span class=nt>volumes</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>www-persistent-storage</span><span class=w>
+</span><span class=w>      </span><span class=nt>persistentVolumeClaim</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span><span class=nt>claimName</span><span class=p>:</span><span class=w> </span><span class=l>claim-http</span><span class=w>
+</span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl delete pod www
+pod <span class=s2>&#34;www&#34;</span> deleted
+controlplane $ kubectl create -f pod-www2.yaml
+pod/www2 created
+controlplane $ <span class=nv>ip</span><span class=o>=</span><span class=k>$(</span>kubectl get pod www2 -o yaml <span class=p>|</span>grep podIP <span class=p>|</span> awk <span class=s1>&#39;{split($0,a,&#34;:&#34;); print a[2]}&#39;</span><span class=k>)</span><span class=p>;</span> curl <span class=nv>$ip</span>
+Hello NFS World
+</code></pre></div><p>应用程序现在使用远程 <em>NFS</em> 进行数据存储。根据具体要求，这种相同的方法适用于其他存储引擎，例如 <em>GlusterFS</em>、<em>AWS EBS</em>、<em>GCE</em> 存储或 <em>OpenStack Cinder</em>。</p>
+</section>
+<footer class=article-footer>
+<section class=article-tags>
+<a href=/tags/k8s/>K8S</a>
+<a href=/tags/%E5%AE%B9%E5%99%A8/>容器</a>
+<a href=/tags/katacoda/>Katacoda</a>
+<a href=/tags/yaml/>YAML</a>
+</section>
+<section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span>
+</section>
+<section class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<span class=article-time--modified>
+最后更新于 Jul 23, 2021 14:51 +0800
+</span>
+</section></footer>
+</article>
+<aside class=related-contents--wrapper>
+<h2 class=section-title>相关文章</h2>
+<div class=related-contents>
+<div class="flex article-list--tile">
+<article class=has-image>
+<a href=/p/k8s-basic-8/>
+<div class=article-image>
+<img src=/p/k8s-basic-8/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-8 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（八）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-7/>
+<div class=article-image>
+<img src=/p/k8s-basic-7/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-7 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（七）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-6/>
+<div class=article-image>
+<img src=/p/k8s-basic-6/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-6 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（六）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-5/>
+<div class=article-image>
+<img src=/p/k8s-basic-5/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-5 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（五）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-4/>
+<div class=article-image>
+<img src=/p/k8s-basic-4/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-4 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（四）</h2>
+</div>
+</a>
+</article>
+</div>
+</div>
+</aside>
+<footer class=site-footer>
+<section class=copyright>
+&copy;
+2016 -
+2021 Catfish
+</section>
+<section class=powerby>
+Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a> <br>
+Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=2.5.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a>
+</section>
+</footer>
+<div class=pswp tabindex=-1 role=dialog aria-hidden=true>
+<div class=pswp__bg></div>
+<div class=pswp__scroll-wrap>
+<div class=pswp__container>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+</div>
+<div class="pswp__ui pswp__ui--hidden">
+<div class=pswp__top-bar>
+<div class=pswp__counter></div>
+<button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+<div class=pswp__preloader>
+<div class=pswp__preloader__icn>
+<div class=pswp__preloader__cut>
+<div class=pswp__preloader__donut></div>
+</div>
+</div>
+</div>
+</div>
+<div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+<div class=pswp__share-tooltip></div>
+</div>
+<button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+</button>
+<div class=pswp__caption>
+<div class=pswp__caption__center></div>
+</div>
+</div>
+</div>
+</div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css integrity="sha256-c0uckgykQ9v5k+IqViZOZKc47Jn7KQil4/MP3ySA3F8=" crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE=" crossorigin=anonymous>
+</main>
+<aside class="sidebar right-sidebar sticky">
+<section class="widget archives">
+<div class=widget-icon><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg>
+</div>
+<h2 class="widget-title section-title">目录</h2>
+<div class=widget--toc>
+<nav id=TableOfContents>
+<ol>
+<li><a href=#部署-nfs-服务器>部署 NFS 服务器</a>
+<ol>
+<li><a href=#任务>任务</a></li>
+</ol>
+</li>
+<li><a href=#部署-persistent-volume>部署 Persistent Volume</a>
+<ol>
+<li><a href=#任务-1>任务</a></li>
+</ol>
+</li>
+<li><a href=#部署-persistent-volume-claim>部署 Persistent Volume Claim</a></li>
+<li><a href=#任务-2>任务</a></li>
+<li><a href=#volume-的使用>Volume 的使用</a></li>
+<li><a href=#任务-3>任务</a></li>
+<li><a href=#数据读写>数据读写</a>
+<ol>
+<li><a href=#更新数据>更新数据</a></li>
+</ol>
+</li>
+<li><a href=#重建-pod>重建 Pod</a>
+<ol>
+<li><a href=#任务-4>任务</a></li>
+</ol>
+</li>
+</ol>
+</nav>
+</div>
+</section>
+</aside>
+</div>
+<script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g=" crossorigin=anonymous defer></script><script type=text/javascript src=/ts/main.js defer></script>
+<script>(function(){const a=document.createElement('link');a.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",a.type="text/css",a.rel="stylesheet",document.head.appendChild(a)})()</script>
+</body>
+</html>
