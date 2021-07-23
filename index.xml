@@ -1,6 +1,287 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Tue, 20 Jul 2021 11:39:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes初探（四）</title><link>https://www.catfish.top/p/k8s-basic-4/</link><pubDate>Tue, 20 Jul 2021 11:39:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-4/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-4/kubernates.png" alt="Featured image of post Kubernetes初探（四）" />&lt;blockquote>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Tue, 20 Jul 2021 13:18:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes初探（五）</title><link>https://www.catfish.top/p/k8s-basic-5/</link><pubDate>Tue, 20 Jul 2021 13:18:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-5/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-5/kubernates.png" alt="Featured image of post Kubernetes初探（五）" />&lt;blockquote>
+&lt;p>Katacoda在线课：&lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/guestbook" target="_blank" rel="noopener"
+>Deploy Guestbook Web App Example&lt;/a>&lt;/p>
+&lt;p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
+本系列教程将使用 &lt;a class="link" href="https://www.katacoda.com" target="_blank" rel="noopener"
+>Katacoda在线学习平台&lt;/a> 完成学习。&lt;/p>
+&lt;/blockquote>
+&lt;p>本场景说明了如何使用 &lt;em>Kubernetes&lt;/em> 和 &lt;em>Docker&lt;/em> 启动简单的多层 &lt;em>Web&lt;/em> 应用。留言簿示例应用程序通过调用* JavaScript API* 将访客的笔记存储在 *Redis* 中。 *Redis* 包含一个 master（用于存储）和一组 *slave* 复制集。&lt;/p>
+&lt;h3 id="核心概念">核心概念&lt;/h3>
+&lt;p>在此场景中将涵盖以下核心概念。这些是理解 Kubernetes 的基础。&lt;/p>
+&lt;ul>
+&lt;li>Pods&lt;/li>
+&lt;li>Replication Controllers&lt;/li>
+&lt;li>Services&lt;/li>
+&lt;li>NodePorts&lt;/li>
+&lt;/ul>
+&lt;h2 id="启动-kubernetes">启动 Kubernetes&lt;/h2>
+&lt;p>首先，我们需要一个正在运行的 Kubernetes 集群。详细信息在 &lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/launch-cluster" target="_blank" rel="noopener"
+>Launch Kubernetes cluster&lt;/a>&lt;/p>
+&lt;h3 id="任务">任务&lt;/h3>
+&lt;p>使用初始化程序脚本启动单节点集群。初始化脚本将启动 &lt;em>API&lt;/em>、&lt;em>Master&lt;/em>、&lt;em>Proxy&lt;/em> 和 &lt;em>DNS Discovery&lt;/em>。 &lt;em>Web App&lt;/em> 使用 &lt;em>DNS Discovery&lt;/em> 来查找 &lt;em>Redis slave&lt;/em> 来存储数据。&lt;/p>
+&lt;pre>&lt;code>launch.sh
+&lt;/code>&lt;/pre>&lt;h3 id="健康检查">健康检查&lt;/h3>
+&lt;p>使用 &lt;code>kubectl cluster-info&lt;/code> 和 &lt;code>kubectl get nodes&lt;/code>命令来检查部署的集群的节点健康信息。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl cluster-info
+Kubernetes master is running at https://172.17.0.81:6443
+KubeDNS is running at https://172.17.0.81:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+To further debug and diagnose cluster problems, use &lt;span class="s1">&amp;#39;kubectl cluster-info dump&amp;#39;&lt;/span>.
+controlplane $ kubectl get nodes
+NAME STATUS ROLES AGE VERSION
+controlplane Ready master 2m15s v1.14.0
+node01 Ready &amp;lt;none&amp;gt; 114s v1.14.0
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>如果节点返回 &lt;em>NotReady&lt;/em>，则它仍在等待。请等待几秒钟后再重新启动。&lt;/p>
+&lt;h2 id="redis-master---replication-controller">Redis Master - Replication Controller&lt;/h2>
+&lt;p>启动应用的第一步是启动&lt;em>Redis Master&lt;/em>。 &lt;em>Kubernetes&lt;/em> 服务部署至少有两个部分，分别为 &lt;em>Replication Controller&lt;/em> 和 &lt;em>Service&lt;/em>。&lt;/p>
+&lt;p>&lt;em>Replication Controller&lt;/em> 定义了运行的实例数量、要使用的 &lt;em>Docker&lt;/em> 镜像以及服务标识名称。其他选项可用于配置和发现。使用上面的编辑器查看 &lt;em>YAML&lt;/em> 定义。&lt;/p>
+&lt;p>如果 &lt;em>Redis&lt;/em> 出现故障，&lt;em>Replication Controller&lt;/em> 将在活动节点上重新启动它。&lt;/p>
+&lt;h3 id="创建-replication-controller">创建 &lt;em>Replication Controller&lt;/em>&lt;/h3>
+&lt;p>&lt;strong>redis-master-controller.yaml&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">ReplicationController&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-master&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-master&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-master&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-master&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">master&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis:3.0.7-alpine&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">containerPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">6379&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>在本示例中，&lt;em>YAML&lt;/em> 使用官方 &lt;em>redis&lt;/em> 设置端口 &lt;em>6379&lt;/em> 运行了一个名为 &lt;em>redis-master&lt;/em> 的 redis 服务器。&lt;/p>
+&lt;p>&lt;em>kubectl create&lt;/em> 命令采用 &lt;em>YAML&lt;/em> 定义并指示 &lt;em>master&lt;/em> 启动控制器。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl create -f redis-master-controller.yaml
+replicationcontroller/redis-master created
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="查看运行的组件">查看运行的组件&lt;/h3>
+&lt;p>上面的命令创建了一个&lt;em>Replication Controller&lt;/em> 。&lt;/p>
+&lt;pre>&lt;code>controlplane $ kubectl get rc
+NAME DESIRED CURRENT READY AGE
+redis-master 1 1 1 2m9s
+&lt;/code>&lt;/pre>&lt;p>所有容器都被描述为 &lt;em>Pod&lt;/em>。 &lt;em>Pod&lt;/em> 是构成特定应用程序（例如 Redis）的容器集合。可以使用 &lt;em>kubectl&lt;/em> 查看 &lt;em>Pod&lt;/em> 信息。&lt;/p>
+&lt;pre>&lt;code>controlplane $ kubectl get pods
+NAME READY STATUS RESTARTS AGE
+redis-master-qkfxw 1/1 Running 0 2m54s
+&lt;/code>&lt;/pre>&lt;h2 id="redis-master---service">Redis Master - Service&lt;/h2>
+&lt;p>第二步是 &lt;em>Service&lt;/em>。 &lt;em>Kubernetes&lt;/em> &lt;em>Service&lt;/em> 是一种命名负载均衡器，它将流量代理到一个或多个容器。即使容器位于不同的节点上，代理也能工作。&lt;/p>
+&lt;p>服务代理在集群内通信，很少将端口暴露给外部接口。&lt;/p>
+&lt;p>当启动服务时，似乎无法使用 &lt;em>curl&lt;/em> 或 &lt;em>netcat&lt;/em> 进行连接，除非=将其作为 &lt;em>Kubernetes&lt;/em> 的一部分启动。推荐的方法是使用 &lt;em>LoadBalancer&lt;/em> 服务来处理外部通信。&lt;/p>
+&lt;p>&lt;strong>redis-master-service.yaml&lt;/strong>&lt;/p>
+&lt;pre>&lt;code>apiVersion: v1
+kind: Service
+metadata:
+name: redis-master
+labels:
+name: redis-master
+spec:
+ports:
+# the port that this service should serve on
+- port: 6379
+targetPort: 6379
+selector:
+name: redis-master
+&lt;/code>&lt;/pre>&lt;h3 id="创建-service">创建 Service&lt;/h3>
+&lt;p>YAML 定义了 &lt;em>Service&lt;/em> 的名称&lt;em>redis-master&lt;/em>，以及应该被代理的端口。&lt;/p>
+&lt;pre>&lt;code>controlplane $ kubectl create -f redis-master-service.yaml
+service/redis-master created
+&lt;/code>&lt;/pre>&lt;h3 id="查看-service-列表与详情">查看 Service 列表与详情&lt;/h3>
+&lt;pre>&lt;code>controlplane $ kubectl get services
+NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE
+kubernetes ClusterIP 10.96.0.1 &amp;lt;none&amp;gt; 443/TCP 10m
+redis-master ClusterIP 10.100.28.180 &amp;lt;none&amp;gt; 6379/TCP 43s
+controlplane $ kubectl describe services redis-master
+Name: redis-master
+Namespace: default
+Labels: name=redis-master
+Annotations: &amp;lt;none&amp;gt;
+Selector: name=redis-master
+Type: ClusterIP
+IP: 10.100.28.180
+Port: &amp;lt;unset&amp;gt; 6379/TCP
+TargetPort: 6379/TCP
+Endpoints: 10.32.0.193:6379
+Session Affinity: None
+Events: &amp;lt;none&amp;gt;
+&lt;/code>&lt;/pre>&lt;h2 id="redis-slave-pods">Redis Slave Pods&lt;/h2>
+&lt;p>在本示例中，我们将运行 &lt;em>Redis Slaves&lt;/em>，它会从 &lt;em>master&lt;/em> 复制数据。有关 &lt;em>Redis&lt;/em> 复制的更多详细信息，请访问 &lt;a class="link" href="http://redis.io/topics/replication" target="_blank" rel="noopener"
+>http://redis.io/topics/replication&lt;/a>&lt;/p>
+&lt;p>如前所述，&lt;em>Controller&lt;/em> 定义了 &lt;em>Service&lt;/em> 的运行方式。在这个例子中，我们需要确定 &lt;em>Service&lt;/em> 是如何发现其他 &lt;em>Pod&lt;/em>。 &lt;em>YAML&lt;/em> 将 &lt;em>GET_HOSTS_FROM&lt;/em> 属性表示为 &lt;em>DNS&lt;/em>。您可以将其更改为在 &lt;em>YAML&lt;/em> 中使用环境变量，但这会引入创建顺序依赖关系，因为需要运行服务才能定义环境变量。&lt;/p>
+&lt;p>&lt;strong>redis-slave-controller.yaml&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">ReplicationController&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-slave&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-slave&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">2&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-slave&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-slave&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">worker&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">gcr.io/google_samples/gb-redisslave:v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">env&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">GET_HOSTS_FROM&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">value&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">dns&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># If your cluster config does not include a dns service, then to&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># instead access an environment variable to find the master&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># service&amp;#39;s host, comment out the &amp;#39;value: dns&amp;#39; line above, and&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># uncomment the line below.&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># value: env&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">containerPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">6379&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="启动-redis-slave-controller">启动 Redis Slave Controller&lt;/h3>
+&lt;p>在这种情况下，我们将使用镜像 &lt;em>kubernetes/redis-slave:v2&lt;/em> 启动 &lt;em>Pod&lt;/em> 的两个实例。它将通过 &lt;em>DNS&lt;/em> 链接到 &lt;em>redis-master&lt;/em>。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl create -f redis-slave-controller.yaml
+replicationcontroller/redis-slave created
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="列出-replication-controller">列出 &lt;em>Replication Controller&lt;/em>&lt;/h3>
+&lt;pre>&lt;code>NAME DESIRED CURRENT READY AGE
+redis-master 1 1 1 11m
+redis-slave 2 2 2 26s
+&lt;/code>&lt;/pre>&lt;h2 id="redis-slave-service">Redis Slave Service&lt;/h2>
+&lt;p>和以前一样，我们需要启动一个与 &lt;em>redis-slave&lt;/em> 通信的&lt;code>Service&lt;/code>来让&lt;code>Slave&lt;/code>能够接收传入的请求。&lt;/p>
+&lt;p>因为我们有两个复制的 &lt;em>Pod&lt;/em>，该服务还将在两个节点之间提供负载平衡。&lt;/p>
+&lt;p>&lt;strong>redis-slave-service.yaml&lt;/strong>&lt;/p>
+&lt;pre>&lt;code>apiVersion: v1
+kind: Service
+metadata:
+name: redis-slave
+labels:
+name: redis-slave
+spec:
+ports:
+# the port that this service should serve on
+- port: 6379
+selector:
+name: redis-slave
+&lt;/code>&lt;/pre>&lt;h3 id="start-redis-slave-service">Start Redis Slave Service&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl create -f redis-slave-service.yaml
+service/redis-slave created
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get services
+NAME TYPE CLUSTER-IP EXTERNAL-IP PORT&lt;span class="o">(&lt;/span>S&lt;span class="o">)&lt;/span> AGE
+kubernetes ClusterIP 10.96.0.1 &amp;lt;none&amp;gt; 443/TCP 2m20s
+redis-master ClusterIP 10.100.144.249 &amp;lt;none&amp;gt; 6379/TCP 46s
+redis-slave ClusterIP 10.105.27.32 &amp;lt;none&amp;gt; 6379/TCP 16s
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="前端-replicated-pods">前端 Replicated Pods&lt;/h2>
+&lt;p>启动数据服务后，我们现在可以部署 &lt;em>Web&lt;/em> 应用。部署 &lt;em>Web&lt;/em> 应用的模式与我们之前部署的 &lt;em>Pod&lt;/em> 相同。&lt;/p>
+&lt;h3 id="启动前端">启动前端&lt;/h3>
+&lt;p>&lt;em>YAML&lt;/em> 定义了一个名为 &lt;em>frontend&lt;/em> 的服务，该服务使用 &lt;em>gcr.io/google_samples/gb-frontend:v3&lt;/em> 的镜像。&lt;em>Replication Controller&lt;/em> 将确保三个 &lt;em>Pod&lt;/em> 始终存在。&lt;/p>
+&lt;p>&lt;strong>frontend-controller.yaml&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">ReplicationController&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">frontend&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">frontend&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">3&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">frontend&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">frontend&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">php-redis&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">gcr.io/google_samples/gb-frontend:v3&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">env&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">GET_HOSTS_FROM&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">value&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">dns&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># If your cluster config does not include a dns service, then to&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># instead access environment variables to find service host&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># info, comment out the &amp;#39;value: dns&amp;#39; line above, and uncomment the&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># line below.&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># value: env&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">containerPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl create -f frontend-controller.yaml
+replicationcontroller/frontend created
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="列出-controllers-和-pods">列出 Controllers 和 Pods&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get rc
+NAME DESIRED CURRENT READY AGE
+frontend &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> 34s
+redis-master &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 8m20s
+redis-slave &lt;span class="m">2&lt;/span> &lt;span class="m">2&lt;/span> &lt;span class="m">2&lt;/span> 8m6s
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get pods
+NAME READY STATUS RESTARTS AGE
+frontend-88lvf 1/1 Running &lt;span class="m">0&lt;/span> 42s
+frontend-phhhv 1/1 Running &lt;span class="m">0&lt;/span> 42s
+frontend-rq8tt 1/1 Running &lt;span class="m">0&lt;/span> 42s
+redis-master-7h9t2 1/1 Running &lt;span class="m">0&lt;/span> 8m28s
+redis-slave-gnhfh 1/1 Running &lt;span class="m">0&lt;/span> 8m14s
+redis-slave-mtn2r 1/1 Running &lt;span class="m">0&lt;/span> 8m14s
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="php-代码">PHP 代码&lt;/h3>
+&lt;p>&lt;em>PHP&lt;/em> 代码使用 &lt;em>HTTP&lt;/em> 和 &lt;em>JSON&lt;/em> 与 &lt;em>Redis&lt;/em> 通信。当设置一个值时，请求转到 &lt;em>redis-master&lt;/em>，而读取的数据来自 &lt;em>redis-slave&lt;/em> 节点。&lt;/p>
+&lt;h2 id="用户手册前端-service">用户手册前端 Service&lt;/h2>
+&lt;p>为了能够访问前端，我们需要启动一个 &lt;em>Service&lt;/em> 来配置代理。&lt;/p>
+&lt;h3 id="启动代理">启动代理&lt;/h3>
+&lt;p>&lt;em>YAML&lt;/em> 将服务定义为 &lt;em>NodePort&lt;/em> 。 &lt;em>NodePort&lt;/em> 允许您设置在整个集群中共享的特点端口，这就像 Docker 中的 &lt;em>-p 80:80&lt;/em>。&lt;/p>
+&lt;p>在这种情况下，我们定义我们的 &lt;em>Web&lt;/em> 应用在端口 &lt;em>80&lt;/em> 上运行，在 &lt;em>30080&lt;/em> 上开放服务。&lt;/p>
+&lt;p>&lt;strong>frontend-service.yaml&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Service&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">frontend&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">frontend&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># if your cluster supports it, uncomment the following to automatically create&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># an external load-balanced IP for the frontend service.&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># type: LoadBalancer&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">type&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">NodePort&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># the port that this service should serve on&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">port&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">nodePort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">30080&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">frontend&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl create -f frontend-service.yaml
+service/frontend created
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get services
+NAME TYPE CLUSTER-IP EXTERNAL-IP PORT&lt;span class="o">(&lt;/span>S&lt;span class="o">)&lt;/span> AGE
+frontend NodePort 10.98.211.171 &amp;lt;none&amp;gt; 80:30080/TCP 3s
+kubernetes ClusterIP 10.96.0.1 &amp;lt;none&amp;gt; 443/TCP 13m
+redis-master ClusterIP 10.100.144.249 &amp;lt;none&amp;gt; 6379/TCP 11m
+redis-slave ClusterIP 10.105.27.32 &amp;lt;none&amp;gt; 6379/TCP 11m
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>We&amp;rsquo;ll discuss &lt;em>NodePort&lt;/em> in future scenarios.&lt;/p>
+&lt;h2 id="访问用户手册前端">访问用户手册前端&lt;/h2>
+&lt;p>定义了所有 &lt;em>Controller&lt;/em> 和 &lt;em>Service&lt;/em> 后，&lt;em>Kubernetes&lt;/em> 将开始将它们作为 &lt;em>Pod&lt;/em> 启动。根据实际发生的情况，&lt;em>Pod&lt;/em> 可以具有不同的状态。例如，如果 &lt;em>Docker&lt;/em> 映像仍在下载无法启动，则 Pod 将处于 &lt;em>pending&lt;/em> 状态。准备就绪后，状态将会变更为 &lt;em>running&lt;/em>。&lt;/p>
+&lt;h3 id="查看-pods-状态">查看 Pods 状态&lt;/h3>
+&lt;p>可以使用下列命令查看所有 &lt;em>Pod&lt;/em> 的状态。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get pods
+NAME READY STATUS RESTARTS AGE
+frontend-88lvf 1/1 Running &lt;span class="m">0&lt;/span> 9m3s
+frontend-phhhv 1/1 Running &lt;span class="m">0&lt;/span> 9m3s
+frontend-rq8tt 1/1 Running &lt;span class="m">0&lt;/span> 9m3s
+redis-master-7h9t2 1/1 Running &lt;span class="m">0&lt;/span> 16m
+redis-slave-gnhfh 1/1 Running &lt;span class="m">0&lt;/span> 16m
+redis-slave-mtn2r 1/1 Running &lt;span class="m">0&lt;/span> 16m
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="查找-nodeport">查找 NodePort&lt;/h3>
+&lt;p>如果您没有分配 &lt;em>众所周知&lt;/em>（well-known） 的 &lt;em>NodePort&lt;/em>，那么 &lt;em>Kubernetes&lt;/em> 将随机分配一个可用端口。您可以使用 &lt;em>kubectl&lt;/em> 找到分配的 &lt;em>NodePort&lt;/em>。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl describe service frontend &lt;span class="p">|&lt;/span> grep NodePort
+Type: NodePort
+NodePort: &amp;lt;unset&amp;gt; 30080/TCP
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="查看-ui">查看 UI&lt;/h3>
+&lt;p>一旦 &lt;em>Pod&lt;/em> 处于 &lt;em>running&lt;/em> 状态，您将能够通过端口 &lt;em>30080&lt;/em> 查看 &lt;em>UI&lt;/em>。使用 &lt;em>URL&lt;/em> 查看页面 &lt;a class="link" href="https://2886795308-30080-kitek05.environments.katacoda.com/" target="_blank" rel="noopener"
+>https://2886795308-30080-kitek05.environments.katacoda.com&lt;/a>&lt;/p>
+&lt;p>&lt;em>在背后&lt;/em>（Under the covers） &lt;em>PHP&lt;/em> 服务通过 &lt;em>DNS&lt;/em> 发现 &lt;em>Redis&lt;/em> 实例。您现在已经在 &lt;em>Kubernetes&lt;/em> 上部署了一个有效的多层应用程序。&lt;/p></description></item><item><title>Kubernetes初探（四）</title><link>https://www.catfish.top/p/k8s-basic-4/</link><pubDate>Tue, 20 Jul 2021 11:39:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-4/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-4/kubernates.png" alt="Featured image of post Kubernetes初探（四）" />&lt;blockquote>
 &lt;p>Katacoda在线课：&lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/creating-kubernetes-yaml-definitions" target="_blank" rel="noopener"
->Creating Kubernetes Yaml Definitions&lt;/a>&lt;/p>
+>Deploy Containers Using YAML&lt;/a>&lt;/p>
 &lt;p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
 本系列教程将使用 &lt;a class="link" href="https://www.katacoda.com" target="_blank" rel="noopener"
 >Katacoda在线学习平台&lt;/a> 完成学习。&lt;/p>
@@ -150,7 +431,7 @@ $ curl host01:30080
 &amp;lt;h1&amp;gt;This request was processed by host: webapp1-6b54fb89d9-ktvz4&amp;lt;/h1&amp;gt;
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>其他 Kubernetes 网络细节和对象定义将在未来的其他场景中介绍。&lt;/p></description></item><item><title>Kubernetes初探（三）</title><link>https://www.catfish.top/p/k8s-basic-3/</link><pubDate>Tue, 20 Jul 2021 11:27:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-3/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-3/kubernates.png" alt="Featured image of post Kubernetes初探（三）" />&lt;blockquote>
 &lt;p>Katacoda在线课：&lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/kubectl-run-containers" target="_blank" rel="noopener"
->Kubectl Run Containers&lt;/a>&lt;/p>
+>Deploy Containers Using Kubectl&lt;/a>&lt;/p>
 &lt;p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
 本系列教程将使用 &lt;a class="link" href="https://www.katacoda.com" target="_blank" rel="noopener"
 >Katacoda在线学习平台&lt;/a> 完成学习。&lt;/p>
@@ -301,7 +582,7 @@ $ curl http://172.17.0.44:8000
 &amp;lt;h1&amp;gt;This request was processed by host: http-774bb756bb-x2xxv&amp;lt;/h1&amp;gt;
 &lt;/code>&lt;/pre>&lt;/div></description></item><item><title>Kubernetes初探（二）</title><link>https://www.catfish.top/p/k8s-basic-2/</link><pubDate>Tue, 20 Jul 2021 11:05:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-2/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-2/kubernates.png" alt="Featured image of post Kubernetes初探（二）" />&lt;blockquote>
 &lt;p>Katacoda在线课：&lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/getting-started-with-kubeadm" target="_blank" rel="noopener"
->Getting Started With Kubeadm&lt;/a>&lt;/p>
+>Launch a multi-node cluster using Kubeadm&lt;/a>&lt;/p>
 &lt;p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
 本系列教程将使用 &lt;a class="link" href="https://www.katacoda.com" target="_blank" rel="noopener"
 >Katacoda在线学习平台&lt;/a> 完成学习。&lt;/p>
@@ -1143,7 +1424,7 @@ token: eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2Nv
 &lt;p>对于生产环境，建议使用 &lt;code>kubectl proxy&lt;/code> 来访问仪表板，而不是 externalIP。在 &lt;a class="link" href="https://github.com/kubernetes/dashboard" target="_blank" rel="noopener"
 >https://github.com/kubernetes/dashboard&lt;/a> 上查看更多详细信息。&lt;/p></description></item><item><title>Kubernetes初探（一）</title><link>https://www.catfish.top/p/k8s-basic-1/</link><pubDate>Tue, 20 Jul 2021 10:21:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-1/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-1/kubernates.png" alt="Featured image of post Kubernetes初探（一）" />&lt;blockquote>
 &lt;p>Katacoda在线课：&lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster" target="_blank" rel="noopener"
->Launch Single Node Cluster&lt;/a>&lt;/p>
+>Launch A Single Node Cluster&lt;/a>&lt;/p>
 &lt;p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
 本系列教程将使用 &lt;a class="link" href="https://www.katacoda.com" target="_blank" rel="noopener"
 >Katacoda在线学习平台&lt;/a> 完成学习。&lt;/p>
