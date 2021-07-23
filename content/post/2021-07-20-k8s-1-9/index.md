@@ -4,7 +4,7 @@ description: 在Kubernetes上运行Stateful服务
 date: 2021-07-23T14:23:00+0800
 lastmod: '2021-07-23T14:51:00+0800'
 image: kubernates.png
-slug: k8s-basic-8
+slug: k8s-basic-9
 categories:
     - k8s-basic
     - katacoda
