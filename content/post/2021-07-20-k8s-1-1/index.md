@@ -14,7 +14,7 @@ tags:
     - Katacoda
 ---
 
-> Katacoda在线课：[Launch Single Node Cluster](https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster)
+> Katacoda在线课：[Launch A Single Node Cluster](https://www.katacoda.com/courses/kubernetes/launch-single-node-cluster)
 > 
 > 本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
 > 本系列教程将使用 [Katacoda在线学习平台](https://www.katacoda.com) 完成学习。
