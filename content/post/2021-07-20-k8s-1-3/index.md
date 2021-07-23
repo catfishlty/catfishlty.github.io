@@ -19,13 +19,13 @@ tags:
 > 本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
 > 本系列教程将使用 [Katacoda在线学习平台](https://www.katacoda.com) 完成学习。
 
-在此场景中，将学习如何使用 `Kubectl` 创建和启动`Deployments`, `Replication Controllers`并通过`Services`对外开放接口，而无需编写 *yaml* 定义。这样便可以快速将容器启动到集群上。
+在此场景中，将学习如何使用 *Kubectl* 创建和启动 *Deployment* 和 *Replication Controllers* 并通过 *Services* 对外暴露接口。本场景中无需编写 *yaml* 定义，便可以快速将容器启动到集群上。
 
 ## 启动集群
 
-首先，我们需要启动一个 Kubernetes 集群。
+首先，我们需要启动一个 *Kubernetes* 集群。
 
-执行以下命令启动集群并下载`Kubectl CLI`。
+执行以下命令启动集群并下载 *Kubectl CLI*。
 
 ```bash
 $ minikube start --wait=false
@@ -41,7 +41,7 @@ $ minikube start --wait=false
 * Done! kubectl is now configured to use "minikube"
 ```
 
-通过`kubectl get nodes`命令来检查节点是否准备就绪。
+通过 `kubectl get nodes` 命令来检查节点是否准备就绪。
 
 ```bash
 $ kubectl get nodes
@@ -51,12 +51,12 @@ minikube   Ready    master   19s   v1.17.3
 
 ## Kubectl Run
 
-Run 命令根据指定的参数（例如映像或副本）创建部署。该部署发布给Kubernetes 主节点，启动所需 Pod 和容器的 。 *Kubectl run* 类似于 *docker run*，但*Kubectl run* 是在集群中运行的。
+*Run* 命令根据指定的参数（例如映像或副本）创建部署。该部署发布给 *Kubernetes* 主节点，启动所需 *Pod* 和容器的 。 *Kubectl run* 类似于 *docker run*，但 *Kubectl run* 是在集群中运行的。
 
 命令的格式为 `kubectl run <name of deployment> <properties>`
 
 ### 任务
-以下命令将启动一个名为 *http* 的部署，它将启动一个基于 Docker 镜像 *katacoda/docker-http-server:latest* 的容器。
+以下命令将启动一个名为 *http* 的部署，它将启动一个基于 *Docker* 镜像 *katacoda/docker-http-server:latest* 的容器。
 
 ```bash
 $ kubectl run http --image=katacoda/docker-http-server:latest --replicas=1
@@ -64,7 +64,7 @@ kubectl run --generator=deployment/apps.v1 is DEPRECATED and will be removed in 
 deployment.apps/http created
 ```
 
-使用*kubectl*查看各部署的状态。
+使用 *kubectl* 查看各部署的状态。
 
 ```bash
 $ kubectl get deployments
@@ -128,7 +128,7 @@ $ kubectl expose deployment http --external-ip="172.17.0.44" --port=8000 --targe
 service/http exposed
 ```
 
-接下来就能 ping 主机查看 HTTP 服务返回的结果。
+接下来就能 *ping* 主机查看 *HTTP* 服务返回的结果。
 
 ```bash
 $ curl http://172.17.0.44:8000
@@ -141,7 +141,7 @@ $ curl http://172.17.0.44:8000
 
 ### 任务
 
-使用命令创建在端口 *8001* 上开放的第二个 http 服务。
+使用命令创建在端口 *8001* 上开放的第二个 *http* 服务。
 
 ```bash
 $ kubectl run httpexposed --image=katacoda/docker-http-server:latest --replicas=1 --port=80 --hostport=8001
@@ -150,12 +150,12 @@ deployment.apps/httpexposed created
 ```
 接下来可以使用 `curl http://172.17.0.41:8001` 来访问该服务。
 
-``` bash
+```bash
 $ curl http://172.17.0.44:8001
 <h1>This request was processed by host: httpexposed-68cb8c8d4-r7qtt</h1>
 ```
 
-在服务内，通过 Docker 端口映射开放了 Pod。因此，您将看不到使用 `kubectl get svc` 列出的服务
+在服务内，通过 *Docker* 端口映射开放了 *Pod*。因此，您将看不到使用 `kubectl get svc` 列出的服务
 
 ```bash
 $ kubectl get svc
@@ -164,7 +164,7 @@ http         ClusterIP   10.97.103.237   172.17.0.44   8000/TCP   4m47s
 kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP    44m
 ```
 
-可以通过 `docker ps | grep httpexposed`命令查看详细信息。
+可以通过 `docker ps | grep httpexposed` 命令查看详细信息。
 
 ```bash
 $ docker ps | grep httpexposed
@@ -174,26 +174,26 @@ d9ae0076a0d4        k8s.gcr.io/pause:3.1          "/pause"                 2 min
 
 ### 暂停容器
 
-运行上面的命令，你会注意到端口暴露在 Pod 上，而不是 http 容器本身。 Pause 容器负责为 Pod 定义网络。 Pod 中的其他容器共享相同的网络命名空间。允许多个容器通过同一网络接口进行通信，提高了网络性能。
+运行上面的命令，你会注意到端口暴露在 *Pod* 上，而不是 *http* 容器本身。 *Pause* 容器负责为 *Pod* 定义网络。 *Pod* 中的其他容器共享相同的网络命名空间。允许多个容器通过同一网络接口进行通信，提高了网络性能。
 
 ## 容器扩展
 
 随着我们的部署运行，我们现在可以使用 *kubectl* 来扩展副本的数量。
 
-扩展部署将请求 Kubernetes 启动额外的 Pod。然后，这些 Pod 将使用开放服务自动进行负载平衡。
+扩展部署将请求 *Kubernetes* 启动额外的 *Pod*。然后，这些 *Pod* 将使用开放服务自动进行负载平衡。
 
 ### 任务
 
-*kubectl scale* 命令能够为特定 `Deployment`或 `Replication Controller` 调整运行的 Pod 数量。
+*kubectl scale* 命令能够为特定 *Deployment* 或 *Replication Controller* 调整运行的 *Pod* 数量。
 
 ```bash
 $ kubectl scale --replicas=3 deployment http
 deployment.apps/http scaled
 ```
 
-列出所有 pod，能够看到三个正在运行的 *http* 部署。
+列出所有 *pod*，能够看到三个正在运行的 *http* 部署。
 
-``` bash
+```bash
 $ kubectl get pods
 NAME                          READY   STATUS    RESTARTS   AGE
 http-774bb756bb-m6tjp         1/1     Running   0          20m
@@ -202,8 +202,7 @@ http-774bb756bb-x2xxv         1/1     Running   0          45s
 httpexposed-68cb8c8d4-r7qtt   1/1     Running   0          9m3s
 ```
 
-一旦每个 Pod 启动，就会被添加到负载均衡器服务中。通过`describe`，可以查看包含的端点和与之关联的 Pod。
-Once each Pod starts it will be added to the load balancer service. By describing the service you can view the endpoint and the associated Pods which are included.
+一旦每个 *Pod* 启动，就会被添加到负载均衡器服务中。通过 *describe*，可以查看包含的端点和与之关联的 *Pod*。
 
 ```bash
 $ kubectl describe svc http

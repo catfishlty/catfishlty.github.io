@@ -20,10 +20,10 @@ tags:
 > 本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
 > 本系列教程将使用 [Katacoda在线学习平台](https://www.katacoda.com) 完成学习。
 
-在此场景中，您将学习如何使用 *Kubectl* 创建和启动`Deployment`、`Replication Controller`，并通过编写 *yaml* 定义使用服务开暴露它们。
+在此场景中，您将学习如何使用 *Kubectl* 创建和启动 *Deployment*、*Replication Controller*，并通过编写 *yaml* 定义使用服务开暴露它们。
 
 
-YAML 定义了计划部署的 Kubernetes 对象。可以以更新对象并将其重新部署到集群的方式来更改配置。
+*YAML* 定义了计划部署的 *Kubernetes* 对象。可以以更新对象并将其重新部署到集群的方式来更改配置。
 
 ## 创建 Deployment
 
@@ -31,10 +31,10 @@ YAML 定义了计划部署的 Kubernetes 对象。可以以更新对象并将其
 
 ### 任务
 
-将以下定义复制到编辑器的*YAML*文件中。该 *YAML* 定义了如何使用在端口 80 上运行的应用，该应用使用 Docker 映像 *katacoda/docker-http-server* ，启动名为 *webapp1* 。
+将以下定义复制到编辑器的*YAML*文件中。该 *YAML* 定义了如何使用在端口 *80* 上运行的应用，该应用使用 *Docker* 映像 *katacoda/docker-http-server* ，启动名为 *webapp1* 。
 
 **deployment.yaml**
-```
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -56,16 +56,16 @@ spec:
         - containerPort: 80
 ```
 
-使用`kubectl create -f deployment.yaml`命令向集群部署。
+使用 `kubectl create -f deployment.yaml` 命令向集群部署。
 
-``` bash
+```bash
 $ kubectl create -f deployment.yaml
 deployment.apps/webapp1 created
 ```
 
-由于它是一个 *Deployment* 对象，因此可以通过 `kubectl get deployment` 获取所有已部署的*Deployment*对象的列表。
+由于它是一个 *Deployment* 对象，因此可以通过 `kubectl get deployment` 获取所有已部署的 *Deployment* 对象的列表。
 
-``` bash
+```bash
 $ kubectl get deployment
 NAME      READY   UP-TO-DATE   AVAILABLE   AGE
 webapp1   1/1     1            1           10s
@@ -73,7 +73,7 @@ webapp1   1/1     1            1           10s
 
 可以使用 `kubectl describe deployment webapp1` 输出单个部署的详细信息。
 
-``` bash
+```bash
 $ kubectl describe deployment webapp1
 Name:                   webapp1
 Namespace:              default
@@ -107,7 +107,6 @@ Events:
   ----    ------             ----  ----                   -------
   Normal  ScalingReplicaSet  49s   deployment-controller  Scaled up replica set webapp1-6b54fb89d9 to 1
 ```
-Details of individual deployments can be outputted with `kubectl describe deployment webapp1`
 
 ## 创建Service
 
@@ -118,7 +117,7 @@ Details of individual deployments can be outputted with `kubectl describe deploy
 将 *Service* 定义复制到编辑器。该 *Service* 选择带有标签 *webapp1* 的所有应用程序。当部署多个副本或实例时，它们将根据此公共标签自动进行负载平衡。该 *Service* 通过 *NodePort* 的网络连接方式部署。
 
 **service.yaml**
-```
+```yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -134,16 +133,16 @@ spec:
     app: webapp1
 ```
 
-所有 Kubernetes 对象都一致使用 *kubectl* 完成部署。
+所有 *Kubernetes* 对象都一致使用 *kubectl* 完成部署。
 
-使用 `kubectl create -f service.yaml` 命令部署*Service*
+使用 `kubectl create -f service.yaml` 命令部署 *Service*
 
 ```bash
 $ kubectl create -f service.yaml
 service/webapp1-svc created
 ```
 
-和以往一样，使用 `kubectl get svc` 可以查看所有已部署的 *Service* 对象的信息。通过`kubectl describe svc webapp1-svc`命令可以查看该 *Service* 对象更多的配置信息。
+和以往一样，使用 `kubectl get svc` 可以查看所有已部署的 *Service* 对象的信息。通过 `kubectl describe svc webapp1-svc` 命令可以查看该 *Service* 对象更多的配置信息。
 
 ```bash
 $ kubectl get svc
@@ -183,8 +182,10 @@ $ curl host01:30080
 
 更新 *deployment.yaml* 文件以增加运行的实例数。例如，该文件应如下所示：
 
-``` yaml
-replicas: 1  -->  replicas: 4
+```yaml
+replicas: 1  
+# -->  
+replicas: 4
 ```
 
 使用 *kubectl apply* 提交对现有定义的更新。要扩展副本数量，请使用 `kubectl apply -f deployment.yaml` 部署更新的 *YAML* 文件
@@ -195,7 +196,7 @@ Warning: kubectl apply should be used on resource created by either kubectl crea
 deployment.apps/webapp1 configured
 ```
 
-集群的状态将立即更新，可通过 `kubectl get deployment`命令 查看
+集群的状态将立即更新，可通过 `kubectl get deployment` 命令 查看
 
 ```bash
 $ kubectl get deployment
@@ -203,7 +204,7 @@ NAME      READY   UP-TO-DATE   AVAILABLE   AGE
 webapp1   4/4     4            4           15m
 ```
 
-根据定义将有额外的`Pods`被调度到集群中， 使用`kubectl get pods`查看 *Pod* 信息
+根据定义将有额外的 `Pods` 被调度到集群中， 使用 `kubectl get pods` 查看 *Pod* 信息
 
 ```bash
 $ kubectl get pods
@@ -231,4 +232,4 @@ $ curl host01:30080
 <h1>This request was processed by host: webapp1-6b54fb89d9-ktvz4</h1>
 ```
 
-其他 Kubernetes 网络细节和对象定义将在未来的其他场景中介绍。
+其他 *Kubernetes* 网络细节和对象定义将在未来的其他场景中介绍。

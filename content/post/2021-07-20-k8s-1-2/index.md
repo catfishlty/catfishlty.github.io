@@ -19,23 +19,23 @@ tags:
 > 本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
 > 本系列教程将使用 [Katacoda在线学习平台](https://www.katacoda.com) 完成学习。
 
-在此场景中，您将学习如何使用 `Kubeadm` 启动 `Kubernetes` 集群。
+在此场景中，您将学习如何使用 *Kubeadm* 启动 *Kubernetes* 集群。
 
-`Kubeadm` 解决了TLS 加密配置、 Kubernetes 核心组件部署和额外节点集群加入的问题。启动的集群通过 RBAC 等机制开箱即用。
+*Kubeadm* 解决了TLS 加密配置、 Kubernetes 核心组件部署和额外节点集群加入的问题。启动的集群通过 RBAC 等机制开箱即用。
 
-关于`Kubeadm`的更多信息可以参考： https://github.com/kubernetes/kubeadm
+关于 *Kubeadm* 的更多信息可以参考： [https://github.com/kubernetes/kubeadm](https://github.com/kubernetes/kubeadm)
 
 ## 初始化 Master
 
-`Kubeadm` 已经安装在节点上。软件包适用于 Ubuntu 16.04+、CentOS 7 或 HypriotOS v1.0.1+。
+*Kubeadm* 已经安装在节点上。软件包适用于 Ubuntu 16.04+、CentOS 7 或 HypriotOS v1.0.1+。
 
-初始化集群的第一步是启动`Master节点`。 `Master节点` 负责运行控制平面组件、`etcd` 和 API 服务器。客户端能够与 API 通信，能够完成工作负载的调度和集群状态的管理。
+初始化集群的第一步是启动 *Master节点* 。 *Master节点* 负责运行控制平面组件、*etcd* 和 *API* 服务器。客户端能够与 *API* 通信，能够完成工作负载的调度和集群状态的管理。
 
 ### 任务
 
-下面的命令将使用已知的`Token`简化初始化集群的步骤。
+下面的命令将使用已知的 *Token* 简化初始化集群的步骤。
 
-``` bash
+```bash
 controlplane $ kubeadm init --token=102952.1a7dd4cc8d1f4cc5 --kubernetes-version $(kubeadm version -o short)
 [init] Using Kubernetes version: v1.14.0
 [preflight] Running pre-flight checks
@@ -104,11 +104,11 @@ kubeadm join 172.17.0.86:6443 --token 102952.1a7dd4cc8d1f4cc5 \
     --discovery-token-ca-cert-hash sha256:ab56a643a2d683bc1deeb483f0f946d4a774c4
 ```
 
-在生产环境中，建议排除使用 `kubeadm` 生成的令牌。
+在生产环境中，建议排除使用 *kubeadm* 生成的令牌。
 
-需要客户端配置和证书来管理 Kubernetes 集群。这个配置是在 *kubeadm* 初始化集群时创建的。该命令将配置复制到用户主目录并设置用于 CLI 的环境变量。
+需要客户端配置和证书来管理 *Kubernetes* 集群。这个配置是在 *kubeadm* 初始化集群时创建的。该命令将配置复制到用户主目录并设置用于 *CLI* 的环境变量。
 
-``` bash
+```bash
 controlplane $ sudo cp /etc/kubernetes/admin.conf $HOME/
 controlplane $ sudo chown $(id -u):$(id -g) $HOME/admin.conf
 controlplane $ export KUBECONFIG=$HOME/admin.conf
@@ -116,15 +116,16 @@ controlplane $ export KUBECONFIG=$HOME/admin.conf
 
 ## 部署容器网络接口 Container Networking Interface (CNI) 
 
-容器网络接口 (CNI) 定义了不同节点及其工作负载是如何通信的。有多个网络提供商可用，其中一些在 [here](https://kubernetes.io/docs/admin/addons/) 中列出。
+容器网络接口 ( *CNI* ) 定义了不同节点及其工作负载是如何通信的。有多个网络提供商可用，其中一些在 [here](https://kubernetes.io/docs/admin/addons/) 中列出。
 
 ### 任务
 
-在这个场景中，我们将使用 `WeaveWorks`的`CNI`。
+在这个场景中，我们将使用 *WeaveWorks* 的 *CNI* 。
 
 **/opt/weave-kube.yaml**
-可以通过`cat /opt/weave-kube.yaml`命令查看部署定义。
-``` yaml
+可以通过 `cat /opt/weave-kube.yaml` 命令查看部署定义。
+
+```yaml
 apiVersion: v1
 kind: List
 items:
@@ -381,9 +382,9 @@ items:
 ```
 
 
-使用`kubectl apply`命令来完成部署工作。.
+使用 `kubectl apply` 命令来完成部署工作。.
 
-``` bash
+```bash
 controlplane $ kubectl apply -f /opt/weave-kube.yaml
 serviceaccount/weave-net created
 clusterrole.rbac.authorization.k8s.io/weave-net created
@@ -393,10 +394,10 @@ rolebinding.rbac.authorization.k8s.io/weave-net created
 daemonset.apps/weave-net created
 ```
 
-`Weave` 现在将在集群上部署为一系列的 `Pod`。
-可以通过 `kubectl get pod -n kube-system`命令查看状态。
+*Weave* 现在将在集群上部署为一系列的 *Pod*。
+可以通过 `kubectl get pod -n kube-system` 命令查看状态。
 
-``` bash
+```bash
 controlplane $ kubectl get pod -n kube-system
 NAME                                   READY   STATUS    RESTARTS   AGE
 coredns-fb8b8dccf-gw8z6                1/1     Running   0          12m
@@ -409,7 +410,7 @@ kube-scheduler-controlplane            1/1     Running   1          11m
 weave-net-2dtbs                        2/2     Running   0          82s
 ```
 
-需要安装Weave在你的集群中时，可以在 https://www.weave.works/docs/net/latest/kube-addon/  找到更多详细信息。
+需要安装 *Weave* 在你的集群中时，可以在 https://www.weave.works/docs/net/latest/kube-addon/  找到更多详细信息。
 
 ## 加入集群
 

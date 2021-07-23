@@ -24,7 +24,7 @@ tags:
 
 ### 核心概念
 
-在此场景中将涵盖以下核心概念。这些是理解 Kubernetes 的基础。
+在此场景中将涵盖以下核心概念。这些是理解 *Kubernetes* 的基础。
 
 - Pods
 - Replication Controllers
@@ -33,13 +33,13 @@ tags:
 
 ## 启动 Kubernetes
 
-首先，我们需要一个正在运行的 Kubernetes 集群。详细信息在 [Launch Kubernetes cluster](https://www.katacoda.com/courses/kubernetes/launch-cluster) 
+首先，我们需要一个正在运行的 *Kubernetes* 集群。详细信息在 [Launch Kubernetes cluster](https://www.katacoda.com/courses/kubernetes/launch-cluster) 
 
 ### 任务
 
 使用初始化程序脚本启动单节点集群。初始化脚本将启动 *API*、*Master*、*Proxy* 和 *DNS Discovery*。 *Web App* 使用 *DNS Discovery* 来查找 *Redis slave* 来存储数据。
 
-```
+```bash
 launch.sh
 ```
 
@@ -107,17 +107,17 @@ replicationcontroller/redis-master created
 
 ### 查看运行的组件
 
-上面的命令创建了一个*Replication Controller* 。
+上面的命令创建了一个 *Replication Controller* 。
 
-```
+```bash
 controlplane $ kubectl get rc
 NAME           DESIRED   CURRENT   READY   AGE
 redis-master   1         1         1       2m9s
 ```
 
-所有容器都被描述为 *Pod*。 *Pod* 是构成特定应用程序（例如 Redis）的容器集合。可以使用 *kubectl* 查看 *Pod* 信息。
+所有容器都被描述为 *Pod*。 *Pod* 是构成特定应用程序（例如 *Redis*）的容器集合。可以使用 *kubectl* 查看 *Pod* 信息。
 
-```
+```bash
 controlplane $ kubectl get pods
 NAME                 READY   STATUS    RESTARTS   AGE
 redis-master-qkfxw   1/1     Running   0          2m54s
@@ -132,7 +132,7 @@ redis-master-qkfxw   1/1     Running   0          2m54s
 当启动服务时，似乎无法使用 *curl* 或 *netcat* 进行连接，除非=将其作为 *Kubernetes* 的一部分启动。推荐的方法是使用 *LoadBalancer* 服务来处理外部通信。
 
 **redis-master-service.yaml**
-```
+```yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -152,14 +152,13 @@ spec:
 
 YAML 定义了 *Service* 的名称*redis-master*，以及应该被代理的端口。
 
-```
+```bash
 controlplane $ kubectl create -f redis-master-service.yaml
 service/redis-master created
 ```
 
 ### 查看 Service 列表与详情
-
-```
+bash
 controlplane $ kubectl get services
 NAME           TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
 kubernetes     ClusterIP   10.96.0.1       <none>        443/TCP    10m
@@ -229,7 +228,7 @@ replicationcontroller/redis-slave created
 
 ### 列出 *Replication Controller*
 
-```
+```bash
 NAME           DESIRED   CURRENT   READY   AGE
 redis-master   1         1         1       11m
 redis-slave    2         2         2       26s
@@ -242,7 +241,7 @@ redis-slave    2         2         2       26s
 因为我们有两个复制的 *Pod*，该服务还将在两个节点之间提供负载平衡。
 
 **redis-slave-service.yaml**
-```
+```yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -387,11 +386,11 @@ redis-master   ClusterIP   10.100.144.249   <none>        6379/TCP       11m
 redis-slave    ClusterIP   10.105.27.32     <none>        6379/TCP       11m
 ```
 
-We'll discuss *NodePort* in future scenarios.
+我们将在未来的场景中讨论 *NodePort* 。
 
 ## 访问用户手册前端
 
-定义了所有 *Controller* 和 *Service* 后，*Kubernetes* 将开始将它们作为 *Pod* 启动。根据实际发生的情况，*Pod* 可以具有不同的状态。例如，如果 *Docker* 映像仍在下载无法启动，则 Pod 将处于 *pending* 状态。准备就绪后，状态将会变更为 *running*。
+定义了所有 *Controller* 和 *Service* 后，*Kubernetes* 将开始将它们作为 *Pod* 启动。根据实际发生的情况，*Pod* 可以具有不同的状态。例如，如果 *Docker* 映像仍在下载无法启动，则 *Pod* 将处于 *pending* 状态。准备就绪后，状态将会变更为 *running*。
 
 ### 查看 Pods 状态
 
