@@ -2,7 +2,7 @@
 title: Kubernetes初探（五）
 description: 部署用户手册应用
 date: 2021-07-20T13:18:00+0800
-lastmod: '2021-07-22T17:52:00+0800'
+lastmod: '2021-07-23T10:35:00+0800'
 image: kubernates.png
 slug: k8s-basic-5
 categories:
