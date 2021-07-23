@@ -1,6 +1,6 @@
 ---
 title: Kubernetes初探（六）
-description: 部署用户手册应用
+description: 网络介绍
 date: 2021-07-20T13:36:00+0800
 lastmod: '2021-07-23T11:39:00+0800'
 image: kubernates.png
