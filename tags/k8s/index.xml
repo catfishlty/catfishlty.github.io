@@ -1,4 +1,12 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>K8S on Catfish</title><link>https://www.catfish.top/tags/k8s/</link><description>Recent content in K8S on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Fri, 23 Jul 2021 14:23:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/tags/k8s/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes初探（九）</title><link>https://www.catfish.top/p/k8s-basic-9/</link><pubDate>Fri, 23 Jul 2021 14:23:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-9/</guid><description>Katacoda在线课：Running Stateful Services on Kubernetes
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>K8S on Catfish</title><link>https://www.catfish.top/tags/k8s/</link><description>Recent content in K8S on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Fri, 23 Jul 2021 14:54:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/tags/k8s/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes初探（十）</title><link>https://www.catfish.top/p/k8s-basic-10/</link><pubDate>Fri, 23 Jul 2021 14:54:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-10/</guid><description>Katacoda在线课：Use Kubernetes To Manage Secrets And Passwords
+本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。 本系列教程将使用 Katacoda在线学习平台 完成学习。
+在此场景中，您将了解如何使用 Kubernetes 管理 Secrets 。 Kubernetes 允许您创建通过环境变量或作为卷挂载到 Pod 的 Secrets 。
+只允许 Secrets （例如 SSL 证书或密码）通过基础架构团队以安全的方式进行管理，而不是将密码存储在应用程序的部署工件中。
+启动 Kubernetes 首先，我们需要启动一个 Kubernetes 集群。
+执行以下命令启动集群组件并下载 Kubectl CLI。
+controlplane $ launch.sh Waiting for Kubernetes to start... Kubernetes started 创建 Secrets Kubernetes 要求将 Secrets 编码为 Base64 的字符串。
+使用命令行工具，我们可以创建 Base64 字符串并将它们存储为变量在文件中使用。
+controlplane $ username=$(echo -n &amp;#34;admin&amp;#34; | base64) controlplane $ password=$(echo -n &amp;#34;a62fjbd37942dcs&amp;#34; | base64) Secrets 是使用 YAML 定义的。下面我们将使用上面定义的变量，并为它们提供我们的应用程序可以使用的标签。这将创建一个可以通过名称访问的键/值秘密的集合。</description></item><item><title>Kubernetes初探（九）</title><link>https://www.catfish.top/p/k8s-basic-9/</link><pubDate>Fri, 23 Jul 2021 14:23:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-9/</guid><description>Katacoda在线课：Running Stateful Services on Kubernetes
 本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。 本系列教程将使用 Katacoda在线学习平台 完成学习。
 部署 NFS 服务器 NFS 是一种允许节点通过网络读 / 写数据的协议。该协议的工作原理是让主节点运行 NFS 守护程序并存储数据。此主节点使某些目录可通过网络使用。
 客户端访问通过驱动器挂载共享的主服务器。从应用程序的角度来看，它们正在写入本地磁盘。在背后，NFS 协议将其写入主服务器。

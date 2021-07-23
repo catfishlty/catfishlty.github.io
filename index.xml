@@ -1,4 +1,141 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Fri, 23 Jul 2021 14:23:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes初探（九）</title><link>https://www.catfish.top/p/k8s-basic-9/</link><pubDate>Fri, 23 Jul 2021 14:23:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-9/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-9/kubernates.png" alt="Featured image of post Kubernetes初探（九）" />&lt;blockquote>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Fri, 23 Jul 2021 14:54:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes初探（十）</title><link>https://www.catfish.top/p/k8s-basic-10/</link><pubDate>Fri, 23 Jul 2021 14:54:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-10/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-10/kubernates.png" alt="Featured image of post Kubernetes初探（十）" />&lt;blockquote>
+&lt;p>Katacoda在线课：&lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/managing-secrets" target="_blank" rel="noopener"
+>Use Kubernetes To Manage Secrets And Passwords&lt;/a>&lt;/p>
+&lt;p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
+本系列教程将使用 &lt;a class="link" href="https://www.katacoda.com" target="_blank" rel="noopener"
+>Katacoda在线学习平台&lt;/a> 完成学习。&lt;/p>
+&lt;/blockquote>
+&lt;p>在此场景中，您将了解如何使用 &lt;em>Kubernetes&lt;/em> 管理 &lt;em>Secrets&lt;/em> 。 &lt;em>Kubernetes&lt;/em> 允许您创建通过环境变量或作为卷挂载到 &lt;em>Pod&lt;/em> 的 &lt;em>Secrets&lt;/em> 。&lt;/p>
+&lt;p>只允许 &lt;em>Secrets&lt;/em> （例如 SSL 证书或密码）通过基础架构团队以安全的方式进行管理，而不是将密码存储在应用程序的部署工件中。&lt;/p>
+&lt;h2 id="启动-kubernetes">启动 Kubernetes&lt;/h2>
+&lt;p>首先，我们需要启动一个 &lt;em>Kubernetes&lt;/em> 集群。&lt;/p>
+&lt;p>执行以下命令启动集群组件并下载 &lt;em>Kubectl CLI&lt;/em>。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ launch.sh
+Waiting &lt;span class="k">for&lt;/span> Kubernetes to start...
+Kubernetes started
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="创建-secrets">创建 Secrets&lt;/h2>
+&lt;p>&lt;em>Kubernetes&lt;/em> 要求将 &lt;em>Secrets&lt;/em> 编码为 &lt;em>Base64&lt;/em> 的字符串。&lt;/p>
+&lt;p>使用命令行工具，我们可以创建 &lt;em>Base64&lt;/em> 字符串并将它们存储为变量在文件中使用。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ &lt;span class="nv">username&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="k">$(&lt;/span>&lt;span class="nb">echo&lt;/span> -n &lt;span class="s2">&amp;#34;admin&amp;#34;&lt;/span> &lt;span class="p">|&lt;/span> base64&lt;span class="k">)&lt;/span>
+controlplane $ &lt;span class="nv">password&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="k">$(&lt;/span>&lt;span class="nb">echo&lt;/span> -n &lt;span class="s2">&amp;#34;a62fjbd37942dcs&amp;#34;&lt;/span> &lt;span class="p">|&lt;/span> base64&lt;span class="k">)&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;em>Secrets&lt;/em> 是使用 &lt;em>YAML&lt;/em> 定义的。下面我们将使用上面定义的变量，并为它们提供我们的应用程序可以使用的标签。这将创建一个可以通过名称访问的键/值秘密的集合。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="nb">echo&lt;/span> &lt;span class="s2">&amp;#34;apiVersion: v1
+&lt;/span>&lt;span class="s2">kind: Secret
+&lt;/span>&lt;span class="s2">metadata:
+&lt;/span>&lt;span class="s2"> name: test-secret
+&lt;/span>&lt;span class="s2">type: Opaque
+&lt;/span>&lt;span class="s2">data:
+&lt;/span>&lt;span class="s2"> username: &lt;/span>&lt;span class="nv">$username&lt;/span>&lt;span class="s2">
+&lt;/span>&lt;span class="s2"> password: &lt;/span>&lt;span class="nv">$password&lt;/span>&lt;span class="s2">&amp;#34;&lt;/span> &amp;gt;&amp;gt; secret.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;strong>secret.yaml&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Secret&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">test-secret&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">type&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Opaque&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">data&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">username&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">YWRtaW4=&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">password&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">YTYyZmpiZDM3OTQyZGNz&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这个 &lt;em>YAML&lt;/em> 文件中定义可以与 &lt;em>Kubectl&lt;/em> 一起使用来创建我们的 &lt;em>Secrets&lt;/em> 。在启动需要访问密钥的 &lt;em>Pod&lt;/em> 时，我们将通过名称引用集合。&lt;/p>
+&lt;h2 id="任务-创建-secret">任务: 创建 Secret&lt;/h2>
+&lt;p>使用 &lt;em>kubectl&lt;/em> 创建 &lt;em>Secret&lt;/em>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl create -f secret.yaml
+secret/test-secret created
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>以下命令允许您查看定义的所有&lt;em>Secret&lt;/em>集合。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get secrets
+NAME TYPE DATA AGE
+default-token-z8shh kubernetes.io/service-account-token &lt;span class="m">3&lt;/span> 14m
+test-secret Opaque &lt;span class="m">2&lt;/span> 26s
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>在下一步中，我们将通过 &lt;em>Pod&lt;/em> 使用这些 &lt;em>Secret&lt;/em> 。&lt;/p>
+&lt;h2 id="通过环境变量使用-secret">通过环境变量使用 &lt;em>Secret&lt;/em>&lt;/h2>
+&lt;p>在文件 &lt;em>secret-env.yaml&lt;/em> 中，我们定义了一个有先前创建的 &lt;em>Secret&lt;/em> 为环境变量的 &lt;em>Pod&lt;/em> 。&lt;/p>
+&lt;p>使用 &lt;code>cat secret-env.yaml&lt;/code> 查看文件&lt;/p>
+&lt;p>&lt;strong>secret-env.yaml&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Pod&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">secret-env-pod&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">mycontainer&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">alpine:latest&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">command&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;sleep&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;9999&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">env&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">SECRET_USERNAME&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">valueFrom&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">secretKeyRef&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">test-secret&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">key&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">username&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">SECRET_PASSWORD&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">valueFrom&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">secretKeyRef&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">test-secret&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">key&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">password&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">restartPolicy&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Never&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>为了填充环境变量，我们定义了名称，在本例中为 &lt;em>SECRET_USERNAME&lt;/em>，以及 &lt;em>Secret&lt;/em> 集合的名称和包含数据的密钥。&lt;/p>
+&lt;p>结构如下所示：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">SECRET_USERNAME&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">valueFrom&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">secretKeyRef&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">test-secret&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">key&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">username&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="任务">任务&lt;/h3>
+&lt;p>使用 &lt;code>kubectl create -f secret-env.yaml&lt;/code> 启动 &lt;em>Pod&lt;/em> 。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl create -f secret-env.yaml
+pod/secret-env-pod created
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;em>Pod&lt;/em> 启动后，将输出填充的环境变量。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl &lt;span class="nb">exec&lt;/span> -it secret-env-pod env &lt;span class="p">|&lt;/span> grep SECRET_
+&lt;span class="nv">SECRET_USERNAME&lt;/span>&lt;span class="o">=&lt;/span>admin
+&lt;span class="nv">SECRET_PASSWORD&lt;/span>&lt;span class="o">=&lt;/span>a62fjbd37942dcs
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;em>Kubernetes&lt;/em> 在填充环境变量时解码 base64 值。您应该会看到我们定义的原始用户名/密码组合。这些变量现在可用于访问 API、数据库等。&lt;/p>
+&lt;p>您可以使用 &lt;code>kubectl get pods&lt;/code> 检查 &lt;em>Pod&lt;/em> 的状态。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get pods
+NAME READY STATUS RESTARTS AGE
+secret-env-pod 1/1 Running &lt;span class="m">0&lt;/span> 34s
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>在下一步中，我们将把 &lt;em>Secret&lt;/em> 挂载为文件。&lt;/p>
+&lt;h2 id="通过文件使用-secret">通过文件使用 &lt;em>Secret&lt;/em>&lt;/h2>
+&lt;p>使用环境变量在内存中存储 &lt;em>Secret&lt;/em> 可能会导致它们意外泄漏。推荐的方法是将它们作为卷安装。&lt;/p>
+&lt;p>&lt;em>Pod&lt;/em> 定义可以使用 &lt;code>cat secret-pod.yaml&lt;/code> 查看。&lt;/p>
+&lt;p>&lt;strong>secret-pod.yaml&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Pod&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">secret-vol-pod&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">volumes&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">secret-volume&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">secret&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">secretName&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">test-secret&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">test-container&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">alpine:latest&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">command&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="s2">&amp;#34;sleep&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;9999&amp;#34;&lt;/span>&lt;span class="p">]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">volumeMounts&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">secret-volume&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">mountPath&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">/etc/secret-volume&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>要将 &lt;em>Secret&lt;/em> 安装为卷，我们首先定义一个具有名称的卷，在本例中为 &lt;em>Secret&lt;/em> 卷，并为其提供我们存储的 &lt;em>Secret&lt;/em> 。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">volumes&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">secret-volume&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">secret&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">secretName&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">test-secret&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>当我们定义容器时，我们将创建的卷挂载到特定目录。应用程序将从该路径读取&lt;em>Secret&lt;/em> 作为文件。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">volumeMounts&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">secret-volume&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">mountPath&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">/etc/secret-volume&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="任务-1">任务&lt;/h3>
+&lt;p>使用 &lt;code>kubectl create -f secret-pod.yaml&lt;/code> 创建我们的新 &lt;em>Pod&lt;/em> 。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl create -f secret-pod.yaml
+pod/secret-vol-pod created
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>启动后，您可以与安装的&lt;em>Secret&lt;/em> 进行交互。例如，您可以列出所有可用的 &lt;em>Secret&lt;/em> ，就好像它们是常规数据一样。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl &lt;span class="nb">exec&lt;/span> -it secret-vol-pod ls /etc/secret-volume
+password username
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>读取文件允许我们访问解码的 &lt;em>Secret&lt;/em> 值。要访问我们使用的用户名&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl &lt;span class="nb">exec&lt;/span> -it secret-vol-pod cat /etc/secret-volume/username
+admin
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>对于密码，我们会读取密码文件。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">admincontrolplane $ kubectl &lt;span class="nb">exec&lt;/span> -it secret-vol-pod cat /etc/secret-volume/password
+a62fjbd37942dcs
+&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>Kubernetes初探（九）</title><link>https://www.catfish.top/p/k8s-basic-9/</link><pubDate>Fri, 23 Jul 2021 14:23:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-9/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-9/kubernates.png" alt="Featured image of post Kubernetes初探（九）" />&lt;blockquote>
 &lt;p>Katacoda在线课：&lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/storage-introduction" target="_blank" rel="noopener"
 >Running Stateful Services on Kubernetes&lt;/a>&lt;/p>
 &lt;p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
