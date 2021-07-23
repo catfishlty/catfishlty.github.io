@@ -1,0 +1,499 @@
+<!doctype html><html lang=zh-cn>
+<head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="创建入口路由"><title>Kubernetes初探（七）</title>
+<link rel=canonical href=https://www.catfish.top/p/k8s-basic-7/>
+<link rel=stylesheet href=/scss/style.min.css><meta property="og:title" content="Kubernetes初探（七）">
+<meta property="og:description" content="创建入口路由">
+<meta property="og:url" content="https://www.catfish.top/p/k8s-basic-7/">
+<meta property="og:site_name" content="Catfish">
+<meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="K8S"><meta property="article:tag" content="容器"><meta property="article:tag" content="Katacoda"><meta property="article:tag" content="YAML"><meta property="article:published_time" content="2021-07-20T15:30:00+08:00"><meta property="article:modified_time" content="2021-07-23T13:41:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/k8s-basic-7/kubernates.png">
+<meta name=twitter:title content="Kubernetes初探（七）">
+<meta name=twitter:description content="创建入口路由"><meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://www.catfish.top/p/k8s-basic-7/kubernates.png">
+<link rel="shortcut icon" href=/favicon.ico>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MPS4W3GMH8"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-MPS4W3GMH8')</script>
+</head>
+<body class="article-page has-toc">
+<script>(function(){const a='StackColorScheme';localStorage.getItem(a)||localStorage.setItem(a,"auto")})()</script><script>(function(){const b='StackColorScheme',a=localStorage.getItem(b),c=window.matchMedia('(prefers-color-scheme: dark)').matches===!0;a=='dark'||a==='auto'&&c?document.documentElement.dataset.scheme='dark':document.documentElement.dataset.scheme='light'})()</script>
+<div class="container main-container flex
+extended">
+<div id=article-toolbar>
+<a href=https://www.catfish.top class=back-home><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="15 6 9 12 15 18"/></svg>
+<span>返回</span>
+</a>
+</div>
+<main class="main full-width">
+<article class="has-image main-article">
+<header class=article-header>
+<div class=article-image>
+<a href=/p/k8s-basic-7/>
+<img src=/p/k8s-basic-7/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_3.png srcset="/p/k8s-basic-7/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_3.png 800w, /p/k8s-basic-7/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_1600x0_resize_box_3.png 1600w" width=800 height=173 loading=lazy alt="Featured image of post Kubernetes初探（七）">
+</a>
+</div>
+<div class=article-details>
+<header class=article-category>
+<a href=/categories/k8s-basic/>
+Kubernate 初探
+</a>
+<a href=/categories/katacoda/>
+Katacoda
+</a>
+</header>
+<h2 class=article-title>
+<a href=/p/k8s-basic-7/>Kubernetes初探（七）</a>
+</h2>
+<h3 class=article-subtitle>
+创建入口路由
+</h3>
+<footer class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--published>Jul 20, 2021</time>
+</footer></div>
+</header>
+<section class=article-content>
+<blockquote>
+<p>Katacoda在线课：<a class=link href=https://www.katacoda.com/courses/kubernetes/create-kubernetes-ingress-routes target=_blank rel=noopener>Create Ingress Routing</a></p>
+<p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
+本系列教程将使用 <a class=link href=https://www.katacoda.com target=_blank rel=noopener>Katacoda在线学习平台</a> 完成学习。</p>
+</blockquote>
+<p><em>Kubernetes</em> 具有先进的网络功能，允许 <em>Pod</em> 和 <em>Service</em> 在集群网络内部进行通信。 <em>Ingress</em> 开启了到集群的入站连接，允许外部流量到达正确的 <em>Pod</em>。</p>
+<p><em>Ingress</em> 能够提供外部可访问的 <em>URL</em>、负载平衡流量、终止 SSL、为 <em>Kubernetes</em> 集群提供基于名称的虚拟主机。</p>
+<p>在此场景中，您将学习如何部署和配置 <em>Ingress</em> 规则来管理传入的 <em>HTTP</em> 请求。</p>
+<h2 id=创建-deployment>创建 Deployment</h2>
+<p>首先，部署一个示例 <em>HTTP</em> 服务器，它将成为我们请求的目标。部署中包含三个部署，分别为 <em>webapp1</em>， <em>webapp2</em>， <em>webapp3</em>，每个部署都有一个服务。</p>
+<p><strong>deployment.yaml</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>apps/v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Deployment</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>webapp1</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>replicas</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>matchLabels</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>webapp1</span><span class=w>
+</span><span class=w>  </span><span class=nt>template</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>webapp1</span><span class=w>
+</span><span class=w>    </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>containers</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>webapp1</span><span class=w>
+</span><span class=w>        </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>katacoda/docker-http-server:latest</span><span class=w>
+</span><span class=w>        </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span>- <span class=nt>containerPort</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w></span><span class=nn>---</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>apps/v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Deployment</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>webapp2</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>replicas</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>matchLabels</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>webapp2</span><span class=w>
+</span><span class=w>  </span><span class=nt>template</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>webapp2</span><span class=w>
+</span><span class=w>    </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>containers</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>webapp2</span><span class=w>
+</span><span class=w>        </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>katacoda/docker-http-server:latest</span><span class=w>
+</span><span class=w>        </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span>- <span class=nt>containerPort</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w></span><span class=nn>---</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>apps/v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Deployment</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>webapp3</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>replicas</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>matchLabels</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>webapp3</span><span class=w>
+</span><span class=w>  </span><span class=nt>template</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>webapp3</span><span class=w>
+</span><span class=w>    </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>containers</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>webapp3</span><span class=w>
+</span><span class=w>        </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>katacoda/docker-http-server:latest</span><span class=w>
+</span><span class=w>        </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span>- <span class=nt>containerPort</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w></span><span class=nn>---</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Service</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>webapp1-svc</span><span class=w>
+</span><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>webapp1</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span>- <span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>webapp1</span><span class=w>
+</span><span class=w></span><span class=nn>---</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Service</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>webapp2-svc</span><span class=w>
+</span><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>webapp2</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span>- <span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>webapp2</span><span class=w>
+</span><span class=w></span><span class=nn>---</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Service</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>webapp3-svc</span><span class=w>
+</span><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>webapp3</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span>- <span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>webapp3</span><span class=w>
+</span></code></pre></div><h3 id=任务>任务</h3>
+<p>使用 <code>kubectl apply -f deployment.yaml</code> 命令部署 <em>YAML</em> 定义。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl apply -f deployment.yaml
+deployment.apps/webapp1 created
+deployment.apps/webapp2 created
+deployment.apps/webapp3 created
+service/webapp1-svc created
+service/webapp2-svc created
+service/webapp3-svc created
+</code></pre></div><p>可以用 <code>kubectl get deployment</code> 查看状态。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get deployment
+NAME      READY   UP-TO-DATE   AVAILABLE   AGE
+webapp1   1/1     <span class=m>1</span>            <span class=m>1</span>           15s
+webapp2   1/1     <span class=m>1</span>            <span class=m>1</span>           15s
+webapp3   1/1     <span class=m>1</span>            <span class=m>1</span>           15s
+</code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get svc
+NAME          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT<span class=o>(</span>S<span class=o>)</span>   AGE
+kubernetes    ClusterIP   10.96.0.1        &lt;none&gt;        443/TCP   7m41s
+webapp1-svc   ClusterIP   10.98.236.192    &lt;none&gt;        80/TCP    41s
+webapp2-svc   ClusterIP   10.105.201.139   &lt;none&gt;        80/TCP    41s
+webapp3-svc   ClusterIP   10.103.159.185   &lt;none&gt;        80/TCP    41s
+</code></pre></div><h2 id=部署-ingress>部署 Ingress</h2>
+<p><em>ingress.yaml</em> 文件中定义了一个基于 <em>Nginx</em> 的 <em>Ingress</em> 控制器以及一个 <em>Service</em> ，开放 <em>80</em> 端口用于使用 <em>External IPs</em> 的外部连接。如果 <em>Kubernetes</em> 集群在云服务商上运行，那么它将为 <em>LoadBalancer</em> 服务类型。</p>
+<p><em>ServiceAccount</em> 定义了带有权限的、连接集群以操作定义的入口规则的一组的帐户。默认服务器密钥是其他 <em>Nginx</em> 示例 <em>SSL</em> 连接的自签名证书，并且是<a class=link href=https://github.com/nginxinc/kubernetes-ingress/tree/master/deployments target=_blank rel=noopener>Nginx Default Example</a> 中所必须的。</p>
+<p><strong>ingress.yaml</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Namespace</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress</span><span class=w>
+</span><span class=w></span><span class=nn>---</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Secret</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>default-server-secret</span><span class=w>
+</span><span class=w>  </span><span class=nt>namespace</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress</span><span class=w>
+</span><span class=w></span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>kubernetes.io/tls</span><span class=w>
+</span><span class=w></span><span class=nt>data</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>tls.crt</span><span class=p>:</span><span class=w> </span><span class=l>LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN2akNDQWFZQ0NRREFPRjl0THNhWFhEQU5CZ2txaGtpRzl3MEJBUXNGQURBaE1SOHdIUVlEVlFRRERCWk8KUjBsT1dFbHVaM0psYzNORGIyNTBjbTlzYkdWeU1CNFhEVEU0TURreE1qRTRNRE16TlZvWERUSXpNRGt4TVRFNApNRE16TlZvd0lURWZNQjBHQTFVRUF3d1dUa2RKVGxoSmJtZHlaWE56UTI5dWRISnZiR3hsY2pDQ0FTSXdEUVlKCktvWklodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0NnZ0VCQUwvN2hIUEtFWGRMdjNyaUM3QlBrMTNpWkt5eTlyQ08KR2xZUXYyK2EzUDF0azIrS3YwVGF5aGRCbDRrcnNUcTZzZm8vWUk1Y2Vhbkw4WGM3U1pyQkVRYm9EN2REbWs1Qgo4eDZLS2xHWU5IWlg0Rm5UZ0VPaStlM2ptTFFxRlBSY1kzVnNPazFFeUZBL0JnWlJVbkNHZUtGeERSN0tQdGhyCmtqSXVuektURXUyaDU4Tlp0S21ScUJHdDEwcTNRYzhZT3ExM2FnbmovUWRjc0ZYYTJnMjB1K1lYZDdoZ3krZksKWk4vVUkxQUQ0YzZyM1lma1ZWUmVHd1lxQVp1WXN2V0RKbW1GNWRwdEMzN011cDBPRUxVTExSakZJOTZXNXIwSAo1TmdPc25NWFJNV1hYVlpiNWRxT3R0SmRtS3FhZ25TZ1JQQVpQN2MwQjFQU2FqYzZjNGZRVXpNQ0F3RUFBVEFOCkJna3Foa2lHOXcwQkFRc0ZBQU9DQVFFQWpLb2tRdGRPcEsrTzhibWVPc3lySmdJSXJycVFVY2ZOUitjb0hZVUoKdGhrYnhITFMzR3VBTWI5dm15VExPY2xxeC9aYzJPblEwMEJCLzlTb0swcitFZ1U2UlVrRWtWcitTTFA3NTdUWgozZWI4dmdPdEduMS9ienM3bzNBaS9kclkrcUI5Q2k1S3lPc3FHTG1US2xFaUtOYkcyR1ZyTWxjS0ZYQU80YTY3Cklnc1hzYktNbTQwV1U3cG9mcGltU1ZmaXFSdkV5YmN3N0NYODF6cFErUyt1eHRYK2VBZ3V0NHh3VlI5d2IyVXYKelhuZk9HbWhWNThDd1dIQnNKa0kxNXhaa2VUWXdSN0diaEFMSkZUUkk3dkhvQXprTWIzbjAxQjQyWjNrN3RXNQpJUDFmTlpIOFUvOWxiUHNoT21FRFZkdjF5ZytVRVJxbStGSis2R0oxeFJGcGZnPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=</span><span class=w>
+</span><span class=w>  </span><span class=nt>tls.key</span><span class=p>:</span><span class=w> </span><span class=l>LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBdi91RWM4b1JkMHUvZXVJTHNFK1RYZUprckxMMnNJNGFWaEMvYjVyYy9XMlRiNHEvClJOcktGMEdYaVN1eE9ycXgrajlnamx4NXFjdnhkenRKbXNFUkJ1Z1B0ME9hVGtIekhvb3FVWmcwZGxmZ1dkT0EKUTZMNTdlT1l0Q29VOUZ4amRXdzZUVVRJVUQ4R0JsRlNjSVo0b1hFTkhzbysyR3VTTWk2Zk1wTVM3YUhudzFtMApxWkdvRWEzWFNyZEJ6eGc2clhkcUNlUDlCMXl3VmRyYURiUzc1aGQzdUdETDU4cGszOVFqVUFQaHpxdmRoK1JWClZGNGJCaW9CbTVpeTlZTW1hWVhsMm0wTGZzeTZuUTRRdFFzdEdNVWozcGJtdlFmazJBNnljeGRFeFpkZFZsdmwKMm82MjBsMllxcHFDZEtCRThCay90elFIVTlKcU56cHpoOUJUTXdJREFRQUJBb0lCQVFDZklHbXowOHhRVmorNwpLZnZJUXQwQ0YzR2MxNld6eDhVNml4MHg4Mm15d1kxUUNlL3BzWE9LZlRxT1h1SENyUlp5TnUvZ2IvUUQ4bUFOCmxOMjRZTWl0TWRJODg5TEZoTkp3QU5OODJDeTczckM5bzVvUDlkazAvYzRIbjAzSkVYNzZ5QjgzQm9rR1FvYksKMjhMNk0rdHUzUmFqNjd6Vmc2d2szaEhrU0pXSzBwV1YrSjdrUkRWYmhDYUZhNk5nMUZNRWxhTlozVDhhUUtyQgpDUDNDeEFTdjYxWTk5TEI4KzNXWVFIK3NYaTVGM01pYVNBZ1BkQUk3WEh1dXFET1lvMU5PL0JoSGt1aVg2QnRtCnorNTZud2pZMy8yUytSRmNBc3JMTnIwMDJZZi9oY0IraVlDNzVWYmcydVd6WTY3TWdOTGQ5VW9RU3BDRkYrVm4KM0cyUnhybnhBb0dCQU40U3M0ZVlPU2huMVpQQjdhTUZsY0k2RHR2S2ErTGZTTXFyY2pOZjJlSEpZNnhubmxKdgpGenpGL2RiVWVTbWxSekR0WkdlcXZXaHFISy9iTjIyeWJhOU1WMDlRQ0JFTk5jNmtWajJTVHpUWkJVbEx4QzYrCk93Z0wyZHhKendWelU0VC84ajdHalRUN05BZVpFS2FvRHFyRG5BYWkyaW5oZU1JVWZHRXFGKzJyQW9HQkFOMVAKK0tZL0lsS3RWRzRKSklQNzBjUis3RmpyeXJpY05iWCtQVzUvOXFHaWxnY2grZ3l4b25BWlBpd2NpeDN3QVpGdwpaZC96ZFB2aTBkWEppc1BSZjRMazg5b2pCUmpiRmRmc2l5UmJYbyt3TFU4NUhRU2NGMnN5aUFPaTVBRHdVU0FkCm45YWFweUNweEFkREtERHdObit3ZFhtaTZ0OHRpSFRkK3RoVDhkaVpBb0dCQUt6Wis1bG9OOTBtYlF4VVh5YUwKMjFSUm9tMGJjcndsTmVCaWNFSmlzaEhYa2xpSVVxZ3hSZklNM2hhUVRUcklKZENFaHFsV01aV0xPb2I2NTNyZgo3aFlMSXM1ZUtka3o0aFRVdnpldm9TMHVXcm9CV2xOVHlGanIrSWhKZnZUc0hpOGdsU3FkbXgySkJhZUFVWUNXCndNdlQ4NmNLclNyNkQrZG8wS05FZzFsL0FvR0FlMkFVdHVFbFNqLzBmRzgrV3hHc1RFV1JqclRNUzRSUjhRWXQKeXdjdFA4aDZxTGxKUTRCWGxQU05rMXZLTmtOUkxIb2pZT2pCQTViYjhibXNVU1BlV09NNENoaFJ4QnlHbmR2eAphYkJDRkFwY0IvbEg4d1R0alVZYlN5T294ZGt5OEp0ek90ajJhS0FiZHd6NlArWDZDODhjZmxYVFo5MWpYL3RMCjF3TmRKS2tDZ1lCbyt0UzB5TzJ2SWFmK2UwSkN5TGhzVDQ5cTN3Zis2QWVqWGx2WDJ1VnRYejN5QTZnbXo5aCsKcDNlK2JMRUxwb3B0WFhNdUFRR0xhUkcrYlNNcjR5dERYbE5ZSndUeThXczNKY3dlSTdqZVp2b0ZpbmNvVlVIMwphdmxoTUVCRGYxSjltSDB5cDBwWUNaS2ROdHNvZEZtQktzVEtQMjJhTmtsVVhCS3gyZzR6cFE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=</span><span class=w>
+</span><span class=w></span><span class=nn>---</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>ServiceAccount</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress </span><span class=w>
+</span><span class=w>  </span><span class=nt>namespace</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress</span><span class=w>
+</span><span class=w></span><span class=nn>---</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>ConfigMap</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>nginx-config</span><span class=w>
+</span><span class=w>  </span><span class=nt>namespace</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress</span><span class=w>
+</span><span class=w></span><span class=nt>data</span><span class=p>:</span><span class=w>
+</span><span class=w></span><span class=nn>---</span><span class=w>
+</span><span class=w></span><span class=c># Described at: https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/</span><span class=w>
+</span><span class=w></span><span class=c># Source from: https://github.com/nginxinc/kubernetes-ingress/blob/master/deployments/common/ingress-class.yaml</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>networking.k8s.io/v1beta1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>IngressClass</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>nginx</span><span class=w>
+</span><span class=w>  </span><span class=c># annotations:</span><span class=w>
+</span><span class=w>  </span><span class=c>#   ingressclass.kubernetes.io/is-default-class: &#34;true&#34;</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>controller</span><span class=p>:</span><span class=w> </span><span class=l>nginx.org/ingress-controller</span><span class=w>
+</span><span class=w></span><span class=nn>---</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>apps/v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Deployment</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress</span><span class=w>
+</span><span class=w>  </span><span class=nt>namespace</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>replicas</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>matchLabels</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress</span><span class=w>
+</span><span class=w>  </span><span class=nt>template</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress</span><span class=w>
+</span><span class=w>    </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>serviceAccountName</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress</span><span class=w>
+</span><span class=w>      </span><span class=nt>containers</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>nginx/nginx-ingress:edge</span><span class=w>
+</span><span class=w>        </span><span class=nt>imagePullPolicy</span><span class=p>:</span><span class=w> </span><span class=l>Always</span><span class=w>
+</span><span class=w>        </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress</span><span class=w>
+</span><span class=w>        </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>http</span><span class=w>
+</span><span class=w>          </span><span class=nt>containerPort</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>        </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>https</span><span class=w>
+</span><span class=w>          </span><span class=nt>containerPort</span><span class=p>:</span><span class=w> </span><span class=m>443</span><span class=w>
+</span><span class=w>        </span><span class=nt>env</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>POD_NAMESPACE</span><span class=w>
+</span><span class=w>          </span><span class=nt>valueFrom</span><span class=p>:</span><span class=w>
+</span><span class=w>            </span><span class=nt>fieldRef</span><span class=p>:</span><span class=w>
+</span><span class=w>              </span><span class=nt>fieldPath</span><span class=p>:</span><span class=w> </span><span class=l>metadata.namespace</span><span class=w>
+</span><span class=w>        </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>POD_NAME</span><span class=w>
+</span><span class=w>          </span><span class=nt>valueFrom</span><span class=p>:</span><span class=w>
+</span><span class=w>            </span><span class=nt>fieldRef</span><span class=p>:</span><span class=w>
+</span><span class=w>              </span><span class=nt>fieldPath</span><span class=p>:</span><span class=w> </span><span class=l>metadata.name</span><span class=w>
+</span><span class=w>        </span><span class=nt>args</span><span class=p>:</span><span class=w>
+</span><span class=w>          </span>- -<span class=l>nginx-configmaps=$(POD_NAMESPACE)/nginx-config</span><span class=w>
+</span><span class=w>          </span>- -<span class=l>default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret</span><span class=w>
+</span><span class=w></span><span class=nn>---</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Service</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress</span><span class=w>
+</span><span class=w>  </span><span class=nt>namespace</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>NodePort </span><span class=w>
+</span><span class=w>  </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span>- <span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>    </span><span class=nt>targetPort</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>    </span><span class=nt>protocol</span><span class=p>:</span><span class=w> </span><span class=l>TCP</span><span class=w>
+</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>http</span><span class=w>
+</span><span class=w>  </span>- <span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>443</span><span class=w>
+</span><span class=w>    </span><span class=nt>targetPort</span><span class=p>:</span><span class=w> </span><span class=m>443</span><span class=w>
+</span><span class=w>    </span><span class=nt>protocol</span><span class=p>:</span><span class=w> </span><span class=l>TCP</span><span class=w>
+</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>https</span><span class=w>
+</span><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>nginx-ingress</span><span class=w>
+</span><span class=w>  </span><span class=nt>externalIPs</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=m>172.17.0.46</span><span class=w>
+</span></code></pre></div><h3 id=任务-1>任务</h3>
+<p><em>Ingress</em> 控制器以同样的方式部署到 <em>Kubernetes</em> 集群，使用 <code>kubectl create -f ingress.yaml</code>命令操作。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl create -f ingress.yaml
+namespace/nginx-ingress created
+secret/default-server-secret created
+serviceaccount/nginx-ingress created
+configmap/nginx-config created
+ingressclass.networking.k8s.io/nginx created
+deployment.apps/nginx-ingress created
+service/nginx-ingress created
+</code></pre></div><p>可以使用 <code>kubectl get deployment -n nginx-ingress</code> 查看状态。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get deployment -n nginx-ingress
+NAME            READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-ingress   1/1     <span class=m>1</span>            <span class=m>1</span>           35s
+</code></pre></div><h2 id=部署-ingress-rules>部署 Ingress Rules</h2>
+<p><em>Ingress Rules</em> 是 Kubernetes 的对象类型。规则可以基于请求主机（域），或请求的路径，或两者的组合。</p>
+<p><code>cat ingress-rules.yaml</code> 中定义了一组示例规则。</p>
+<p><strong>ingress-rules.yaml</strong></p>
+<pre><code>apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: webapp-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: my.kubernetes.example
+    http:
+      paths:
+      - path: /webapp1
+        backend:
+          serviceName: webapp1-svc
+          servicePort: 80
+      - path: /webapp2
+        backend:
+          serviceName: webapp2-svc
+          servicePort: 80
+      - backend:
+          serviceName: webapp3-svc
+          servicePort: 80
+</code></pre><p>规则的重要部分定义如下。</p>
+<p>这些规则适用于对主机 <em>my.kubernetes.example</em> 的请求。基于路径请求定义了两个规则，并使用一个 <em>catch all</em> 定义。对路径 <em>/webapp1</em> 的请求被转发到服务 <em>webapp1-svc</em>。同样，对 <em>/webapp2</em> 的请求被转发到 <em>webapp2-svc</em>。如果没有规则适用，将使用 <em>webapp3-svc</em>。</p>
+<p>这演示了应用的 <em>URL</em> 结构如何独立于应用程序的部署方式。</p>
+<h3 id=任务-2>任务</h3>
+<p>与所有 <em>Kubernetes 对象一样</em>，它们可以通过 <code>kubectl create -f ingress-rules.yaml</code> 进行部署。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl create -f ingress-rules.yaml
+ingress.extensions/webapp-ingress created
+</code></pre></div><p>部署后，可以通过 <code>kubectl get ing</code> 查看所有 <em>Ingress</em> 规则的状态</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get ing
+NAME             CLASS   HOSTS                   ADDRESS   PORTS   AGE
+webapp-ingress   nginx   my.kubernetes.example             <span class=m>80</span>      41s
+</code></pre></div><h2 id=测试>测试</h2>
+<p>应用入口规则后，流量将被路由到定义的位置。</p>
+<p>第一个请求将由 <em>webapp1</em> 处理。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ curl -H <span class=s2>&#34;Host: my.kubernetes.example&#34;</span> 172.17.0.68/webapp1
+&lt;h1&gt;This request was processed by host: webapp1-7c456784b7-cg6sk&lt;/h1&gt;
+</code></pre></div><p>第二个请求将由 <em>webapp2</em> 处理。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ curl -H <span class=s2>&#34;Host: my.kubernetes.example&#34;</span> 172.17.0.68/webapp2
+&lt;h1&gt;This request was processed by host: webapp2-79f9947d45-25j6l&lt;/h1&gt;
+</code></pre></div><p>最后，所有的其他请求将由 <em>webapp3</em> 处理。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ curl -H <span class=s2>&#34;Host: my.kubernetes.example&#34;</span> 172.17.0.68
+&lt;h1&gt;This request was processed by host: webapp3-777f4dd675-n2pqs&lt;/h1&gt;
+</code></pre></div>
+</section>
+<footer class=article-footer>
+<section class=article-tags>
+<a href=/tags/k8s/>K8S</a>
+<a href=/tags/%E5%AE%B9%E5%99%A8/>容器</a>
+<a href=/tags/katacoda/>Katacoda</a>
+<a href=/tags/yaml/>YAML</a>
+</section>
+<section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span>
+</section>
+<section class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<span class=article-time--modified>
+最后更新于 Jul 23, 2021 13:41 +0800
+</span>
+</section></footer>
+</article>
+<aside class=related-contents--wrapper>
+<h2 class=section-title>相关文章</h2>
+<div class=related-contents>
+<div class="flex article-list--tile">
+<article class=has-image>
+<a href=/p/k8s-basic-8/>
+<div class=article-image>
+<img src=/p/k8s-basic-8/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-8 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（八）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-6/>
+<div class=article-image>
+<img src=/p/k8s-basic-6/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-6 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（六）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-5/>
+<div class=article-image>
+<img src=/p/k8s-basic-5/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-5 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（五）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-4/>
+<div class=article-image>
+<img src=/p/k8s-basic-4/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-4 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（四）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-3/>
+<div class=article-image>
+<img src=/p/k8s-basic-3/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-3 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（三）</h2>
+</div>
+</a>
+</article>
+</div>
+</div>
+</aside>
+<footer class=site-footer>
+<section class=copyright>
+&copy;
+2016 -
+2021 Catfish
+</section>
+<section class=powerby>
+Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a> <br>
+Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=2.5.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a>
+</section>
+</footer>
+<div class=pswp tabindex=-1 role=dialog aria-hidden=true>
+<div class=pswp__bg></div>
+<div class=pswp__scroll-wrap>
+<div class=pswp__container>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+</div>
+<div class="pswp__ui pswp__ui--hidden">
+<div class=pswp__top-bar>
+<div class=pswp__counter></div>
+<button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+<div class=pswp__preloader>
+<div class=pswp__preloader__icn>
+<div class=pswp__preloader__cut>
+<div class=pswp__preloader__donut></div>
+</div>
+</div>
+</div>
+</div>
+<div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+<div class=pswp__share-tooltip></div>
+</div>
+<button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+</button>
+<div class=pswp__caption>
+<div class=pswp__caption__center></div>
+</div>
+</div>
+</div>
+</div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css integrity="sha256-c0uckgykQ9v5k+IqViZOZKc47Jn7KQil4/MP3ySA3F8=" crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE=" crossorigin=anonymous>
+</main>
+<aside class="sidebar right-sidebar sticky">
+<section class="widget archives">
+<div class=widget-icon><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg>
+</div>
+<h2 class="widget-title section-title">目录</h2>
+<div class=widget--toc>
+<nav id=TableOfContents>
+<ol>
+<li><a href=#创建-deployment>创建 Deployment</a>
+<ol>
+<li><a href=#任务>任务</a></li>
+</ol>
+</li>
+<li><a href=#部署-ingress>部署 Ingress</a>
+<ol>
+<li><a href=#任务-1>任务</a></li>
+</ol>
+</li>
+<li><a href=#部署-ingress-rules>部署 Ingress Rules</a>
+<ol>
+<li><a href=#任务-2>任务</a></li>
+</ol>
+</li>
+<li><a href=#测试>测试</a></li>
+</ol>
+</nav>
+</div>
+</section>
+</aside>
+</div>
+<script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g=" crossorigin=anonymous defer></script><script type=text/javascript src=/ts/main.js defer></script>
+<script>(function(){const a=document.createElement('link');a.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",a.type="text/css",a.rel="stylesheet",document.head.appendChild(a)})()</script>
+</body>
+</html>

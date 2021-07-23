@@ -1,0 +1,401 @@
+<!doctype html><html lang=zh-cn>
+<head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="Liveness 和 Readiness 健康检查"><title>Kubernetes初探（八）</title>
+<link rel=canonical href=https://www.catfish.top/p/k8s-basic-8/>
+<link rel=stylesheet href=/scss/style.min.css><meta property="og:title" content="Kubernetes初探（八）">
+<meta property="og:description" content="Liveness 和 Readiness 健康检查">
+<meta property="og:url" content="https://www.catfish.top/p/k8s-basic-8/">
+<meta property="og:site_name" content="Catfish">
+<meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="K8S"><meta property="article:tag" content="容器"><meta property="article:tag" content="Katacoda"><meta property="article:tag" content="YAML"><meta property="article:published_time" content="2021-07-23T13:07:00+08:00"><meta property="article:modified_time" content="2021-07-23T14:22:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/k8s-basic-8/kubernates.png">
+<meta name=twitter:title content="Kubernetes初探（八）">
+<meta name=twitter:description content="Liveness 和 Readiness 健康检查"><meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://www.catfish.top/p/k8s-basic-8/kubernates.png">
+<link rel="shortcut icon" href=/favicon.ico>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MPS4W3GMH8"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-MPS4W3GMH8')</script>
+</head>
+<body class="article-page has-toc">
+<script>(function(){const a='StackColorScheme';localStorage.getItem(a)||localStorage.setItem(a,"auto")})()</script><script>(function(){const b='StackColorScheme',a=localStorage.getItem(b),c=window.matchMedia('(prefers-color-scheme: dark)').matches===!0;a=='dark'||a==='auto'&&c?document.documentElement.dataset.scheme='dark':document.documentElement.dataset.scheme='light'})()</script>
+<div class="container main-container flex
+extended">
+<div id=article-toolbar>
+<a href=https://www.catfish.top class=back-home><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="15 6 9 12 15 18"/></svg>
+<span>返回</span>
+</a>
+</div>
+<main class="main full-width">
+<article class="has-image main-article">
+<header class=article-header>
+<div class=article-image>
+<a href=/p/k8s-basic-8/>
+<img src=/p/k8s-basic-8/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_3.png srcset="/p/k8s-basic-8/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_3.png 800w, /p/k8s-basic-8/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_1600x0_resize_box_3.png 1600w" width=800 height=173 loading=lazy alt="Featured image of post Kubernetes初探（八）">
+</a>
+</div>
+<div class=article-details>
+<header class=article-category>
+<a href=/categories/k8s-basic/>
+Kubernate 初探
+</a>
+<a href=/categories/katacoda/>
+Katacoda
+</a>
+</header>
+<h2 class=article-title>
+<a href=/p/k8s-basic-8/>Kubernetes初探（八）</a>
+</h2>
+<h3 class=article-subtitle>
+Liveness 和 Readiness 健康检查
+</h3>
+<footer class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--published>Jul 23, 2021</time>
+</footer></div>
+</header>
+<section class=article-content>
+<blockquote>
+<p>Katacoda在线课：<a class=link href=https://www.katacoda.com/courses/kubernetes/liveness-readiness-healthchecks target=_blank rel=noopener>Liveness and Readiness Healthchecks</a></p>
+<p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
+本系列教程将使用 <a class=link href=https://www.katacoda.com target=_blank rel=noopener>Katacoda在线学习平台</a> 完成学习。</p>
+</blockquote>
+<p>在此场景中，您将了解 <em>Kubernetes</em> 如何使用 <em>Readiness and Liveness Probes</em> 检查容器运行状况。</p>
+<p><em>Readiness Probe</em> 检查应用是否准备好开始处理流量。此探针解决了容器已启动的问题，但该进程仍在预热和配置自身，这意味着它尚未准备好接收流量。</p>
+<p><em>Liveness Probe</em> 确保应用程序健康并能够处理请求。</p>
+<h2 id=启动集群>启动集群</h2>
+<p>首先，我们需要启动一个 <em>Kubernetes</em> 集群。</p>
+<p>执行以下命令启动集群组件并下载 <em>Kubectl CLI</em></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ launch.sh
+Waiting <span class=k>for</span> Kubernetes to start...
+Kubernetes started
+</code></pre></div><p>集群启动后，使用 <code>kubectl apply -f deploy.yaml</code> 部署演示应用程序。</p>
+<p><strong>deploy.yaml</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>List</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>items</span><span class=p>:</span><span class=w>
+</span><span class=w></span>- <span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>ReplicationController</span><span class=w>
+</span><span class=w>  </span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w>  </span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>frontend</span><span class=w>
+</span><span class=w>    </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>frontend</span><span class=w>
+</span><span class=w>  </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>replicas</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w>    </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>frontend</span><span class=w>
+</span><span class=w>    </span><span class=nt>template</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>          </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>frontend</span><span class=w>
+</span><span class=w>      </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span><span class=nt>containers</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>frontend</span><span class=w>
+</span><span class=w>          </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>katacoda/docker-http-server:health</span><span class=w>
+</span><span class=w>          </span><span class=nt>readinessProbe</span><span class=p>:</span><span class=w>
+</span><span class=w>            </span><span class=nt>httpGet</span><span class=p>:</span><span class=w>
+</span><span class=w>              </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/</span><span class=w>
+</span><span class=w>              </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>            </span><span class=nt>initialDelaySeconds</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w>            </span><span class=nt>timeoutSeconds</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w>          </span><span class=nt>livenessProbe</span><span class=p>:</span><span class=w>
+</span><span class=w>            </span><span class=nt>httpGet</span><span class=p>:</span><span class=w>
+</span><span class=w>              </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/</span><span class=w>
+</span><span class=w>              </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>            </span><span class=nt>initialDelaySeconds</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w>            </span><span class=nt>timeoutSeconds</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w></span>- <span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>ReplicationController</span><span class=w>
+</span><span class=w>  </span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w>  </span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>bad-frontend</span><span class=w>
+</span><span class=w>    </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>bad-frontend</span><span class=w>
+</span><span class=w>  </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>replicas</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w>    </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>bad-frontend</span><span class=w>
+</span><span class=w>    </span><span class=nt>template</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>          </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>bad-frontend</span><span class=w>
+</span><span class=w>      </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span><span class=nt>containers</span><span class=p>:</span><span class=w>
+</span><span class=w>        </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>bad-frontend</span><span class=w>
+</span><span class=w>          </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>katacoda/docker-http-server:unhealthy</span><span class=w>
+</span><span class=w>          </span><span class=nt>readinessProbe</span><span class=p>:</span><span class=w>
+</span><span class=w>            </span><span class=nt>httpGet</span><span class=p>:</span><span class=w>
+</span><span class=w>              </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/</span><span class=w>
+</span><span class=w>              </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>            </span><span class=nt>initialDelaySeconds</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w>            </span><span class=nt>timeoutSeconds</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w>          </span><span class=nt>livenessProbe</span><span class=p>:</span><span class=w>
+</span><span class=w>            </span><span class=nt>httpGet</span><span class=p>:</span><span class=w>
+</span><span class=w>              </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/</span><span class=w>
+</span><span class=w>              </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>            </span><span class=nt>initialDelaySeconds</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w>            </span><span class=nt>timeoutSeconds</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w></span>- <span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Service</span><span class=w>
+</span><span class=w>  </span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w>  </span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>frontend</span><span class=w>
+</span><span class=w>      </span><span class=nt>kubernetes.io/cluster-service</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;true&#34;</span><span class=w>
+</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>frontend</span><span class=w>
+</span><span class=w>  </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>NodePort</span><span class=w>
+</span><span class=w>    </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>      </span><span class=nt>nodePort</span><span class=p>:</span><span class=w> </span><span class=m>30080</span><span class=w>
+</span><span class=w>    </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span><span class=nt>app</span><span class=p>:</span><span class=w> </span><span class=l>frontend</span><span class=w>
+</span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl apply -f deploy.yaml
+replicationcontroller/frontend created
+replicationcontroller/bad-frontend created
+service/frontend created
+</code></pre></div><h2 id=readiness-probe>Readiness Probe</h2>
+<p>在部署集群时，还部署了两个 <em>Pod</em> 来演示健康检查。您可以使用 <code>cat deploy.yaml</code> 查看部署。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>livenessProbe</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>httpGet</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/</span><span class=w>
+</span><span class=w>    </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span><span class=w>  </span><span class=nt>initialDelaySeconds</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span><span class=w>  </span><span class=nt>timeoutSeconds</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span></code></pre></div><p>可以根据您的应用程序更改设置来调用不同的端点，例如 <em>/ping</em>。</p>
+<h3 id=获取状态>获取状态</h3>
+<p>第一个 <em>Pod</em> <em>bad-frontend</em> 是一个 <em>HTTP</em> 服务，它总是返回 500 错误，表明它没有正确启动。您可以使用 <code>kubectl get pods --selector="name=bad-frontend"</code> 命令查看 Pod 的状态。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pods --selector<span class=o>=</span><span class=s2>&#34;name=bad-frontend&#34;</span>
+NAME                 READY   STATUS    RESTARTS   AGE
+bad-frontend-jk5z2   0/1     Running   <span class=m>2</span>          78s
+</code></pre></div><p><em>Kubectl</em> 将返回使用我们的特定标签部署的 <em>Pod</em>。因为健康检查失败，它会显示没有容器为准备就绪的状态，同时它还将显示容器的重启尝试次数。</p>
+<p>要了解有关失败原因的更多详细信息，请对该 <em>Pod</em> 使用描述命令。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ <span class=nv>pod</span><span class=o>=</span><span class=k>$(</span>kubectl get pods --selector<span class=o>=</span><span class=s2>&#34;name=bad-frontend&#34;</span> --output<span class=o>=</span><span class=nv>jsonpath</span><span class=o>={</span>.items..metadata.name<span class=o>}</span><span class=k>)</span>
+controlplane $ kubectl describe pod <span class=nv>$pod</span>
+Name:               bad-frontend-jk5z2
+Namespace:          default
+Priority:           <span class=m>0</span>
+PriorityClassName:  &lt;none&gt;
+Node:               controlplane/172.17.0.67
+Start Time:         Fri, <span class=m>23</span> Jul <span class=m>2021</span> 05:54:59 +0000
+Labels:             <span class=nv>name</span><span class=o>=</span>bad-frontend
+Annotations:        &lt;none&gt;
+Status:             Running
+IP:                 10.32.0.6
+Controlled By:      ReplicationController/bad-frontend
+Containers:
+  bad-frontend:
+    Container ID:   docker://811c3fa6d76c13f4b5bc7a6b2d6f514292e9673be46572a79b8f2d3d5e36bc62
+    Image:          katacoda/docker-http-server:unhealthy
+    Image ID:       docker-pullable://katacoda/docker-http-server@sha256:bea95c69c299c690103c39ebb3159c39c5061fee1dad13aa1b0625e0c6b52f22
+    Port:           &lt;none&gt;
+    Host Port:      &lt;none&gt;
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    <span class=m>2</span>
+      Started:      Fri, <span class=m>23</span> Jul <span class=m>2021</span> 05:57:07 +0000
+      Finished:     Fri, <span class=m>23</span> Jul <span class=m>2021</span> 05:57:37 +0000
+    Ready:          False
+    Restart Count:  <span class=m>4</span>
+    Liveness:       http-get http://:80/ <span class=nv>delay</span><span class=o>=</span>1s <span class=nv>timeout</span><span class=o>=</span>1s <span class=nv>period</span><span class=o>=</span>10s <span class=c1>#success=1 #failure=3</span>
+    Readiness:      http-get http://:80/ <span class=nv>delay</span><span class=o>=</span>1s <span class=nv>timeout</span><span class=o>=</span>1s <span class=nv>period</span><span class=o>=</span>10s <span class=c1>#success=1 #failure=3</span>
+    Environment:    &lt;none&gt;
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-5n24z <span class=o>(</span>ro<span class=o>)</span>
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             False 
+  ContainersReady   False 
+  PodScheduled      True 
+Volumes:
+  default-token-5n24z:
+    Type:        Secret <span class=o>(</span>a volume populated by a Secret<span class=o>)</span>
+    SecretName:  default-token-5n24z
+    Optional:    <span class=nb>false</span>
+QoS Class:       BestEffort
+Node-Selectors:  &lt;none&gt;
+Tolerations:     node.kubernetes.io/not-ready:NoExecute <span class=k>for</span> 300s
+                 node.kubernetes.io/unreachable:NoExecute <span class=k>for</span> 300s
+Events:
+  Type     Reason     Age                   From                   Message
+  ----     ------     ----                  ----                   -------
+  Normal   Scheduled  2m53s                 default-scheduler      Successfully assigned default/bad-frontend-jk5z2 to controlplane
+  Normal   Pulling    2m52s                 kubelet, controlplane  Pulling image <span class=s2>&#34;katacoda/docker-http-server:unhealthy&#34;</span>
+  Normal   Pulled     2m45s                 kubelet, controlplane  Successfully pulled image <span class=s2>&#34;katacoda/docker-http-server:unhealthy&#34;</span>
+  Normal   Created    105s <span class=o>(</span>x3 over 2m45s<span class=o>)</span>  kubelet, controlplane  Created container bad-frontend
+  Normal   Started    105s <span class=o>(</span>x3 over 2m45s<span class=o>)</span>  kubelet, controlplane  Started container bad-frontend
+  Warning  Unhealthy  105s <span class=o>(</span>x6 over 2m35s<span class=o>)</span>  kubelet, controlplane  Liveness probe failed: HTTP probe failed with statuscode: <span class=m>500</span>
+  Normal   Killing    105s <span class=o>(</span>x2 over 2m15s<span class=o>)</span>  kubelet, controlplane  Container bad-frontend failed liveness probe, will be restarted
+  Normal   Pulled     105s <span class=o>(</span>x2 over 2m15s<span class=o>)</span>  kubelet, controlplane  Container image <span class=s2>&#34;katacoda/docker-http-server:unhealthy&#34;</span> already present on machine
+  Warning  Unhealthy  103s <span class=o>(</span>x7 over 2m43s<span class=o>)</span>  kubelet, controlplane  Readiness probe failed: HTTP probe failed with statuscode: <span class=m>500</span>
+</code></pre></div><h3 id=readiness>Readiness</h3>
+<p>我们的第二个 Pod，<em>frontend</em>，在启动时返回 <em>OK</em> 状态。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pods --selector<span class=o>=</span><span class=s2>&#34;name=frontend&#34;</span>
+NAME             READY   STATUS    RESTARTS   AGE
+frontend-54czd   1/1     Running   <span class=m>0</span>          4m9s
+</code></pre></div><h4 id=liveness-probe>Liveness Probe</h4>
+<p>由于我们的第二个 <em>Pod</em> 当前处于健康状态，我们可以模拟发生的故障。</p>
+<p>目前，该 <em>Pod</em> 应该没有发生崩溃。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pods --selector<span class=o>=</span><span class=s2>&#34;name=frontend&#34;</span>
+NAME             READY   STATUS    RESTARTS   AGE
+frontend-54czd   1/1     Running   <span class=m>0</span>          7m17s
+</code></pre></div><h3 id=让服务崩溃>让服务崩溃</h3>
+<p><em>HTTP</em> 服务器有一个额外的端点，这将导致它返回 <em>500</em> 错误。使用 <em>kubectl exec</em> 可以调用端点。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ <span class=nv>pod</span><span class=o>=</span><span class=k>$(</span>kubectl get pods --selector<span class=o>=</span><span class=s2>&#34;name=frontend&#34;</span> --output<span class=o>=</span><span class=nv>jsonpath</span><span class=o>={</span>.items..metadata.name<span class=o>}</span><span class=k>)</span>
+controlplane $ kubectl <span class=nb>exec</span> <span class=nv>$pod</span> -- /usr/bin/curl -s localhost/unhealthy
+</code></pre></div><h2 id=liveness>Liveness</h2>
+<p><em>Kubernetes</em> 将根据配置执行 <em>Liveness Probe</em>。如果探测器失败，<em>Kubernetes</em> 将销毁并重新创建失败的容器。执行上面的命令使服务崩溃并观察 <em>Kubernetes</em> 自动恢复它。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pods --selector<span class=o>=</span><span class=s2>&#34;name=frontend&#34;</span>
+NAME             READY   STATUS    RESTARTS   AGE
+frontend-54czd   1/1     Running   <span class=m>1</span>          9m42s
+</code></pre></div><p>检查可能需要一些时间才能检测到。</p>
+</section>
+<footer class=article-footer>
+<section class=article-tags>
+<a href=/tags/k8s/>K8S</a>
+<a href=/tags/%E5%AE%B9%E5%99%A8/>容器</a>
+<a href=/tags/katacoda/>Katacoda</a>
+<a href=/tags/yaml/>YAML</a>
+</section>
+<section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span>
+</section>
+<section class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<span class=article-time--modified>
+最后更新于 Jul 23, 2021 14:22 +0800
+</span>
+</section></footer>
+</article>
+<aside class=related-contents--wrapper>
+<h2 class=section-title>相关文章</h2>
+<div class=related-contents>
+<div class="flex article-list--tile">
+<article class=has-image>
+<a href=/p/k8s-basic-7/>
+<div class=article-image>
+<img src=/p/k8s-basic-7/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-7 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（七）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-6/>
+<div class=article-image>
+<img src=/p/k8s-basic-6/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-6 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（六）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-5/>
+<div class=article-image>
+<img src=/p/k8s-basic-5/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-5 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（五）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-4/>
+<div class=article-image>
+<img src=/p/k8s-basic-4/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-4 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（四）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-3/>
+<div class=article-image>
+<img src=/p/k8s-basic-3/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-3 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（三）</h2>
+</div>
+</a>
+</article>
+</div>
+</div>
+</aside>
+<footer class=site-footer>
+<section class=copyright>
+&copy;
+2016 -
+2021 Catfish
+</section>
+<section class=powerby>
+Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a> <br>
+Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=2.5.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a>
+</section>
+</footer>
+<div class=pswp tabindex=-1 role=dialog aria-hidden=true>
+<div class=pswp__bg></div>
+<div class=pswp__scroll-wrap>
+<div class=pswp__container>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+</div>
+<div class="pswp__ui pswp__ui--hidden">
+<div class=pswp__top-bar>
+<div class=pswp__counter></div>
+<button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+<div class=pswp__preloader>
+<div class=pswp__preloader__icn>
+<div class=pswp__preloader__cut>
+<div class=pswp__preloader__donut></div>
+</div>
+</div>
+</div>
+</div>
+<div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+<div class=pswp__share-tooltip></div>
+</div>
+<button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+</button>
+<div class=pswp__caption>
+<div class=pswp__caption__center></div>
+</div>
+</div>
+</div>
+</div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css integrity="sha256-c0uckgykQ9v5k+IqViZOZKc47Jn7KQil4/MP3ySA3F8=" crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE=" crossorigin=anonymous>
+</main>
+<aside class="sidebar right-sidebar sticky">
+<section class="widget archives">
+<div class=widget-icon><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg>
+</div>
+<h2 class="widget-title section-title">目录</h2>
+<div class=widget--toc>
+<nav id=TableOfContents>
+<ol>
+<li><a href=#启动集群>启动集群</a></li>
+<li><a href=#readiness-probe>Readiness Probe</a>
+<ol>
+<li><a href=#获取状态>获取状态</a></li>
+<li><a href=#readiness>Readiness</a>
+<ol>
+<li><a href=#liveness-probe>Liveness Probe</a></li>
+</ol>
+</li>
+<li><a href=#让服务崩溃>让服务崩溃</a></li>
+</ol>
+</li>
+<li><a href=#liveness>Liveness</a></li>
+</ol>
+</nav>
+</div>
+</section>
+</aside>
+</div>
+<script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g=" crossorigin=anonymous defer></script><script type=text/javascript src=/ts/main.js defer></script>
+<script>(function(){const a=document.createElement('link');a.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",a.type="text/css",a.rel="stylesheet",document.head.appendChild(a)})()</script>
+</body>
+</html>
