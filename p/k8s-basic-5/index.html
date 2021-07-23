@@ -58,7 +58,7 @@ Katacoda
 </blockquote>
 <p>本场景说明了如何使用 <em>Kubernetes</em> 和 <em>Docker</em> 启动简单的多层 <em>Web</em> 应用。留言簿示例应用程序通过调用* JavaScript API* 将访客的笔记存储在 *Redis* 中。 *Redis* 包含一个 master（用于存储）和一组 *slave* 复制集。</p>
 <h3 id=核心概念>核心概念</h3>
-<p>在此场景中将涵盖以下核心概念。这些是理解 Kubernetes 的基础。</p>
+<p>在此场景中将涵盖以下核心概念。这些是理解 <em>Kubernetes</em> 的基础。</p>
 <ul>
 <li>Pods</li>
 <li>Replication Controllers</li>
@@ -66,11 +66,11 @@ Katacoda
 <li>NodePorts</li>
 </ul>
 <h2 id=启动-kubernetes>启动 Kubernetes</h2>
-<p>首先，我们需要一个正在运行的 Kubernetes 集群。详细信息在 <a class=link href=https://www.katacoda.com/courses/kubernetes/launch-cluster target=_blank rel=noopener>Launch Kubernetes cluster</a></p>
+<p>首先，我们需要一个正在运行的 <em>Kubernetes</em> 集群。详细信息在 <a class=link href=https://www.katacoda.com/courses/kubernetes/launch-cluster target=_blank rel=noopener>Launch Kubernetes cluster</a></p>
 <h3 id=任务>任务</h3>
 <p>使用初始化程序脚本启动单节点集群。初始化脚本将启动 <em>API</em>、<em>Master</em>、<em>Proxy</em> 和 <em>DNS Discovery</em>。 <em>Web App</em> 使用 <em>DNS Discovery</em> 来查找 <em>Redis slave</em> 来存储数据。</p>
-<pre><code>launch.sh
-</code></pre><h3 id=健康检查>健康检查</h3>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>launch.sh
+</code></pre></div><h3 id=健康检查>健康检查</h3>
 <p>使用 <code>kubectl cluster-info</code> 和 <code>kubectl get nodes</code>命令来检查部署的集群的节点健康信息。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl cluster-info
 Kubernetes master is running at https://172.17.0.81:6443
@@ -114,112 +114,117 @@ node01         Ready    &lt;none&gt;   114s    v1.14.0
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl create -f redis-master-controller.yaml
 replicationcontroller/redis-master created
 </code></pre></div><h3 id=查看运行的组件>查看运行的组件</h3>
-<p>上面的命令创建了一个<em>Replication Controller</em> 。</p>
-<pre><code>controlplane $ kubectl get rc
+<p>上面的命令创建了一个 <em>Replication Controller</em> 。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get rc
 NAME           DESIRED   CURRENT   READY   AGE
-redis-master   1         1         1       2m9s
-</code></pre><p>所有容器都被描述为 <em>Pod</em>。 <em>Pod</em> 是构成特定应用程序（例如 Redis）的容器集合。可以使用 <em>kubectl</em> 查看 <em>Pod</em> 信息。</p>
-<pre><code>controlplane $ kubectl get pods
+redis-master   <span class=m>1</span>         <span class=m>1</span>         <span class=m>1</span>       2m9s
+</code></pre></div><p>所有容器都被描述为 <em>Pod</em>。 <em>Pod</em> 是构成特定应用程序（例如 <em>Redis</em>）的容器集合。可以使用 <em>kubectl</em> 查看 <em>Pod</em> 信息。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pods
 NAME                 READY   STATUS    RESTARTS   AGE
-redis-master-qkfxw   1/1     Running   0          2m54s
-</code></pre><h2 id=redis-master---service>Redis Master - Service</h2>
+redis-master-qkfxw   1/1     Running   <span class=m>0</span>          2m54s
+</code></pre></div><h2 id=redis-master---service>Redis Master - Service</h2>
 <p>第二步是 <em>Service</em>。 <em>Kubernetes</em> <em>Service</em> 是一种命名负载均衡器，它将流量代理到一个或多个容器。即使容器位于不同的节点上，代理也能工作。</p>
 <p>服务代理在集群内通信，很少将端口暴露给外部接口。</p>
 <p>当启动服务时，似乎无法使用 <em>curl</em> 或 <em>netcat</em> 进行连接，除非=将其作为 <em>Kubernetes</em> 的一部分启动。推荐的方法是使用 <em>LoadBalancer</em> 服务来处理外部通信。</p>
 <p><strong>redis-master-service.yaml</strong></p>
-<pre><code>apiVersion: v1
-kind: Service
-metadata:
-  name: redis-master
-  labels:
-    name: redis-master
-spec:
-  ports:
-    # the port that this service should serve on
-  - port: 6379
-    targetPort: 6379
-  selector:
-    name: redis-master
-</code></pre><h3 id=创建-service>创建 Service</h3>
-<p>YAML 定义了 <em>Service</em> 的名称<em>redis-master</em>，以及应该被代理的端口。</p>
-<pre><code>controlplane $ kubectl create -f redis-master-service.yaml
-service/redis-master created
-</code></pre><h3 id=查看-service-列表与详情>查看 Service 列表与详情</h3>
-<pre><code>controlplane $ kubectl get services
-NAME           TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
-kubernetes     ClusterIP   10.96.0.1       &lt;none&gt;        443/TCP    10m
-redis-master   ClusterIP   10.100.28.180   &lt;none&gt;        6379/TCP   43s
-
-controlplane $ kubectl describe services redis-master
-Name:              redis-master
-Namespace:         default
-Labels:            name=redis-master
-Annotations:       &lt;none&gt;
-Selector:          name=redis-master
-Type:              ClusterIP
-IP:                10.100.28.180
-Port:              &lt;unset&gt;  6379/TCP
-TargetPort:        6379/TCP
-Endpoints:         10.32.0.193:6379
-Session Affinity:  None
-Events:            &lt;none&gt;
-</code></pre><h2 id=redis-slave-pods>Redis Slave Pods</h2>
-<p>在本示例中，我们将运行 <em>Redis Slaves</em>，它会从 <em>master</em> 复制数据。有关 <em>Redis</em> 复制的更多详细信息，请访问 <a class=link href=http://redis.io/topics/replication target=_blank rel=noopener>http://redis.io/topics/replication</a></p>
-<p>如前所述，<em>Controller</em> 定义了 <em>Service</em> 的运行方式。在这个例子中，我们需要确定 <em>Service</em> 是如何发现其他 <em>Pod</em>。 <em>YAML</em> 将 <em>GET_HOSTS_FROM</em> 属性表示为 <em>DNS</em>。您可以将其更改为在 <em>YAML</em> 中使用环境变量，但这会引入创建顺序依赖关系，因为需要运行服务才能定义环境变量。</p>
-<p><strong>redis-slave-controller.yaml</strong></p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
-</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>ReplicationController</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Service</span><span class=w>
 </span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
-</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>redis-slave</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>redis-master</span><span class=w>
 </span><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
-</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>redis-slave</span><span class=w>
+</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>redis-master</span><span class=w>
 </span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
-</span><span class=w>  </span><span class=nt>replicas</span><span class=p>:</span><span class=w> </span><span class=m>2</span><span class=w>
+</span><span class=w>  </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=c># the port that this service should serve on</span><span class=w>
+</span><span class=w>  </span>- <span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>6379</span><span class=w>
+</span><span class=w>    </span><span class=nt>targetPort</span><span class=p>:</span><span class=w> </span><span class=m>6379</span><span class=w>
 </span><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
-</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>redis-slave</span><span class=w>
-</span><span class=w>  </span><span class=nt>template</span><span class=p>:</span><span class=w>
-</span><span class=w>    </span><span class=nt>metadata</span><span class=p>:</span><span class=w>
-</span><span class=w>      </span><span class=nt>labels</span><span class=p>:</span><span class=w>
-</span><span class=w>        </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>redis-slave</span><span class=w>
-</span><span class=w>    </span><span class=nt>spec</span><span class=p>:</span><span class=w>
-</span><span class=w>      </span><span class=nt>containers</span><span class=p>:</span><span class=w>
-</span><span class=w>      </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>worker</span><span class=w>
-</span><span class=w>        </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>gcr.io/google_samples/gb-redisslave:v1</span><span class=w>
-</span><span class=w>        </span><span class=nt>env</span><span class=p>:</span><span class=w>
-</span><span class=w>        </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>GET_HOSTS_FROM</span><span class=w>
-</span><span class=w>          </span><span class=nt>value</span><span class=p>:</span><span class=w> </span><span class=l>dns</span><span class=w>
-</span><span class=w>          </span><span class=c># If your cluster config does not include a dns service, then to</span><span class=w>
-</span><span class=w>          </span><span class=c># instead access an environment variable to find the master</span><span class=w>
-</span><span class=w>          </span><span class=c># service&#39;s host, comment out the &#39;value: dns&#39; line above, and</span><span class=w>
-</span><span class=w>          </span><span class=c># uncomment the line below.</span><span class=w>
-</span><span class=w>          </span><span class=c># value: env</span><span class=w>
-</span><span class=w>        </span><span class=nt>ports</span><span class=p>:</span><span class=w>
-</span><span class=w>        </span>- <span class=nt>containerPort</span><span class=p>:</span><span class=w> </span><span class=m>6379</span><span class=w>
-</span></code></pre></div><h3 id=启动-redis-slave-controller>启动 Redis Slave Controller</h3>
-<p>在这种情况下，我们将使用镜像 <em>kubernetes/redis-slave:v2</em> 启动 <em>Pod</em> 的两个实例。它将通过 <em>DNS</em> 链接到 <em>redis-master</em>。</p>
-<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl create -f redis-slave-controller.yaml
-replicationcontroller/redis-slave created
-</code></pre></div><h3 id=列出-replication-controller>列出 <em>Replication Controller</em></h3>
-<pre><code>NAME           DESIRED   CURRENT   READY   AGE
-redis-master   1         1         1       11m
-redis-slave    2         2         2       26s
-</code></pre><h2 id=redis-slave-service>Redis Slave Service</h2>
-<p>和以前一样，我们需要启动一个与 <em>redis-slave</em> 通信的<code>Service</code>来让<code>Slave</code>能够接收传入的请求。</p>
-<p>因为我们有两个复制的 <em>Pod</em>，该服务还将在两个节点之间提供负载平衡。</p>
-<p><strong>redis-slave-service.yaml</strong></p>
-<pre><code>apiVersion: v1
-kind: Service
+</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>redis-master</span><span class=w>
+</span></code></pre></div><h3 id=创建-service>创建 Service</h3>
+<p>YAML 定义了 <em>Service</em> 的名称<em>redis-master</em>，以及应该被代理的端口。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl create -f redis-master-service.yaml
+service/redis-master created
+</code></pre></div><h3 id=查看-service-列表与详情>查看 Service 列表与详情</h3>
+<p>bash
+controlplane $ kubectl get services
+NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE
+kubernetes ClusterIP 10.96.0.1 443/TCP 10m
+redis-master ClusterIP 10.100.28.180 6379/TCP 43s</p>
+<p>controlplane $ kubectl describe services redis-master
+Name: redis-master
+Namespace: default
+Labels: name=redis-master
+Annotations:
+Selector: name=redis-master
+Type: ClusterIP
+IP: 10.100.28.180
+Port: 6379/TCP
+TargetPort: 6379/TCP
+Endpoints: 10.32.0.193:6379
+Session Affinity: None
+Events: </p>
+<pre><code>
+## Redis Slave Pods
+
+在本示例中，我们将运行 *Redis Slaves*，它会从 *master* 复制数据。有关 *Redis* 复制的更多详细信息，请访问 [http://redis.io/topics/replication](http://redis.io/topics/replication)
+
+如前所述，*Controller* 定义了 *Service* 的运行方式。在这个例子中，我们需要确定 *Service* 是如何发现其他 *Pod*。 *YAML* 将 *GET_HOSTS_FROM* 属性表示为 *DNS*。您可以将其更改为在 *YAML* 中使用环境变量，但这会引入创建顺序依赖关系，因为需要运行服务才能定义环境变量。
+
+**redis-slave-controller.yaml**
+```yaml
+apiVersion: v1
+kind: ReplicationController
 metadata:
   name: redis-slave
   labels:
     name: redis-slave
 spec:
-  ports:
-    # the port that this service should serve on
-  - port: 6379
+  replicas: 2
   selector:
     name: redis-slave
-</code></pre><h3 id=start-redis-slave-service>Start Redis Slave Service</h3>
+  template:
+    metadata:
+      labels:
+        name: redis-slave
+    spec:
+      containers:
+      - name: worker
+        image: gcr.io/google_samples/gb-redisslave:v1
+        env:
+        - name: GET_HOSTS_FROM
+          value: dns
+          # If your cluster config does not include a dns service, then to
+          # instead access an environment variable to find the master
+          # service's host, comment out the 'value: dns' line above, and
+          # uncomment the line below.
+          # value: env
+        ports:
+        - containerPort: 6379
+</code></pre><h3 id=启动-redis-slave-controller>启动 Redis Slave Controller</h3>
+<p>在这种情况下，我们将使用镜像 <em>kubernetes/redis-slave:v2</em> 启动 <em>Pod</em> 的两个实例。它将通过 <em>DNS</em> 链接到 <em>redis-master</em>。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl create -f redis-slave-controller.yaml
+replicationcontroller/redis-slave created
+</code></pre></div><h3 id=列出-replication-controller>列出 <em>Replication Controller</em></h3>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>NAME           DESIRED   CURRENT   READY   AGE
+redis-master   <span class=m>1</span>         <span class=m>1</span>         <span class=m>1</span>       11m
+redis-slave    <span class=m>2</span>         <span class=m>2</span>         <span class=m>2</span>       26s
+</code></pre></div><h2 id=redis-slave-service>Redis Slave Service</h2>
+<p>和以前一样，我们需要启动一个与 <em>redis-slave</em> 通信的<code>Service</code>来让<code>Slave</code>能够接收传入的请求。</p>
+<p>因为我们有两个复制的 <em>Pod</em>，该服务还将在两个节点之间提供负载平衡。</p>
+<p><strong>redis-slave-service.yaml</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Service</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>redis-slave</span><span class=w>
+</span><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>redis-slave</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=c># the port that this service should serve on</span><span class=w>
+</span><span class=w>  </span>- <span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>6379</span><span class=w>
+</span><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>redis-slave</span><span class=w>
+</span></code></pre></div><h3 id=start-redis-slave-service>Start Redis Slave Service</h3>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl create -f redis-slave-service.yaml
 service/redis-slave created
 </code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get services
@@ -309,9 +314,9 @@ frontend       NodePort    10.98.211.171    &lt;none&gt;        80:30080/TCP   3
 kubernetes     ClusterIP   10.96.0.1        &lt;none&gt;        443/TCP        13m
 redis-master   ClusterIP   10.100.144.249   &lt;none&gt;        6379/TCP       11m
 redis-slave    ClusterIP   10.105.27.32     &lt;none&gt;        6379/TCP       11m
-</code></pre></div><p>We&rsquo;ll discuss <em>NodePort</em> in future scenarios.</p>
+</code></pre></div><p>我们将在未来的场景中讨论 <em>NodePort</em> 。</p>
 <h2 id=访问用户手册前端>访问用户手册前端</h2>
-<p>定义了所有 <em>Controller</em> 和 <em>Service</em> 后，<em>Kubernetes</em> 将开始将它们作为 <em>Pod</em> 启动。根据实际发生的情况，<em>Pod</em> 可以具有不同的状态。例如，如果 <em>Docker</em> 映像仍在下载无法启动，则 Pod 将处于 <em>pending</em> 状态。准备就绪后，状态将会变更为 <em>running</em>。</p>
+<p>定义了所有 <em>Controller</em> 和 <em>Service</em> 后，<em>Kubernetes</em> 将开始将它们作为 <em>Pod</em> 启动。根据实际发生的情况，<em>Pod</em> 可以具有不同的状态。例如，如果 <em>Docker</em> 映像仍在下载无法启动，则 <em>Pod</em> 将处于 <em>pending</em> 状态。准备就绪后，状态将会变更为 <em>running</em>。</p>
 <h3 id=查看-pods-状态>查看 Pods 状态</h3>
 <p>可以使用下列命令查看所有 <em>Pod</em> 的状态。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pods
@@ -481,10 +486,6 @@ Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=
 <ol>
 <li><a href=#创建-service>创建 Service</a></li>
 <li><a href=#查看-service-列表与详情>查看 Service 列表与详情</a></li>
-</ol>
-</li>
-<li><a href=#redis-slave-pods>Redis Slave Pods</a>
-<ol>
 <li><a href=#启动-redis-slave-controller>启动 Redis Slave Controller</a></li>
 <li><a href=#列出-replication-controller>列出 <em>Replication Controller</em></a></li>
 </ol>

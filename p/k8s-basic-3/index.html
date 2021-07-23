@@ -56,10 +56,10 @@ Katacoda
 <p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
 本系列教程将使用 <a class=link href=https://www.katacoda.com target=_blank rel=noopener>Katacoda在线学习平台</a> 完成学习。</p>
 </blockquote>
-<p>在此场景中，将学习如何使用 <code>Kubectl</code> 创建和启动<code>Deployments</code>, <code>Replication Controllers</code>并通过<code>Services</code>对外开放接口，而无需编写 <em>yaml</em> 定义。这样便可以快速将容器启动到集群上。</p>
+<p>在此场景中，将学习如何使用 <em>Kubectl</em> 创建和启动 <em>Deployment</em> 和 <em>Replication Controllers</em> 并通过 <em>Services</em> 对外暴露接口。本场景中无需编写 <em>yaml</em> 定义，便可以快速将容器启动到集群上。</p>
 <h2 id=启动集群>启动集群</h2>
-<p>首先，我们需要启动一个 Kubernetes 集群。</p>
-<p>执行以下命令启动集群并下载<code>Kubectl CLI</code>。</p>
+<p>首先，我们需要启动一个 <em>Kubernetes</em> 集群。</p>
+<p>执行以下命令启动集群并下载 <em>Kubectl CLI</em>。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ minikube start --wait<span class=o>=</span><span class=nb>false</span>
 * minikube v1.8.1 on Ubuntu 18.04
 * Using the none driver based on user configuration
@@ -71,19 +71,19 @@ Katacoda
 * Enabling addons: default-storageclass, storage-provisioner
 * Configuring <span class=nb>local</span> host environment ...
 * Done! kubectl is now configured to use <span class=s2>&#34;minikube&#34;</span>
-</code></pre></div><p>通过<code>kubectl get nodes</code>命令来检查节点是否准备就绪。</p>
+</code></pre></div><p>通过 <code>kubectl get nodes</code> 命令来检查节点是否准备就绪。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl get nodes
 NAME       STATUS   ROLES    AGE   VERSION
 minikube   Ready    master   19s   v1.17.3
 </code></pre></div><h2 id=kubectl-run>Kubectl Run</h2>
-<p>Run 命令根据指定的参数（例如映像或副本）创建部署。该部署发布给Kubernetes 主节点，启动所需 Pod 和容器的 。 <em>Kubectl run</em> 类似于 <em>docker run</em>，但<em>Kubectl run</em> 是在集群中运行的。</p>
+<p><em>Run</em> 命令根据指定的参数（例如映像或副本）创建部署。该部署发布给 <em>Kubernetes</em> 主节点，启动所需 <em>Pod</em> 和容器的 。 <em>Kubectl run</em> 类似于 <em>docker run</em>，但 <em>Kubectl run</em> 是在集群中运行的。</p>
 <p>命令的格式为 <code>kubectl run &lt;name of deployment> &lt;properties></code></p>
 <h3 id=任务>任务</h3>
-<p>以下命令将启动一个名为 <em>http</em> 的部署，它将启动一个基于 Docker 镜像 <em>katacoda/docker-http-server:latest</em> 的容器。</p>
+<p>以下命令将启动一个名为 <em>http</em> 的部署，它将启动一个基于 <em>Docker</em> 镜像 <em>katacoda/docker-http-server:latest</em> 的容器。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl run http --image<span class=o>=</span>katacoda/docker-http-server:latest --replicas<span class=o>=</span><span class=m>1</span>
 kubectl run --generator<span class=o>=</span>deployment/apps.v1 is DEPRECATED and will be removed in a future version. Use kubectl run --generator<span class=o>=</span>run-pod/v1 or kubectl create instead.
 deployment.apps/http created
-</code></pre></div><p>使用<em>kubectl</em>查看各部署的状态。</p>
+</code></pre></div><p>使用 <em>kubectl</em> 查看各部署的状态。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl get deployments
 NAME   READY   UP-TO-DATE   AVAILABLE   AGE
 http   1/1     <span class=m>1</span>            <span class=m>1</span>           2m7s
@@ -129,46 +129,45 @@ Events:
 <p>使用以下命令将主机上的容器端口 <em>80</em> 公开 <em>8000</em> 绑定到主机的 <em>external-ip</em>。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl expose deployment http --external-ip<span class=o>=</span><span class=s2>&#34;172.17.0.44&#34;</span> --port<span class=o>=</span><span class=m>8000</span> --target-port<span class=o>=</span><span class=m>80</span>
 service/http exposed
-</code></pre></div><p>接下来就能 ping 主机查看 HTTP 服务返回的结果。</p>
+</code></pre></div><p>接下来就能 <em>ping</em> 主机查看 <em>HTTP</em> 服务返回的结果。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ curl http://172.17.0.44:8000
 &lt;h1&gt;This request was processed by host: http-774bb756bb-m6tjp&lt;/h1&gt;
 </code></pre></div><h2 id=kubectl-run-and-expose>Kubectl Run and Expose</h2>
 <p>可以单独使用命令 <em>kubectl run</em> 来创建部署并将其开放。</p>
 <h3 id=任务-2>任务</h3>
-<p>使用命令创建在端口 <em>8001</em> 上开放的第二个 http 服务。</p>
+<p>使用命令创建在端口 <em>8001</em> 上开放的第二个 <em>http</em> 服务。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl run httpexposed --image<span class=o>=</span>katacoda/docker-http-server:latest --replicas<span class=o>=</span><span class=m>1</span> --port<span class=o>=</span><span class=m>80</span> --hostport<span class=o>=</span><span class=m>8001</span>
 kubectl run --generator<span class=o>=</span>deployment/apps.v1 is DEPRECATED and will be removed in a future version. Use kubectl run --generator<span class=o>=</span>run-pod/v1 or kubectl create instead.
 deployment.apps/httpexposed created
 </code></pre></div><p>接下来可以使用 <code>curl http://172.17.0.41:8001</code> 来访问该服务。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ curl http://172.17.0.44:8001
 &lt;h1&gt;This request was processed by host: httpexposed-68cb8c8d4-r7qtt&lt;/h1&gt;
-</code></pre></div><p>在服务内，通过 Docker 端口映射开放了 Pod。因此，您将看不到使用 <code>kubectl get svc</code> 列出的服务</p>
+</code></pre></div><p>在服务内，通过 <em>Docker</em> 端口映射开放了 <em>Pod</em>。因此，您将看不到使用 <code>kubectl get svc</code> 列出的服务</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl get svc
 NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT<span class=o>(</span>S<span class=o>)</span>    AGE
 http         ClusterIP   10.97.103.237   172.17.0.44   8000/TCP   4m47s
 kubernetes   ClusterIP   10.96.0.1       &lt;none&gt;        443/TCP    44m
-</code></pre></div><p>可以通过 <code>docker ps | grep httpexposed</code>命令查看详细信息。</p>
+</code></pre></div><p>可以通过 <code>docker ps | grep httpexposed</code> 命令查看详细信息。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ docker ps <span class=p>|</span> grep httpexposed
 1690c6682f93        katacoda/docker-http-server   <span class=s2>&#34;/app&#34;</span>                   <span class=m>2</span> minutes ago       Up <span class=m>2</span> minutes                               k8s_httpexposed_httpexposed-68cb8c8d4-r7qtt_default_6fb23c14-277e-4298-b325-c52ef4eb09a9_0
 d9ae0076a0d4        k8s.gcr.io/pause:3.1          <span class=s2>&#34;/pause&#34;</span>                 <span class=m>2</span> minutes ago       Up <span class=m>2</span> minutes        0.0.0.0:8001-&gt;80/tcp   k8s_POD_httpexposed-68cb8c8d4-r7qtt_default_6fb23c14-277e-4298-b325-c52ef4eb09a9_0
 </code></pre></div><h3 id=暂停容器>暂停容器</h3>
-<p>运行上面的命令，你会注意到端口暴露在 Pod 上，而不是 http 容器本身。 Pause 容器负责为 Pod 定义网络。 Pod 中的其他容器共享相同的网络命名空间。允许多个容器通过同一网络接口进行通信，提高了网络性能。</p>
+<p>运行上面的命令，你会注意到端口暴露在 <em>Pod</em> 上，而不是 <em>http</em> 容器本身。 <em>Pause</em> 容器负责为 <em>Pod</em> 定义网络。 <em>Pod</em> 中的其他容器共享相同的网络命名空间。允许多个容器通过同一网络接口进行通信，提高了网络性能。</p>
 <h2 id=容器扩展>容器扩展</h2>
 <p>随着我们的部署运行，我们现在可以使用 <em>kubectl</em> 来扩展副本的数量。</p>
-<p>扩展部署将请求 Kubernetes 启动额外的 Pod。然后，这些 Pod 将使用开放服务自动进行负载平衡。</p>
+<p>扩展部署将请求 <em>Kubernetes</em> 启动额外的 <em>Pod</em>。然后，这些 <em>Pod</em> 将使用开放服务自动进行负载平衡。</p>
 <h3 id=任务-3>任务</h3>
-<p><em>kubectl scale</em> 命令能够为特定 <code>Deployment</code>或 <code>Replication Controller</code> 调整运行的 Pod 数量。</p>
+<p><em>kubectl scale</em> 命令能够为特定 <em>Deployment</em> 或 <em>Replication Controller</em> 调整运行的 <em>Pod</em> 数量。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl scale --replicas<span class=o>=</span><span class=m>3</span> deployment http
 deployment.apps/http scaled
-</code></pre></div><p>列出所有 pod，能够看到三个正在运行的 <em>http</em> 部署。</p>
+</code></pre></div><p>列出所有 <em>pod</em>，能够看到三个正在运行的 <em>http</em> 部署。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl get pods
 NAME                          READY   STATUS    RESTARTS   AGE
 http-774bb756bb-m6tjp         1/1     Running   <span class=m>0</span>          20m
 http-774bb756bb-q29v8         1/1     Running   <span class=m>0</span>          45s
 http-774bb756bb-x2xxv         1/1     Running   <span class=m>0</span>          45s
 httpexposed-68cb8c8d4-r7qtt   1/1     Running   <span class=m>0</span>          9m3s
-</code></pre></div><p>一旦每个 Pod 启动，就会被添加到负载均衡器服务中。通过<code>describe</code>，可以查看包含的端点和与之关联的 Pod。
-Once each Pod starts it will be added to the load balancer service. By describing the service you can view the endpoint and the associated Pods which are included.</p>
+</code></pre></div><p>一旦每个 <em>Pod</em> 启动，就会被添加到负载均衡器服务中。通过 <em>describe</em>，可以查看包含的端点和与之关联的 <em>Pod</em>。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl describe svc http
 Name:              http
 Namespace:         default

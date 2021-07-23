@@ -7,7 +7,7 @@
 &lt;/blockquote>
 &lt;p>本场景说明了如何使用 &lt;em>Kubernetes&lt;/em> 和 &lt;em>Docker&lt;/em> 启动简单的多层 &lt;em>Web&lt;/em> 应用。留言簿示例应用程序通过调用* JavaScript API* 将访客的笔记存储在 *Redis* 中。 *Redis* 包含一个 master（用于存储）和一组 *slave* 复制集。&lt;/p>
 &lt;h3 id="核心概念">核心概念&lt;/h3>
-&lt;p>在此场景中将涵盖以下核心概念。这些是理解 Kubernetes 的基础。&lt;/p>
+&lt;p>在此场景中将涵盖以下核心概念。这些是理解 &lt;em>Kubernetes&lt;/em> 的基础。&lt;/p>
 &lt;ul>
 &lt;li>Pods&lt;/li>
 &lt;li>Replication Controllers&lt;/li>
@@ -15,12 +15,12 @@
 &lt;li>NodePorts&lt;/li>
 &lt;/ul>
 &lt;h2 id="启动-kubernetes">启动 Kubernetes&lt;/h2>
-&lt;p>首先，我们需要一个正在运行的 Kubernetes 集群。详细信息在 &lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/launch-cluster" target="_blank" rel="noopener"
+&lt;p>首先，我们需要一个正在运行的 &lt;em>Kubernetes&lt;/em> 集群。详细信息在 &lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/launch-cluster" target="_blank" rel="noopener"
 >Launch Kubernetes cluster&lt;/a>&lt;/p>
 &lt;h3 id="任务">任务&lt;/h3>
 &lt;p>使用初始化程序脚本启动单节点集群。初始化脚本将启动 &lt;em>API&lt;/em>、&lt;em>Master&lt;/em>、&lt;em>Proxy&lt;/em> 和 &lt;em>DNS Discovery&lt;/em>。 &lt;em>Web App&lt;/em> 使用 &lt;em>DNS Discovery&lt;/em> 来查找 &lt;em>Redis slave&lt;/em> 来存储数据。&lt;/p>
-&lt;pre>&lt;code>launch.sh
-&lt;/code>&lt;/pre>&lt;h3 id="健康检查">健康检查&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">launch.sh
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="健康检查">健康检查&lt;/h3>
 &lt;p>使用 &lt;code>kubectl cluster-info&lt;/code> 和 &lt;code>kubectl get nodes&lt;/code>命令来检查部署的集群的节点健康信息。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl cluster-info
 Kubernetes master is running at https://172.17.0.81:6443
@@ -63,112 +63,114 @@ node01 Ready &amp;lt;none&amp;gt; 114s v1.14.0
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl create -f redis-master-controller.yaml
 replicationcontroller/redis-master created
 &lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="查看运行的组件">查看运行的组件&lt;/h3>
-&lt;p>上面的命令创建了一个&lt;em>Replication Controller&lt;/em> 。&lt;/p>
-&lt;pre>&lt;code>controlplane $ kubectl get rc
+&lt;p>上面的命令创建了一个 &lt;em>Replication Controller&lt;/em> 。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get rc
 NAME DESIRED CURRENT READY AGE
-redis-master 1 1 1 2m9s
-&lt;/code>&lt;/pre>&lt;p>所有容器都被描述为 &lt;em>Pod&lt;/em>。 &lt;em>Pod&lt;/em> 是构成特定应用程序（例如 Redis）的容器集合。可以使用 &lt;em>kubectl&lt;/em> 查看 &lt;em>Pod&lt;/em> 信息。&lt;/p>
-&lt;pre>&lt;code>controlplane $ kubectl get pods
+redis-master &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 2m9s
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>所有容器都被描述为 &lt;em>Pod&lt;/em>。 &lt;em>Pod&lt;/em> 是构成特定应用程序（例如 &lt;em>Redis&lt;/em>）的容器集合。可以使用 &lt;em>kubectl&lt;/em> 查看 &lt;em>Pod&lt;/em> 信息。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get pods
 NAME READY STATUS RESTARTS AGE
-redis-master-qkfxw 1/1 Running 0 2m54s
-&lt;/code>&lt;/pre>&lt;h2 id="redis-master---service">Redis Master - Service&lt;/h2>
+redis-master-qkfxw 1/1 Running &lt;span class="m">0&lt;/span> 2m54s
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="redis-master---service">Redis Master - Service&lt;/h2>
 &lt;p>第二步是 &lt;em>Service&lt;/em>。 &lt;em>Kubernetes&lt;/em> &lt;em>Service&lt;/em> 是一种命名负载均衡器，它将流量代理到一个或多个容器。即使容器位于不同的节点上，代理也能工作。&lt;/p>
 &lt;p>服务代理在集群内通信，很少将端口暴露给外部接口。&lt;/p>
 &lt;p>当启动服务时，似乎无法使用 &lt;em>curl&lt;/em> 或 &lt;em>netcat&lt;/em> 进行连接，除非=将其作为 &lt;em>Kubernetes&lt;/em> 的一部分启动。推荐的方法是使用 &lt;em>LoadBalancer&lt;/em> 服务来处理外部通信。&lt;/p>
 &lt;p>&lt;strong>redis-master-service.yaml&lt;/strong>&lt;/p>
-&lt;pre>&lt;code>apiVersion: v1
-kind: Service
-metadata:
-name: redis-master
-labels:
-name: redis-master
-spec:
-ports:
-# the port that this service should serve on
-- port: 6379
-targetPort: 6379
-selector:
-name: redis-master
-&lt;/code>&lt;/pre>&lt;h3 id="创建-service">创建 Service&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Service&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-master&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-master&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># the port that this service should serve on&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">port&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">6379&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">targetPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">6379&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-master&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="创建-service">创建 Service&lt;/h3>
 &lt;p>YAML 定义了 &lt;em>Service&lt;/em> 的名称&lt;em>redis-master&lt;/em>，以及应该被代理的端口。&lt;/p>
-&lt;pre>&lt;code>controlplane $ kubectl create -f redis-master-service.yaml
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl create -f redis-master-service.yaml
 service/redis-master created
-&lt;/code>&lt;/pre>&lt;h3 id="查看-service-列表与详情">查看 Service 列表与详情&lt;/h3>
-&lt;pre>&lt;code>controlplane $ kubectl get services
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="查看-service-列表与详情">查看 Service 列表与详情&lt;/h3>
+&lt;p>bash
+controlplane $ kubectl get services
 NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE
-kubernetes ClusterIP 10.96.0.1 &amp;lt;none&amp;gt; 443/TCP 10m
-redis-master ClusterIP 10.100.28.180 &amp;lt;none&amp;gt; 6379/TCP 43s
-controlplane $ kubectl describe services redis-master
+kubernetes ClusterIP 10.96.0.1 &lt;!-- raw HTML omitted --> 443/TCP 10m
+redis-master ClusterIP 10.100.28.180 &lt;!-- raw HTML omitted --> 6379/TCP 43s&lt;/p>
+&lt;p>controlplane $ kubectl describe services redis-master
 Name: redis-master
 Namespace: default
 Labels: name=redis-master
-Annotations: &amp;lt;none&amp;gt;
+Annotations: &lt;!-- raw HTML omitted -->
 Selector: name=redis-master
 Type: ClusterIP
 IP: 10.100.28.180
-Port: &amp;lt;unset&amp;gt; 6379/TCP
+Port: &lt;!-- raw HTML omitted --> 6379/TCP
 TargetPort: 6379/TCP
 Endpoints: 10.32.0.193:6379
 Session Affinity: None
-Events: &amp;lt;none&amp;gt;
-&lt;/code>&lt;/pre>&lt;h2 id="redis-slave-pods">Redis Slave Pods&lt;/h2>
-&lt;p>在本示例中，我们将运行 &lt;em>Redis Slaves&lt;/em>，它会从 &lt;em>master&lt;/em> 复制数据。有关 &lt;em>Redis&lt;/em> 复制的更多详细信息，请访问 &lt;a class="link" href="http://redis.io/topics/replication" target="_blank" rel="noopener"
->http://redis.io/topics/replication&lt;/a>&lt;/p>
-&lt;p>如前所述，&lt;em>Controller&lt;/em> 定义了 &lt;em>Service&lt;/em> 的运行方式。在这个例子中，我们需要确定 &lt;em>Service&lt;/em> 是如何发现其他 &lt;em>Pod&lt;/em>。 &lt;em>YAML&lt;/em> 将 &lt;em>GET_HOSTS_FROM&lt;/em> 属性表示为 &lt;em>DNS&lt;/em>。您可以将其更改为在 &lt;em>YAML&lt;/em> 中使用环境变量，但这会引入创建顺序依赖关系，因为需要运行服务才能定义环境变量。&lt;/p>
-&lt;p>&lt;strong>redis-slave-controller.yaml&lt;/strong>&lt;/p>
+Events: &lt;!-- raw HTML omitted -->&lt;/p>
+&lt;pre>&lt;code>
+## Redis Slave Pods
+在本示例中，我们将运行 *Redis Slaves*，它会从 *master* 复制数据。有关 *Redis* 复制的更多详细信息，请访问 [http://redis.io/topics/replication](http://redis.io/topics/replication)
+如前所述，*Controller* 定义了 *Service* 的运行方式。在这个例子中，我们需要确定 *Service* 是如何发现其他 *Pod*。 *YAML* 将 *GET_HOSTS_FROM* 属性表示为 *DNS*。您可以将其更改为在 *YAML* 中使用环境变量，但这会引入创建顺序依赖关系，因为需要运行服务才能定义环境变量。
+**redis-slave-controller.yaml**
+```yaml
+apiVersion: v1
+kind: ReplicationController
+metadata:
+name: redis-slave
+labels:
+name: redis-slave
+spec:
+replicas: 2
+selector:
+name: redis-slave
+template:
+metadata:
+labels:
+name: redis-slave
+spec:
+containers:
+- name: worker
+image: gcr.io/google_samples/gb-redisslave:v1
+env:
+- name: GET_HOSTS_FROM
+value: dns
+# If your cluster config does not include a dns service, then to
+# instead access an environment variable to find the master
+# service's host, comment out the 'value: dns' line above, and
+# uncomment the line below.
+# value: env
+ports:
+- containerPort: 6379
+&lt;/code>&lt;/pre>&lt;h3 id="启动-redis-slave-controller">启动 Redis Slave Controller&lt;/h3>
+&lt;p>在这种情况下，我们将使用镜像 &lt;em>kubernetes/redis-slave:v2&lt;/em> 启动 &lt;em>Pod&lt;/em> 的两个实例。它将通过 &lt;em>DNS&lt;/em> 链接到 &lt;em>redis-master&lt;/em>。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl create -f redis-slave-controller.yaml
+replicationcontroller/redis-slave created
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="列出-replication-controller">列出 &lt;em>Replication Controller&lt;/em>&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">NAME DESIRED CURRENT READY AGE
+redis-master &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 11m
+redis-slave &lt;span class="m">2&lt;/span> &lt;span class="m">2&lt;/span> &lt;span class="m">2&lt;/span> 26s
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="redis-slave-service">Redis Slave Service&lt;/h2>
+&lt;p>和以前一样，我们需要启动一个与 &lt;em>redis-slave&lt;/em> 通信的&lt;code>Service&lt;/code>来让&lt;code>Slave&lt;/code>能够接收传入的请求。&lt;/p>
+&lt;p>因为我们有两个复制的 &lt;em>Pod&lt;/em>，该服务还将在两个节点之间提供负载平衡。&lt;/p>
+&lt;p>&lt;strong>redis-slave-service.yaml&lt;/strong>&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">ReplicationController&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Service&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-slave&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-slave&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">2&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># the port that this service should serve on&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">port&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">6379&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-slave&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">redis-slave&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">worker&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">gcr.io/google_samples/gb-redisslave:v1&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">env&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">GET_HOSTS_FROM&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">value&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">dns&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># If your cluster config does not include a dns service, then to&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># instead access an environment variable to find the master&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># service&amp;#39;s host, comment out the &amp;#39;value: dns&amp;#39; line above, and&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># uncomment the line below.&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># value: env&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">containerPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">6379&lt;/span>&lt;span class="w">
-&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="启动-redis-slave-controller">启动 Redis Slave Controller&lt;/h3>
-&lt;p>在这种情况下，我们将使用镜像 &lt;em>kubernetes/redis-slave:v2&lt;/em> 启动 &lt;em>Pod&lt;/em> 的两个实例。它将通过 &lt;em>DNS&lt;/em> 链接到 &lt;em>redis-master&lt;/em>。&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl create -f redis-slave-controller.yaml
-replicationcontroller/redis-slave created
-&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="列出-replication-controller">列出 &lt;em>Replication Controller&lt;/em>&lt;/h3>
-&lt;pre>&lt;code>NAME DESIRED CURRENT READY AGE
-redis-master 1 1 1 11m
-redis-slave 2 2 2 26s
-&lt;/code>&lt;/pre>&lt;h2 id="redis-slave-service">Redis Slave Service&lt;/h2>
-&lt;p>和以前一样，我们需要启动一个与 &lt;em>redis-slave&lt;/em> 通信的&lt;code>Service&lt;/code>来让&lt;code>Slave&lt;/code>能够接收传入的请求。&lt;/p>
-&lt;p>因为我们有两个复制的 &lt;em>Pod&lt;/em>，该服务还将在两个节点之间提供负载平衡。&lt;/p>
-&lt;p>&lt;strong>redis-slave-service.yaml&lt;/strong>&lt;/p>
-&lt;pre>&lt;code>apiVersion: v1
-kind: Service
-metadata:
-name: redis-slave
-labels:
-name: redis-slave
-spec:
-ports:
-# the port that this service should serve on
-- port: 6379
-selector:
-name: redis-slave
-&lt;/code>&lt;/pre>&lt;h3 id="start-redis-slave-service">Start Redis Slave Service&lt;/h3>
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="start-redis-slave-service">Start Redis Slave Service&lt;/h3>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl create -f redis-slave-service.yaml
 service/redis-slave created
 &lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get services
@@ -258,9 +260,9 @@ frontend NodePort 10.98.211.171 &amp;lt;none&amp;gt; 80:30080/TCP 3s
 kubernetes ClusterIP 10.96.0.1 &amp;lt;none&amp;gt; 443/TCP 13m
 redis-master ClusterIP 10.100.144.249 &amp;lt;none&amp;gt; 6379/TCP 11m
 redis-slave ClusterIP 10.105.27.32 &amp;lt;none&amp;gt; 6379/TCP 11m
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>We&amp;rsquo;ll discuss &lt;em>NodePort&lt;/em> in future scenarios.&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>我们将在未来的场景中讨论 &lt;em>NodePort&lt;/em> 。&lt;/p>
 &lt;h2 id="访问用户手册前端">访问用户手册前端&lt;/h2>
-&lt;p>定义了所有 &lt;em>Controller&lt;/em> 和 &lt;em>Service&lt;/em> 后，&lt;em>Kubernetes&lt;/em> 将开始将它们作为 &lt;em>Pod&lt;/em> 启动。根据实际发生的情况，&lt;em>Pod&lt;/em> 可以具有不同的状态。例如，如果 &lt;em>Docker&lt;/em> 映像仍在下载无法启动，则 Pod 将处于 &lt;em>pending&lt;/em> 状态。准备就绪后，状态将会变更为 &lt;em>running&lt;/em>。&lt;/p>
+&lt;p>定义了所有 &lt;em>Controller&lt;/em> 和 &lt;em>Service&lt;/em> 后，&lt;em>Kubernetes&lt;/em> 将开始将它们作为 &lt;em>Pod&lt;/em> 启动。根据实际发生的情况，&lt;em>Pod&lt;/em> 可以具有不同的状态。例如，如果 &lt;em>Docker&lt;/em> 映像仍在下载无法启动，则 &lt;em>Pod&lt;/em> 将处于 &lt;em>pending&lt;/em> 状态。准备就绪后，状态将会变更为 &lt;em>running&lt;/em>。&lt;/p>
 &lt;h3 id="查看-pods-状态">查看 Pods 状态&lt;/h3>
 &lt;p>可以使用下列命令查看所有 &lt;em>Pod&lt;/em> 的状态。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get pods
@@ -286,36 +288,36 @@ NodePort: &amp;lt;unset&amp;gt; 30080/TCP
 本系列教程将使用 &lt;a class="link" href="https://www.katacoda.com" target="_blank" rel="noopener"
 >Katacoda在线学习平台&lt;/a> 完成学习。&lt;/p>
 &lt;/blockquote>
-&lt;p>在此场景中，您将学习如何使用 &lt;em>Kubectl&lt;/em> 创建和启动&lt;code>Deployment&lt;/code>、&lt;code>Replication Controller&lt;/code>，并通过编写 &lt;em>yaml&lt;/em> 定义使用服务开暴露它们。&lt;/p>
-&lt;p>YAML 定义了计划部署的 Kubernetes 对象。可以以更新对象并将其重新部署到集群的方式来更改配置。&lt;/p>
+&lt;p>在此场景中，您将学习如何使用 &lt;em>Kubectl&lt;/em> 创建和启动 &lt;em>Deployment&lt;/em>、&lt;em>Replication Controller&lt;/em>，并通过编写 &lt;em>yaml&lt;/em> 定义使用服务开暴露它们。&lt;/p>
+&lt;p>&lt;em>YAML&lt;/em> 定义了计划部署的 &lt;em>Kubernetes&lt;/em> 对象。可以以更新对象并将其重新部署到集群的方式来更改配置。&lt;/p>
 &lt;h2 id="创建-deployment">创建 Deployment&lt;/h2>
 &lt;p>&lt;em>Deployment&lt;/em> 对象是最常见的 &lt;em>Kubernetes&lt;/em> 对象之一。&lt;em>Deployment&lt;/em> 对象定义了所需的容器规范，以及 &lt;em>Kubernetes&lt;/em> 其他部分用来发现和连接到应用程序的名称和标签。&lt;/p>
 &lt;h3 id="任务">任务&lt;/h3>
-&lt;p>将以下定义复制到编辑器的&lt;em>YAML&lt;/em>文件中。该 &lt;em>YAML&lt;/em> 定义了如何使用在端口 80 上运行的应用，该应用使用 Docker 映像 &lt;em>katacoda/docker-http-server&lt;/em> ，启动名为 &lt;em>webapp1&lt;/em> 。&lt;/p>
+&lt;p>将以下定义复制到编辑器的&lt;em>YAML&lt;/em>文件中。该 &lt;em>YAML&lt;/em> 定义了如何使用在端口 &lt;em>80&lt;/em> 上运行的应用，该应用使用 &lt;em>Docker&lt;/em> 映像 &lt;em>katacoda/docker-http-server&lt;/em> ，启动名为 &lt;em>webapp1&lt;/em> 。&lt;/p>
 &lt;p>&lt;strong>deployment.yaml&lt;/strong>&lt;/p>
-&lt;pre>&lt;code>apiVersion: apps/v1
-kind: Deployment
-metadata:
-name: webapp1
-spec:
-replicas: 1
-selector:
-matchLabels:
-app: webapp1
-template:
-metadata:
-labels:
-app: webapp1
-spec:
-containers:
-- name: webapp1
-image: katacoda/docker-http-server:latest
-ports:
-- containerPort: 80
-&lt;/code>&lt;/pre>&lt;p>使用&lt;code>kubectl create -f deployment.yaml&lt;/code>命令向集群部署。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">apps/v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">matchLabels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">katacoda/docker-http-server:latest&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">containerPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>使用 &lt;code>kubectl create -f deployment.yaml&lt;/code> 命令向集群部署。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl create -f deployment.yaml
 deployment.apps/webapp1 created
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>由于它是一个 &lt;em>Deployment&lt;/em> 对象，因此可以通过 &lt;code>kubectl get deployment&lt;/code> 获取所有已部署的&lt;em>Deployment&lt;/em>对象的列表。&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>由于它是一个 &lt;em>Deployment&lt;/em> 对象，因此可以通过 &lt;code>kubectl get deployment&lt;/code> 获取所有已部署的 &lt;em>Deployment&lt;/em> 对象的列表。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get deployment
 NAME READY UP-TO-DATE AVAILABLE AGE
 webapp1 1/1 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 10s
@@ -352,30 +354,29 @@ Events:
 Type Reason Age From Message
 ---- ------ ---- ---- -------
 Normal ScalingReplicaSet 49s deployment-controller Scaled up replica &lt;span class="nb">set&lt;/span> webapp1-6b54fb89d9 to &lt;span class="m">1&lt;/span>
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>Details of individual deployments can be outputted with &lt;code>kubectl describe deployment webapp1&lt;/code>&lt;/p>
-&lt;h2 id="创建service">创建Service&lt;/h2>
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="创建service">创建Service&lt;/h2>
 &lt;p>&lt;em>Kubernetes&lt;/em> 具有强大的网络功能，可以控制应用程序的通信方式。这些网络配置也可以通过 &lt;em>YAML&lt;/em> 定义。&lt;/p>
 &lt;h3 id="任务-1">任务&lt;/h3>
 &lt;p>将 &lt;em>Service&lt;/em> 定义复制到编辑器。该 &lt;em>Service&lt;/em> 选择带有标签 &lt;em>webapp1&lt;/em> 的所有应用程序。当部署多个副本或实例时，它们将根据此公共标签自动进行负载平衡。该 &lt;em>Service&lt;/em> 通过 &lt;em>NodePort&lt;/em> 的网络连接方式部署。&lt;/p>
 &lt;p>&lt;strong>service.yaml&lt;/strong>&lt;/p>
-&lt;pre>&lt;code>apiVersion: v1
-kind: Service
-metadata:
-name: webapp1-svc
-labels:
-app: webapp1
-spec:
-type: NodePort
-ports:
-- port: 80
-nodePort: 30080
-selector:
-app: webapp1
-&lt;/code>&lt;/pre>&lt;p>所有 Kubernetes 对象都一致使用 &lt;em>kubectl&lt;/em> 完成部署。&lt;/p>
-&lt;p>使用 &lt;code>kubectl create -f service.yaml&lt;/code> 命令部署&lt;em>Service&lt;/em>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Service&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1-svc&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">type&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">NodePort&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">port&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">nodePort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">30080&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">webapp1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>所有 &lt;em>Kubernetes&lt;/em> 对象都一致使用 &lt;em>kubectl&lt;/em> 完成部署。&lt;/p>
+&lt;p>使用 &lt;code>kubectl create -f service.yaml&lt;/code> 命令部署 &lt;em>Service&lt;/em>&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl create -f service.yaml
 service/webapp1-svc created
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>和以往一样，使用 &lt;code>kubectl get svc&lt;/code> 可以查看所有已部署的 &lt;em>Service&lt;/em> 对象的信息。通过&lt;code>kubectl describe svc webapp1-svc&lt;/code>命令可以查看该 &lt;em>Service&lt;/em> 对象更多的配置信息。&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>和以往一样，使用 &lt;code>kubectl get svc&lt;/code> 可以查看所有已部署的 &lt;em>Service&lt;/em> 对象的信息。通过 &lt;code>kubectl describe svc webapp1-svc&lt;/code> 命令可以查看该 &lt;em>Service&lt;/em> 对象更多的配置信息。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get svc
 NAME TYPE CLUSTER-IP EXTERNAL-IP PORT&lt;span class="o">(&lt;/span>S&lt;span class="o">)&lt;/span> AGE
 kubernetes ClusterIP 10.96.0.1 &amp;lt;none&amp;gt; 443/TCP 6m38s
@@ -401,16 +402,18 @@ Events: &amp;lt;none&amp;gt;
 &lt;p>由于 &lt;em>Deployment&lt;/em> 需要不同的配置，因此可以更改 &lt;em>YAML&lt;/em> 的详细信息。这遵循基础设施即代码的思维方式。清单应在源代码控制下，并且保证生产环境的配置和源代码控制中的配置一致。&lt;/p>
 &lt;h3 id="任务-2">任务&lt;/h3>
 &lt;p>更新 &lt;em>deployment.yaml&lt;/em> 文件以增加运行的实例数。例如，该文件应如下所示：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">replicas: 1 --&amp;gt; replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">4&lt;/span>&lt;span class="w">
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="c"># --&amp;gt; &lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">4&lt;/span>&lt;span class="w">
 &lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>使用 &lt;em>kubectl apply&lt;/em> 提交对现有定义的更新。要扩展副本数量，请使用 &lt;code>kubectl apply -f deployment.yaml&lt;/code> 部署更新的 &lt;em>YAML&lt;/em> 文件&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl apply -f deployment.yaml
 Warning: kubectl apply should be used on resource created by either kubectl create --save-config or kubectl apply
 deployment.apps/webapp1 configured
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>集群的状态将立即更新，可通过 &lt;code>kubectl get deployment&lt;/code>命令 查看&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>集群的状态将立即更新，可通过 &lt;code>kubectl get deployment&lt;/code> 命令 查看&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get deployment
 NAME READY UP-TO-DATE AVAILABLE AGE
 webapp1 4/4 &lt;span class="m">4&lt;/span> &lt;span class="m">4&lt;/span> 15m
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>根据定义将有额外的&lt;code>Pods&lt;/code>被调度到集群中， 使用&lt;code>kubectl get pods&lt;/code>查看 &lt;em>Pod&lt;/em> 信息&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>根据定义将有额外的 &lt;code>Pods&lt;/code> 被调度到集群中， 使用 &lt;code>kubectl get pods&lt;/code> 查看 &lt;em>Pod&lt;/em> 信息&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get pods
 NAME READY STATUS RESTARTS AGE
 webapp1-6b54fb89d9-5rzpv 1/1 Running &lt;span class="m">0&lt;/span> 16m
@@ -429,17 +432,17 @@ $ curl host01:30080
 &amp;lt;h1&amp;gt;This request was processed by host: webapp1-6b54fb89d9-x8vtv&amp;lt;/h1&amp;gt;
 $ curl host01:30080
 &amp;lt;h1&amp;gt;This request was processed by host: webapp1-6b54fb89d9-ktvz4&amp;lt;/h1&amp;gt;
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>其他 Kubernetes 网络细节和对象定义将在未来的其他场景中介绍。&lt;/p></description></item><item><title>Kubernetes初探（三）</title><link>https://www.catfish.top/p/k8s-basic-3/</link><pubDate>Tue, 20 Jul 2021 11:27:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-3/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-3/kubernates.png" alt="Featured image of post Kubernetes初探（三）" />&lt;blockquote>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>其他 &lt;em>Kubernetes&lt;/em> 网络细节和对象定义将在未来的其他场景中介绍。&lt;/p></description></item><item><title>Kubernetes初探（三）</title><link>https://www.catfish.top/p/k8s-basic-3/</link><pubDate>Tue, 20 Jul 2021 11:27:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-3/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-3/kubernates.png" alt="Featured image of post Kubernetes初探（三）" />&lt;blockquote>
 &lt;p>Katacoda在线课：&lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/kubectl-run-containers" target="_blank" rel="noopener"
 >Deploy Containers Using Kubectl&lt;/a>&lt;/p>
 &lt;p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
 本系列教程将使用 &lt;a class="link" href="https://www.katacoda.com" target="_blank" rel="noopener"
 >Katacoda在线学习平台&lt;/a> 完成学习。&lt;/p>
 &lt;/blockquote>
-&lt;p>在此场景中，将学习如何使用 &lt;code>Kubectl&lt;/code> 创建和启动&lt;code>Deployments&lt;/code>, &lt;code>Replication Controllers&lt;/code>并通过&lt;code>Services&lt;/code>对外开放接口，而无需编写 &lt;em>yaml&lt;/em> 定义。这样便可以快速将容器启动到集群上。&lt;/p>
+&lt;p>在此场景中，将学习如何使用 &lt;em>Kubectl&lt;/em> 创建和启动 &lt;em>Deployment&lt;/em> 和 &lt;em>Replication Controllers&lt;/em> 并通过 &lt;em>Services&lt;/em> 对外暴露接口。本场景中无需编写 &lt;em>yaml&lt;/em> 定义，便可以快速将容器启动到集群上。&lt;/p>
 &lt;h2 id="启动集群">启动集群&lt;/h2>
-&lt;p>首先，我们需要启动一个 Kubernetes 集群。&lt;/p>
-&lt;p>执行以下命令启动集群并下载&lt;code>Kubectl CLI&lt;/code>。&lt;/p>
+&lt;p>首先，我们需要启动一个 &lt;em>Kubernetes&lt;/em> 集群。&lt;/p>
+&lt;p>执行以下命令启动集群并下载 &lt;em>Kubectl CLI&lt;/em>。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ minikube start --wait&lt;span class="o">=&lt;/span>&lt;span class="nb">false&lt;/span>
 * minikube v1.8.1 on Ubuntu 18.04
 * Using the none driver based on user configuration
@@ -451,19 +454,19 @@ $ curl host01:30080
 * Enabling addons: default-storageclass, storage-provisioner
 * Configuring &lt;span class="nb">local&lt;/span> host environment ...
 * Done! kubectl is now configured to use &lt;span class="s2">&amp;#34;minikube&amp;#34;&lt;/span>
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>通过&lt;code>kubectl get nodes&lt;/code>命令来检查节点是否准备就绪。&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>通过 &lt;code>kubectl get nodes&lt;/code> 命令来检查节点是否准备就绪。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get nodes
 NAME STATUS ROLES AGE VERSION
 minikube Ready master 19s v1.17.3
 &lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="kubectl-run">Kubectl Run&lt;/h2>
-&lt;p>Run 命令根据指定的参数（例如映像或副本）创建部署。该部署发布给Kubernetes 主节点，启动所需 Pod 和容器的 。 &lt;em>Kubectl run&lt;/em> 类似于 &lt;em>docker run&lt;/em>，但&lt;em>Kubectl run&lt;/em> 是在集群中运行的。&lt;/p>
+&lt;p>&lt;em>Run&lt;/em> 命令根据指定的参数（例如映像或副本）创建部署。该部署发布给 &lt;em>Kubernetes&lt;/em> 主节点，启动所需 &lt;em>Pod&lt;/em> 和容器的 。 &lt;em>Kubectl run&lt;/em> 类似于 &lt;em>docker run&lt;/em>，但 &lt;em>Kubectl run&lt;/em> 是在集群中运行的。&lt;/p>
 &lt;p>命令的格式为 &lt;code>kubectl run &amp;lt;name of deployment&amp;gt; &amp;lt;properties&amp;gt;&lt;/code>&lt;/p>
 &lt;h3 id="任务">任务&lt;/h3>
-&lt;p>以下命令将启动一个名为 &lt;em>http&lt;/em> 的部署，它将启动一个基于 Docker 镜像 &lt;em>katacoda/docker-http-server:latest&lt;/em> 的容器。&lt;/p>
+&lt;p>以下命令将启动一个名为 &lt;em>http&lt;/em> 的部署，它将启动一个基于 &lt;em>Docker&lt;/em> 镜像 &lt;em>katacoda/docker-http-server:latest&lt;/em> 的容器。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl run http --image&lt;span class="o">=&lt;/span>katacoda/docker-http-server:latest --replicas&lt;span class="o">=&lt;/span>&lt;span class="m">1&lt;/span>
 kubectl run --generator&lt;span class="o">=&lt;/span>deployment/apps.v1 is DEPRECATED and will be removed in a future version. Use kubectl run --generator&lt;span class="o">=&lt;/span>run-pod/v1 or kubectl create instead.
 deployment.apps/http created
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>使用&lt;em>kubectl&lt;/em>查看各部署的状态。&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>使用 &lt;em>kubectl&lt;/em> 查看各部署的状态。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get deployments
 NAME READY UP-TO-DATE AVAILABLE AGE
 http 1/1 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 2m7s
@@ -509,46 +512,45 @@ Normal ScalingReplicaSet 4m16s deployment-controller Scaled up replica &lt;span 
 &lt;p>使用以下命令将主机上的容器端口 &lt;em>80&lt;/em> 公开 &lt;em>8000&lt;/em> 绑定到主机的 &lt;em>external-ip&lt;/em>。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl expose deployment http --external-ip&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;172.17.0.44&amp;#34;&lt;/span> --port&lt;span class="o">=&lt;/span>&lt;span class="m">8000&lt;/span> --target-port&lt;span class="o">=&lt;/span>&lt;span class="m">80&lt;/span>
 service/http exposed
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>接下来就能 ping 主机查看 HTTP 服务返回的结果。&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>接下来就能 &lt;em>ping&lt;/em> 主机查看 &lt;em>HTTP&lt;/em> 服务返回的结果。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ curl http://172.17.0.44:8000
 &amp;lt;h1&amp;gt;This request was processed by host: http-774bb756bb-m6tjp&amp;lt;/h1&amp;gt;
 &lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="kubectl-run-and-expose">Kubectl Run and Expose&lt;/h2>
 &lt;p>可以单独使用命令 &lt;em>kubectl run&lt;/em> 来创建部署并将其开放。&lt;/p>
 &lt;h3 id="任务-2">任务&lt;/h3>
-&lt;p>使用命令创建在端口 &lt;em>8001&lt;/em> 上开放的第二个 http 服务。&lt;/p>
+&lt;p>使用命令创建在端口 &lt;em>8001&lt;/em> 上开放的第二个 &lt;em>http&lt;/em> 服务。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl run httpexposed --image&lt;span class="o">=&lt;/span>katacoda/docker-http-server:latest --replicas&lt;span class="o">=&lt;/span>&lt;span class="m">1&lt;/span> --port&lt;span class="o">=&lt;/span>&lt;span class="m">80&lt;/span> --hostport&lt;span class="o">=&lt;/span>&lt;span class="m">8001&lt;/span>
 kubectl run --generator&lt;span class="o">=&lt;/span>deployment/apps.v1 is DEPRECATED and will be removed in a future version. Use kubectl run --generator&lt;span class="o">=&lt;/span>run-pod/v1 or kubectl create instead.
 deployment.apps/httpexposed created
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>接下来可以使用 &lt;code>curl http://172.17.0.41:8001&lt;/code> 来访问该服务。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ curl http://172.17.0.44:8001
 &amp;lt;h1&amp;gt;This request was processed by host: httpexposed-68cb8c8d4-r7qtt&amp;lt;/h1&amp;gt;
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>在服务内，通过 Docker 端口映射开放了 Pod。因此，您将看不到使用 &lt;code>kubectl get svc&lt;/code> 列出的服务&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>在服务内，通过 &lt;em>Docker&lt;/em> 端口映射开放了 &lt;em>Pod&lt;/em>。因此，您将看不到使用 &lt;code>kubectl get svc&lt;/code> 列出的服务&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get svc
 NAME TYPE CLUSTER-IP EXTERNAL-IP PORT&lt;span class="o">(&lt;/span>S&lt;span class="o">)&lt;/span> AGE
 http ClusterIP 10.97.103.237 172.17.0.44 8000/TCP 4m47s
 kubernetes ClusterIP 10.96.0.1 &amp;lt;none&amp;gt; 443/TCP 44m
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>可以通过 &lt;code>docker ps | grep httpexposed&lt;/code>命令查看详细信息。&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>可以通过 &lt;code>docker ps | grep httpexposed&lt;/code> 命令查看详细信息。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ docker ps &lt;span class="p">|&lt;/span> grep httpexposed
 1690c6682f93 katacoda/docker-http-server &lt;span class="s2">&amp;#34;/app&amp;#34;&lt;/span> &lt;span class="m">2&lt;/span> minutes ago Up &lt;span class="m">2&lt;/span> minutes k8s_httpexposed_httpexposed-68cb8c8d4-r7qtt_default_6fb23c14-277e-4298-b325-c52ef4eb09a9_0
 d9ae0076a0d4 k8s.gcr.io/pause:3.1 &lt;span class="s2">&amp;#34;/pause&amp;#34;&lt;/span> &lt;span class="m">2&lt;/span> minutes ago Up &lt;span class="m">2&lt;/span> minutes 0.0.0.0:8001-&amp;gt;80/tcp k8s_POD_httpexposed-68cb8c8d4-r7qtt_default_6fb23c14-277e-4298-b325-c52ef4eb09a9_0
 &lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="暂停容器">暂停容器&lt;/h3>
-&lt;p>运行上面的命令，你会注意到端口暴露在 Pod 上，而不是 http 容器本身。 Pause 容器负责为 Pod 定义网络。 Pod 中的其他容器共享相同的网络命名空间。允许多个容器通过同一网络接口进行通信，提高了网络性能。&lt;/p>
+&lt;p>运行上面的命令，你会注意到端口暴露在 &lt;em>Pod&lt;/em> 上，而不是 &lt;em>http&lt;/em> 容器本身。 &lt;em>Pause&lt;/em> 容器负责为 &lt;em>Pod&lt;/em> 定义网络。 &lt;em>Pod&lt;/em> 中的其他容器共享相同的网络命名空间。允许多个容器通过同一网络接口进行通信，提高了网络性能。&lt;/p>
 &lt;h2 id="容器扩展">容器扩展&lt;/h2>
 &lt;p>随着我们的部署运行，我们现在可以使用 &lt;em>kubectl&lt;/em> 来扩展副本的数量。&lt;/p>
-&lt;p>扩展部署将请求 Kubernetes 启动额外的 Pod。然后，这些 Pod 将使用开放服务自动进行负载平衡。&lt;/p>
+&lt;p>扩展部署将请求 &lt;em>Kubernetes&lt;/em> 启动额外的 &lt;em>Pod&lt;/em>。然后，这些 &lt;em>Pod&lt;/em> 将使用开放服务自动进行负载平衡。&lt;/p>
 &lt;h3 id="任务-3">任务&lt;/h3>
-&lt;p>&lt;em>kubectl scale&lt;/em> 命令能够为特定 &lt;code>Deployment&lt;/code>或 &lt;code>Replication Controller&lt;/code> 调整运行的 Pod 数量。&lt;/p>
+&lt;p>&lt;em>kubectl scale&lt;/em> 命令能够为特定 &lt;em>Deployment&lt;/em> 或 &lt;em>Replication Controller&lt;/em> 调整运行的 &lt;em>Pod&lt;/em> 数量。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl scale --replicas&lt;span class="o">=&lt;/span>&lt;span class="m">3&lt;/span> deployment http
 deployment.apps/http scaled
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>列出所有 pod，能够看到三个正在运行的 &lt;em>http&lt;/em> 部署。&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>列出所有 &lt;em>pod&lt;/em>，能够看到三个正在运行的 &lt;em>http&lt;/em> 部署。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get pods
 NAME READY STATUS RESTARTS AGE
 http-774bb756bb-m6tjp 1/1 Running &lt;span class="m">0&lt;/span> 20m
 http-774bb756bb-q29v8 1/1 Running &lt;span class="m">0&lt;/span> 45s
 http-774bb756bb-x2xxv 1/1 Running &lt;span class="m">0&lt;/span> 45s
 httpexposed-68cb8c8d4-r7qtt 1/1 Running &lt;span class="m">0&lt;/span> 9m3s
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>一旦每个 Pod 启动，就会被添加到负载均衡器服务中。通过&lt;code>describe&lt;/code>，可以查看包含的端点和与之关联的 Pod。
-Once each Pod starts it will be added to the load balancer service. By describing the service you can view the endpoint and the associated Pods which are included.&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>一旦每个 &lt;em>Pod&lt;/em> 启动，就会被添加到负载均衡器服务中。通过 &lt;em>describe&lt;/em>，可以查看包含的端点和与之关联的 &lt;em>Pod&lt;/em>。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl describe svc http
 Name: http
 Namespace: default
@@ -587,15 +589,15 @@ $ curl http://172.17.0.44:8000
 本系列教程将使用 &lt;a class="link" href="https://www.katacoda.com" target="_blank" rel="noopener"
 >Katacoda在线学习平台&lt;/a> 完成学习。&lt;/p>
 &lt;/blockquote>
-&lt;p>在此场景中，您将学习如何使用 &lt;code>Kubeadm&lt;/code> 启动 &lt;code>Kubernetes&lt;/code> 集群。&lt;/p>
-&lt;p>&lt;code>Kubeadm&lt;/code> 解决了TLS 加密配置、 Kubernetes 核心组件部署和额外节点集群加入的问题。启动的集群通过 RBAC 等机制开箱即用。&lt;/p>
-&lt;p>关于&lt;code>Kubeadm&lt;/code>的更多信息可以参考： &lt;a class="link" href="https://github.com/kubernetes/kubeadm" target="_blank" rel="noopener"
+&lt;p>在此场景中，您将学习如何使用 &lt;em>Kubeadm&lt;/em> 启动 &lt;em>Kubernetes&lt;/em> 集群。&lt;/p>
+&lt;p>&lt;em>Kubeadm&lt;/em> 解决了TLS 加密配置、 Kubernetes 核心组件部署和额外节点集群加入的问题。启动的集群通过 RBAC 等机制开箱即用。&lt;/p>
+&lt;p>关于 &lt;em>Kubeadm&lt;/em> 的更多信息可以参考： &lt;a class="link" href="https://github.com/kubernetes/kubeadm" target="_blank" rel="noopener"
 >https://github.com/kubernetes/kubeadm&lt;/a>&lt;/p>
 &lt;h2 id="初始化-master">初始化 Master&lt;/h2>
-&lt;p>&lt;code>Kubeadm&lt;/code> 已经安装在节点上。软件包适用于 Ubuntu 16.04+、CentOS 7 或 HypriotOS v1.0.1+。&lt;/p>
-&lt;p>初始化集群的第一步是启动&lt;code>Master节点&lt;/code>。 &lt;code>Master节点&lt;/code> 负责运行控制平面组件、&lt;code>etcd&lt;/code> 和 API 服务器。客户端能够与 API 通信，能够完成工作负载的调度和集群状态的管理。&lt;/p>
+&lt;p>&lt;em>Kubeadm&lt;/em> 已经安装在节点上。软件包适用于 Ubuntu 16.04+、CentOS 7 或 HypriotOS v1.0.1+。&lt;/p>
+&lt;p>初始化集群的第一步是启动 &lt;em>Master节点&lt;/em> 。 &lt;em>Master节点&lt;/em> 负责运行控制平面组件、&lt;em>etcd&lt;/em> 和 &lt;em>API&lt;/em> 服务器。客户端能够与 &lt;em>API&lt;/em> 通信，能够完成工作负载的调度和集群状态的管理。&lt;/p>
 &lt;h3 id="任务">任务&lt;/h3>
-&lt;p>下面的命令将使用已知的&lt;code>Token&lt;/code>简化初始化集群的步骤。&lt;/p>
+&lt;p>下面的命令将使用已知的 &lt;em>Token&lt;/em> 简化初始化集群的步骤。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubeadm init --token&lt;span class="o">=&lt;/span>102952.1a7dd4cc8d1f4cc5 --kubernetes-version &lt;span class="k">$(&lt;/span>kubeadm version -o short&lt;span class="k">)&lt;/span>
 &lt;span class="o">[&lt;/span>init&lt;span class="o">]&lt;/span> Using Kubernetes version: v1.14.0
 &lt;span class="o">[&lt;/span>preflight&lt;span class="o">]&lt;/span> Running pre-flight checks
@@ -656,18 +658,18 @@ https://kubernetes.io/docs/concepts/cluster-administration/addons/
 Then you can join any number of worker nodes by running the following on each as root:
 kubeadm join 172.17.0.86:6443 --token 102952.1a7dd4cc8d1f4cc5 &lt;span class="se">\
 &lt;/span>&lt;span class="se">&lt;/span> --discovery-token-ca-cert-hash sha256:ab56a643a2d683bc1deeb483f0f946d4a774c4
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>在生产环境中，建议排除使用 &lt;code>kubeadm&lt;/code> 生成的令牌。&lt;/p>
-&lt;p>需要客户端配置和证书来管理 Kubernetes 集群。这个配置是在 &lt;em>kubeadm&lt;/em> 初始化集群时创建的。该命令将配置复制到用户主目录并设置用于 CLI 的环境变量。&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>在生产环境中，建议排除使用 &lt;em>kubeadm&lt;/em> 生成的令牌。&lt;/p>
+&lt;p>需要客户端配置和证书来管理 &lt;em>Kubernetes&lt;/em> 集群。这个配置是在 &lt;em>kubeadm&lt;/em> 初始化集群时创建的。该命令将配置复制到用户主目录并设置用于 &lt;em>CLI&lt;/em> 的环境变量。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ sudo cp /etc/kubernetes/admin.conf &lt;span class="nv">$HOME&lt;/span>/
 controlplane $ sudo chown &lt;span class="k">$(&lt;/span>id -u&lt;span class="k">)&lt;/span>:&lt;span class="k">$(&lt;/span>id -g&lt;span class="k">)&lt;/span> &lt;span class="nv">$HOME&lt;/span>/admin.conf
 controlplane $ &lt;span class="nb">export&lt;/span> &lt;span class="nv">KUBECONFIG&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="nv">$HOME&lt;/span>/admin.conf
 &lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="部署容器网络接口-container-networking-interface-cni">部署容器网络接口 Container Networking Interface (CNI)&lt;/h2>
-&lt;p>容器网络接口 (CNI) 定义了不同节点及其工作负载是如何通信的。有多个网络提供商可用，其中一些在 &lt;a class="link" href="https://kubernetes.io/docs/admin/addons/" target="_blank" rel="noopener"
+&lt;p>容器网络接口 ( &lt;em>CNI&lt;/em> ) 定义了不同节点及其工作负载是如何通信的。有多个网络提供商可用，其中一些在 &lt;a class="link" href="https://kubernetes.io/docs/admin/addons/" target="_blank" rel="noopener"
 >here&lt;/a> 中列出。&lt;/p>
 &lt;h3 id="任务-1">任务&lt;/h3>
-&lt;p>在这个场景中，我们将使用 &lt;code>WeaveWorks&lt;/code>的&lt;code>CNI&lt;/code>。&lt;/p>
+&lt;p>在这个场景中，我们将使用 &lt;em>WeaveWorks&lt;/em> 的 &lt;em>CNI&lt;/em> 。&lt;/p>
 &lt;p>&lt;strong>/opt/weave-kube.yaml&lt;/strong>
-可以通过&lt;code>cat /opt/weave-kube.yaml&lt;/code>命令查看部署定义。&lt;/p>
+可以通过 &lt;code>cat /opt/weave-kube.yaml&lt;/code> 命令查看部署定义。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">List&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">items&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
@@ -921,7 +923,7 @@ controlplane $ &lt;span class="nb">export&lt;/span> &lt;span class="nv">KUBECONF
 &lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">type&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">FileOrCreate&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">updateStrategy&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">type&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">RollingUpdate&lt;/span>&lt;span class="w">
-&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>使用&lt;code>kubectl apply&lt;/code>命令来完成部署工作。.&lt;/p>
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>使用 &lt;code>kubectl apply&lt;/code> 命令来完成部署工作。.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl apply -f /opt/weave-kube.yaml
 serviceaccount/weave-net created
 clusterrole.rbac.authorization.k8s.io/weave-net created
@@ -929,8 +931,8 @@ clusterrolebinding.rbac.authorization.k8s.io/weave-net created
 role.rbac.authorization.k8s.io/weave-net created
 rolebinding.rbac.authorization.k8s.io/weave-net created
 daemonset.apps/weave-net created
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>Weave&lt;/code> 现在将在集群上部署为一系列的 &lt;code>Pod&lt;/code>。
-可以通过 &lt;code>kubectl get pod -n kube-system&lt;/code>命令查看状态。&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;em>Weave&lt;/em> 现在将在集群上部署为一系列的 &lt;em>Pod&lt;/em>。
+可以通过 &lt;code>kubectl get pod -n kube-system&lt;/code> 命令查看状态。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">controlplane $ kubectl get pod -n kube-system
 NAME READY STATUS RESTARTS AGE
 coredns-fb8b8dccf-gw8z6 1/1 Running &lt;span class="m">0&lt;/span> 12m
@@ -941,7 +943,7 @@ kube-controller-manager-controlplane 1/1 Running &lt;span class="m">0&lt;/span> 
 kube-proxy-2kjsl 1/1 Running &lt;span class="m">0&lt;/span> 13m
 kube-scheduler-controlplane 1/1 Running &lt;span class="m">1&lt;/span> 11m
 weave-net-2dtbs 2/2 Running &lt;span class="m">0&lt;/span> 82s
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>需要安装Weave在你的集群中时，可以在 &lt;a class="link" href="https://www.weave.works/docs/net/latest/kube-addon/" target="_blank" rel="noopener"
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>需要安装 &lt;em>Weave&lt;/em> 在你的集群中时，可以在 &lt;a class="link" href="https://www.weave.works/docs/net/latest/kube-addon/" target="_blank" rel="noopener"
 >https://www.weave.works/docs/net/latest/kube-addon/&lt;/a> 找到更多详细信息。&lt;/p>
 &lt;h2 id="加入集群">加入集群&lt;/h2>
 &lt;p>一旦 &lt;code>Master&lt;/code> 和 &lt;code>CNI&lt;/code> 初始化完成，其他节点只要拥有正确的令牌就可以加入集群。令牌可以通过 &lt;code>kubeadm token&lt;/code> 进行管理，例如 &lt;code>kubeadm token list&lt;/code>。&lt;/p>
@@ -1429,11 +1431,11 @@ token: eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2Nv
 本系列教程将使用 &lt;a class="link" href="https://www.katacoda.com" target="_blank" rel="noopener"
 >Katacoda在线学习平台&lt;/a> 完成学习。&lt;/p>
 &lt;/blockquote>
-&lt;p>&lt;code>Minikube&lt;/code> 是一个可以轻松在本地运行 &lt;code>Kubernetes&lt;/code> 的工具。 &lt;code>Minikube&lt;/code> 是一个在本地上计算机的虚拟机内运行一个单节点 &lt;code>Kubernetes&lt;/code> 集群，便于用户能够完成日常开发工作，同时也能够让新用户快速了解&lt;code>Kubernetes&lt;/code>。&lt;/p>
+&lt;p>&lt;em>Minikube&lt;/em> 是一个可以轻松在本地运行 &lt;em>Kubernetes&lt;/em> 的工具。 &lt;em>Minikube&lt;/em> 是一个在本地上计算机的虚拟机内运行一个单节点 &lt;em>Kubernetes&lt;/em> 集群，便于用户能够完成日常开发工作，同时也能够让新用户快速了解 &lt;em>Kubernetes&lt;/em> 。&lt;/p>
 &lt;p>详情见： &lt;a class="link" href="https://github.com/kubernetes/minikube" target="_blank" rel="noopener"
 >https://github.com/kubernetes/minikube&lt;/a>&lt;/p>
-&lt;h2 id="步骤-1---启动minikube">步骤 1 - 启动&lt;code>Minikube&lt;/code>&lt;/h2>
-&lt;p>&lt;code>Minikube&lt;/code>已经安装并配置到环境中。通过运行 &lt;code>minikube version&lt;/code> 命令检查它是否已正确安装。&lt;/p>
+&lt;h2 id="步骤-1---启动-minikube">步骤 1 - 启动 &lt;em>Minikube&lt;/em>&lt;/h2>
+&lt;p>&lt;em>Minikube&lt;/em> 已经安装并配置到环境中。通过运行 &lt;code>minikube version&lt;/code> 命令检查它是否已正确安装。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ minikube version
 minikube version: v1.8.1
 commit: cbda04cf6bbe65e987ae52bb393c10099ab62014
@@ -1449,30 +1451,30 @@ commit: cbda04cf6bbe65e987ae52bb393c10099ab62014
 * Enabling addons: default-storageclass, storage-provisioner
 * Configuring &lt;span class="nb">local&lt;/span> host environment ...
 * Done! kubectl is now configured to use &lt;span class="s2">&amp;#34;minikube&amp;#34;&lt;/span>
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>现在，您的在线终端中有一个正在运行的 &lt;code>Kubernetes&lt;/code> 集群。 &lt;code>Minikube&lt;/code>会启动一个虚拟机为&lt;code>K8S&lt;/code>集群提供运行环境。&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>现在，您的在线终端中有一个正在运行的 &lt;em>Kubernetes&lt;/em> 集群。 &lt;em>Minikube&lt;/em> 会启动一个虚拟机为 &lt;em>K8S&lt;/em> 集群提供运行环境。&lt;/p>
 &lt;h2 id="步骤-2---集群信息">步骤 2 - 集群信息&lt;/h2>
-&lt;p>用户使用 &lt;code>kubectl&lt;/code> 客户端与集群交互。该工具用于管理 &lt;code>Kubernetes&lt;/code> 和在集群上运行的应用程序.&lt;/p>
-&lt;p>通过&lt;code>kubectl cluster-info&lt;/code>命令查看集群详情信息和健康状态。&lt;/p>
+&lt;p>用户使用 &lt;em>kubectl&lt;/em> 客户端与集群交互。该工具用于管理 &lt;em>Kubernetes&lt;/em> 和在集群上运行的应用程序.&lt;/p>
+&lt;p>通过 &lt;code>kubectl cluster-info&lt;/code> 命令查看集群详情信息和健康状态。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl cluster-info
 Kubernetes master is running at https://172.17.0.10:8443
 KubeDNS is running at https://172.17.0.10:8443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 To further debug and diagnose cluster problems, use &lt;span class="s1">&amp;#39;kubectl cluster-info dump&amp;#39;&lt;/span>.
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>通过&lt;code>kubectl get nodes&lt;/code>查看集群中的各节点信息。&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>通过 &lt;code>kubectl get nodes&lt;/code> 查看集群中的各节点信息。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get nodes
 NAME STATUS ROLES AGE VERSION
 minikube Ready master 9m15s v1.17.3
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>如果节点被标记为 &lt;strong>NotReady&lt;/strong> 则它仍在启动组件阶段。&lt;/p>
-&lt;p>此命令显示可用于托管我们的应用程序的所有节点。现在我们只有一个节点，可以看到它的状态是&lt;code>Ready&lt;/code>。&lt;/p>
+&lt;p>此命令显示可用于托管我们的应用程序的所有节点。现在我们只有一个节点，可以看到它的状态是 &lt;strong>Ready&lt;/strong>。&lt;/p>
 &lt;h2 id="步骤-3---部署容器">步骤 3 - 部署容器&lt;/h2>
-&lt;p>现在可以通过 &lt;code>Kubernetes&lt;/code> 集群来部署容器。&lt;/p>
-&lt;p>&lt;code>kubectl run&lt;/code>命令能够将容器部署到集群中。&lt;/p>
+&lt;p>现在可以通过 &lt;em>Kubernetes&lt;/em> 集群来部署容器。&lt;/p>
+&lt;p>&lt;code>kubectl run&lt;/code> 命令能够将容器部署到集群中。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl create deployment first-deployment --image&lt;span class="o">=&lt;/span>katacoda/docker-http-server
 deployment.apps/first-deployment created
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>部署状态可以通过&lt;code>Pods&lt;/code>的运行状态得知。&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>部署状态可以通过 &lt;em>Pods&lt;/em> 的运行状态得知。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get pods
 NAME READY STATUS RESTARTS AGE
 first-deployment-666c48b44-n7qjz 1/1 Running &lt;span class="m">0&lt;/span> 60s
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>容器运行后，可以根据需求使用不同的网络选项公开暴露接口。其中的一种解决方案是 &lt;code>NodePort&lt;/code>，它为容器提供动态端口。&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>容器运行后，可以根据需求使用不同的网络选项公开暴露接口。其中的一种解决方案是 &lt;em>NodePort&lt;/em> ，它为容器提供动态端口。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl expose deployment first-deployment --port&lt;span class="o">=&lt;/span>&lt;span class="m">80&lt;/span> --type&lt;span class="o">=&lt;/span>NodePort
 service/first-deployment exposed
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>下面的命令能够查询到绑定的端口，并且能够发送HTTP请求进行测试。&lt;/p>
@@ -1483,10 +1485,10 @@ $ curl host01:&lt;span class="nv">$PORT&lt;/span>
 &amp;lt;h1&amp;gt;This request was processed by host: first-deployment-666c48b44-n7qjz&amp;lt;/h1&amp;gt;
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>结果显示的是处理请求的容器。&lt;/p>
 &lt;h2 id="步骤-4---仪表盘">步骤 4 - 仪表盘&lt;/h2>
-&lt;p>使用 &lt;code>Minikube&lt;/code>命令启用仪表板&lt;/p>
+&lt;p>使用 &lt;em>Minikube&lt;/em> 命令启用仪表板&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ minikube addons &lt;span class="nb">enable&lt;/span> dashboard
 * The &lt;span class="s1">&amp;#39;dashboard&amp;#39;&lt;/span> addon is enabled
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>通过使用&lt;code>yaml&lt;/code>文件来定义部署Kubernetes Dashboard。&lt;strong>该配置仅适用于&lt;code>Katacoda&lt;/code>&lt;/strong>&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>通过使用 &lt;em>yaml&lt;/em> 文件来定义部署 &lt;em>Kubernetes Dashboard&lt;/em> 。&lt;strong>该配置仅适用于&lt;code>Katacoda&lt;/code>&lt;/strong>&lt;/p>
 &lt;p>&lt;strong>/opt/kubernetes-dashboard.yaml&lt;/strong>&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Namespace&lt;/span>&lt;span class="w">
@@ -1521,8 +1523,8 @@ $ curl host01:&lt;span class="nv">$PORT&lt;/span>
 &lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl apply -f /opt/kubernetes-dashboard.yaml
 namespace/kubernetes-dashboard configured
 service/kubernetes-dashboard-katacoda created
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>可以使用&lt;code>Kubernetes&lt;/code>仪表板查看部署到集群中的应用程序。仪表板将部署在 &lt;code>30000&lt;/code> 端口，但需要一段时间才能完成启动。&lt;/p>
-&lt;p>要查看 &lt;code>Dashboard&lt;/code>启动的进度，请使用 &lt;code>kubectl get pods -n kubernetes-dashboard -w&lt;/code> 查看 &lt;code>kube-system&lt;/code>命名空间中的 &lt;code>Pod&lt;/code>&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>可以使用 &lt;em>Kubernetes&lt;/em> 仪表板查看部署到集群中的应用程序。仪表板将部署在 &lt;em>30000&lt;/em> 端口，但需要一段时间才能完成启动。&lt;/p>
+&lt;p>要查看 &lt;em>Dashboard&lt;/em> 启动的进度，请使用 &lt;code>kubectl get pods -n kubernetes-dashboard -w&lt;/code> 查看 &lt;em>kube-system&lt;/em> 命名空间中的 &lt;em>Pod&lt;/em>&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ kubectl get pods -n kubernetes-dashboard -w
 NAME READY STATUS RESTARTS AGE
 dashboard-metrics-scraper-7b64584c5c-jmkls 1/1 Running &lt;span class="m">0&lt;/span> 6m15s

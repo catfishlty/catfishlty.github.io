@@ -56,14 +56,14 @@ Katacoda
 <p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
 本系列教程将使用 <a class=link href=https://www.katacoda.com target=_blank rel=noopener>Katacoda在线学习平台</a> 完成学习。</p>
 </blockquote>
-<p>在此场景中，您将学习如何使用 <code>Kubeadm</code> 启动 <code>Kubernetes</code> 集群。</p>
-<p><code>Kubeadm</code> 解决了TLS 加密配置、 Kubernetes 核心组件部署和额外节点集群加入的问题。启动的集群通过 RBAC 等机制开箱即用。</p>
-<p>关于<code>Kubeadm</code>的更多信息可以参考： <a class=link href=https://github.com/kubernetes/kubeadm target=_blank rel=noopener>https://github.com/kubernetes/kubeadm</a></p>
+<p>在此场景中，您将学习如何使用 <em>Kubeadm</em> 启动 <em>Kubernetes</em> 集群。</p>
+<p><em>Kubeadm</em> 解决了TLS 加密配置、 Kubernetes 核心组件部署和额外节点集群加入的问题。启动的集群通过 RBAC 等机制开箱即用。</p>
+<p>关于 <em>Kubeadm</em> 的更多信息可以参考： <a class=link href=https://github.com/kubernetes/kubeadm target=_blank rel=noopener>https://github.com/kubernetes/kubeadm</a></p>
 <h2 id=初始化-master>初始化 Master</h2>
-<p><code>Kubeadm</code> 已经安装在节点上。软件包适用于 Ubuntu 16.04+、CentOS 7 或 HypriotOS v1.0.1+。</p>
-<p>初始化集群的第一步是启动<code>Master节点</code>。 <code>Master节点</code> 负责运行控制平面组件、<code>etcd</code> 和 API 服务器。客户端能够与 API 通信，能够完成工作负载的调度和集群状态的管理。</p>
+<p><em>Kubeadm</em> 已经安装在节点上。软件包适用于 Ubuntu 16.04+、CentOS 7 或 HypriotOS v1.0.1+。</p>
+<p>初始化集群的第一步是启动 <em>Master节点</em> 。 <em>Master节点</em> 负责运行控制平面组件、<em>etcd</em> 和 <em>API</em> 服务器。客户端能够与 <em>API</em> 通信，能够完成工作负载的调度和集群状态的管理。</p>
 <h3 id=任务>任务</h3>
-<p>下面的命令将使用已知的<code>Token</code>简化初始化集群的步骤。</p>
+<p>下面的命令将使用已知的 <em>Token</em> 简化初始化集群的步骤。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubeadm init --token<span class=o>=</span>102952.1a7dd4cc8d1f4cc5 --kubernetes-version <span class=k>$(</span>kubeadm version -o short<span class=k>)</span>
 <span class=o>[</span>init<span class=o>]</span> Using Kubernetes version: v1.14.0
 <span class=o>[</span>preflight<span class=o>]</span> Running pre-flight checks
@@ -130,17 +130,17 @@ Then you can join any number of worker nodes by running the following on each as
 
 kubeadm join 172.17.0.86:6443 --token 102952.1a7dd4cc8d1f4cc5 <span class=se>\
 </span><span class=se></span>    --discovery-token-ca-cert-hash sha256:ab56a643a2d683bc1deeb483f0f946d4a774c4
-</code></pre></div><p>在生产环境中，建议排除使用 <code>kubeadm</code> 生成的令牌。</p>
-<p>需要客户端配置和证书来管理 Kubernetes 集群。这个配置是在 <em>kubeadm</em> 初始化集群时创建的。该命令将配置复制到用户主目录并设置用于 CLI 的环境变量。</p>
+</code></pre></div><p>在生产环境中，建议排除使用 <em>kubeadm</em> 生成的令牌。</p>
+<p>需要客户端配置和证书来管理 <em>Kubernetes</em> 集群。这个配置是在 <em>kubeadm</em> 初始化集群时创建的。该命令将配置复制到用户主目录并设置用于 <em>CLI</em> 的环境变量。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ sudo cp /etc/kubernetes/admin.conf <span class=nv>$HOME</span>/
 controlplane $ sudo chown <span class=k>$(</span>id -u<span class=k>)</span>:<span class=k>$(</span>id -g<span class=k>)</span> <span class=nv>$HOME</span>/admin.conf
 controlplane $ <span class=nb>export</span> <span class=nv>KUBECONFIG</span><span class=o>=</span><span class=nv>$HOME</span>/admin.conf
 </code></pre></div><h2 id=部署容器网络接口-container-networking-interface-cni>部署容器网络接口 Container Networking Interface (CNI)</h2>
-<p>容器网络接口 (CNI) 定义了不同节点及其工作负载是如何通信的。有多个网络提供商可用，其中一些在 <a class=link href=https://kubernetes.io/docs/admin/addons/ target=_blank rel=noopener>here</a> 中列出。</p>
+<p>容器网络接口 ( <em>CNI</em> ) 定义了不同节点及其工作负载是如何通信的。有多个网络提供商可用，其中一些在 <a class=link href=https://kubernetes.io/docs/admin/addons/ target=_blank rel=noopener>here</a> 中列出。</p>
 <h3 id=任务-1>任务</h3>
-<p>在这个场景中，我们将使用 <code>WeaveWorks</code>的<code>CNI</code>。</p>
+<p>在这个场景中，我们将使用 <em>WeaveWorks</em> 的 <em>CNI</em> 。</p>
 <p><strong>/opt/weave-kube.yaml</strong>
-可以通过<code>cat /opt/weave-kube.yaml</code>命令查看部署定义。</p>
+可以通过 <code>cat /opt/weave-kube.yaml</code> 命令查看部署定义。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
 </span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>List</span><span class=w>
 </span><span class=w></span><span class=nt>items</span><span class=p>:</span><span class=w>
@@ -394,7 +394,7 @@ controlplane $ <span class=nb>export</span> <span class=nv>KUBECONFIG</span><spa
 </span><span class=w>                </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>FileOrCreate</span><span class=w>
 </span><span class=w>      </span><span class=nt>updateStrategy</span><span class=p>:</span><span class=w>
 </span><span class=w>        </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>RollingUpdate</span><span class=w>
-</span></code></pre></div><p>使用<code>kubectl apply</code>命令来完成部署工作。.</p>
+</span></code></pre></div><p>使用 <code>kubectl apply</code> 命令来完成部署工作。.</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl apply -f /opt/weave-kube.yaml
 serviceaccount/weave-net created
 clusterrole.rbac.authorization.k8s.io/weave-net created
@@ -402,8 +402,8 @@ clusterrolebinding.rbac.authorization.k8s.io/weave-net created
 role.rbac.authorization.k8s.io/weave-net created
 rolebinding.rbac.authorization.k8s.io/weave-net created
 daemonset.apps/weave-net created
-</code></pre></div><p><code>Weave</code> 现在将在集群上部署为一系列的 <code>Pod</code>。
-可以通过 <code>kubectl get pod -n kube-system</code>命令查看状态。</p>
+</code></pre></div><p><em>Weave</em> 现在将在集群上部署为一系列的 <em>Pod</em>。
+可以通过 <code>kubectl get pod -n kube-system</code> 命令查看状态。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get pod -n kube-system
 NAME                                   READY   STATUS    RESTARTS   AGE
 coredns-fb8b8dccf-gw8z6                1/1     Running   <span class=m>0</span>          12m
@@ -414,7 +414,7 @@ kube-controller-manager-controlplane   1/1     Running   <span class=m>0</span> 
 kube-proxy-2kjsl                       1/1     Running   <span class=m>0</span>          13m
 kube-scheduler-controlplane            1/1     Running   <span class=m>1</span>          11m
 weave-net-2dtbs                        2/2     Running   <span class=m>0</span>          82s
-</code></pre></div><p>需要安装Weave在你的集群中时，可以在 <a class=link href=https://www.weave.works/docs/net/latest/kube-addon/ target=_blank rel=noopener>https://www.weave.works/docs/net/latest/kube-addon/</a> 找到更多详细信息。</p>
+</code></pre></div><p>需要安装 <em>Weave</em> 在你的集群中时，可以在 <a class=link href=https://www.weave.works/docs/net/latest/kube-addon/ target=_blank rel=noopener>https://www.weave.works/docs/net/latest/kube-addon/</a> 找到更多详细信息。</p>
 <h2 id=加入集群>加入集群</h2>
 <p>一旦 <code>Master</code> 和 <code>CNI</code> 初始化完成，其他节点只要拥有正确的令牌就可以加入集群。令牌可以通过 <code>kubeadm token</code> 进行管理，例如 <code>kubeadm token list</code>。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubeadm token list

@@ -56,10 +56,10 @@ Katacoda
 <p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
 本系列教程将使用 <a class=link href=https://www.katacoda.com target=_blank rel=noopener>Katacoda在线学习平台</a> 完成学习。</p>
 </blockquote>
-<p><code>Minikube</code> 是一个可以轻松在本地运行 <code>Kubernetes</code> 的工具。 <code>Minikube</code> 是一个在本地上计算机的虚拟机内运行一个单节点 <code>Kubernetes</code> 集群，便于用户能够完成日常开发工作，同时也能够让新用户快速了解<code>Kubernetes</code>。</p>
+<p><em>Minikube</em> 是一个可以轻松在本地运行 <em>Kubernetes</em> 的工具。 <em>Minikube</em> 是一个在本地上计算机的虚拟机内运行一个单节点 <em>Kubernetes</em> 集群，便于用户能够完成日常开发工作，同时也能够让新用户快速了解 <em>Kubernetes</em> 。</p>
 <p>详情见： <a class=link href=https://github.com/kubernetes/minikube target=_blank rel=noopener>https://github.com/kubernetes/minikube</a></p>
-<h2 id=步骤-1---启动minikube>步骤 1 - 启动<code>Minikube</code></h2>
-<p><code>Minikube</code>已经安装并配置到环境中。通过运行 <code>minikube version</code> 命令检查它是否已正确安装。</p>
+<h2 id=步骤-1---启动-minikube>步骤 1 - 启动 <em>Minikube</em></h2>
+<p><em>Minikube</em> 已经安装并配置到环境中。通过运行 <code>minikube version</code> 命令检查它是否已正确安装。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ minikube version
 
 minikube version: v1.8.1
@@ -77,31 +77,31 @@ commit: cbda04cf6bbe65e987ae52bb393c10099ab62014
 * Enabling addons: default-storageclass, storage-provisioner
 * Configuring <span class=nb>local</span> host environment ...
 * Done! kubectl is now configured to use <span class=s2>&#34;minikube&#34;</span>
-</code></pre></div><p>现在，您的在线终端中有一个正在运行的 <code>Kubernetes</code> 集群。 <code>Minikube</code>会启动一个虚拟机为<code>K8S</code>集群提供运行环境。</p>
+</code></pre></div><p>现在，您的在线终端中有一个正在运行的 <em>Kubernetes</em> 集群。 <em>Minikube</em> 会启动一个虚拟机为 <em>K8S</em> 集群提供运行环境。</p>
 <h2 id=步骤-2---集群信息>步骤 2 - 集群信息</h2>
-<p>用户使用 <code>kubectl</code> 客户端与集群交互。该工具用于管理 <code>Kubernetes</code> 和在集群上运行的应用程序.</p>
-<p>通过<code>kubectl cluster-info</code>命令查看集群详情信息和健康状态。</p>
+<p>用户使用 <em>kubectl</em> 客户端与集群交互。该工具用于管理 <em>Kubernetes</em> 和在集群上运行的应用程序.</p>
+<p>通过 <code>kubectl cluster-info</code> 命令查看集群详情信息和健康状态。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl cluster-info
 Kubernetes master is running at https://172.17.0.10:8443
 KubeDNS is running at https://172.17.0.10:8443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
 To further debug and diagnose cluster problems, use <span class=s1>&#39;kubectl cluster-info dump&#39;</span>.
-</code></pre></div><p>通过<code>kubectl get nodes</code>查看集群中的各节点信息。</p>
+</code></pre></div><p>通过 <code>kubectl get nodes</code> 查看集群中的各节点信息。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl get nodes
 NAME       STATUS   ROLES    AGE     VERSION
 minikube   Ready    master   9m15s   v1.17.3
 </code></pre></div><p>如果节点被标记为 <strong>NotReady</strong> 则它仍在启动组件阶段。</p>
-<p>此命令显示可用于托管我们的应用程序的所有节点。现在我们只有一个节点，可以看到它的状态是<code>Ready</code>。</p>
+<p>此命令显示可用于托管我们的应用程序的所有节点。现在我们只有一个节点，可以看到它的状态是 <strong>Ready</strong>。</p>
 <h2 id=步骤-3---部署容器>步骤 3 - 部署容器</h2>
-<p>现在可以通过 <code>Kubernetes</code> 集群来部署容器。</p>
-<p><code>kubectl run</code>命令能够将容器部署到集群中。</p>
+<p>现在可以通过 <em>Kubernetes</em> 集群来部署容器。</p>
+<p><code>kubectl run</code> 命令能够将容器部署到集群中。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl create deployment first-deployment --image<span class=o>=</span>katacoda/docker-http-server
 deployment.apps/first-deployment created
-</code></pre></div><p>部署状态可以通过<code>Pods</code>的运行状态得知。</p>
+</code></pre></div><p>部署状态可以通过 <em>Pods</em> 的运行状态得知。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl get pods
 NAME                               READY   STATUS    RESTARTS   AGE
 first-deployment-666c48b44-n7qjz   1/1     Running   <span class=m>0</span>          60s
-</code></pre></div><p>容器运行后，可以根据需求使用不同的网络选项公开暴露接口。其中的一种解决方案是 <code>NodePort</code>，它为容器提供动态端口。</p>
+</code></pre></div><p>容器运行后，可以根据需求使用不同的网络选项公开暴露接口。其中的一种解决方案是 <em>NodePort</em> ，它为容器提供动态端口。</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl expose deployment first-deployment --port<span class=o>=</span><span class=m>80</span> --type<span class=o>=</span>NodePort
 service/first-deployment exposed
 </code></pre></div><p>下面的命令能够查询到绑定的端口，并且能够发送HTTP请求进行测试。</p>
@@ -112,10 +112,10 @@ $ curl host01:<span class=nv>$PORT</span>
 &lt;h1&gt;This request was processed by host: first-deployment-666c48b44-n7qjz&lt;/h1&gt;
 </code></pre></div><p>结果显示的是处理请求的容器。</p>
 <h2 id=步骤-4---仪表盘>步骤 4 - 仪表盘</h2>
-<p>使用 <code>Minikube</code>命令启用仪表板</p>
+<p>使用 <em>Minikube</em> 命令启用仪表板</p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ minikube addons <span class=nb>enable</span> dashboard
 * The <span class=s1>&#39;dashboard&#39;</span> addon is enabled
-</code></pre></div><p>通过使用<code>yaml</code>文件来定义部署Kubernetes Dashboard。<strong>该配置仅适用于<code>Katacoda</code></strong></p>
+</code></pre></div><p>通过使用 <em>yaml</em> 文件来定义部署 <em>Kubernetes Dashboard</em> 。<strong>该配置仅适用于<code>Katacoda</code></strong></p>
 <p><strong>/opt/kubernetes-dashboard.yaml</strong></p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
 </span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Namespace</span><span class=w>
@@ -150,8 +150,8 @@ $ curl host01:<span class=nv>$PORT</span>
 </span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl apply -f /opt/kubernetes-dashboard.yaml
 namespace/kubernetes-dashboard configured
 service/kubernetes-dashboard-katacoda created
-</code></pre></div><p>可以使用<code>Kubernetes</code>仪表板查看部署到集群中的应用程序。仪表板将部署在 <code>30000</code> 端口，但需要一段时间才能完成启动。</p>
-<p>要查看 <code>Dashboard</code>启动的进度，请使用 <code>kubectl get pods -n kubernetes-dashboard -w</code> 查看 <code>kube-system</code>命名空间中的 <code>Pod</code></p>
+</code></pre></div><p>可以使用 <em>Kubernetes</em> 仪表板查看部署到集群中的应用程序。仪表板将部署在 <em>30000</em> 端口，但需要一段时间才能完成启动。</p>
+<p>要查看 <em>Dashboard</em> 启动的进度，请使用 <code>kubectl get pods -n kubernetes-dashboard -w</code> 查看 <em>kube-system</em> 命名空间中的 <em>Pod</em></p>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ kubectl get pods -n kubernetes-dashboard -w
 NAME                                         READY   STATUS    RESTARTS   AGE
 dashboard-metrics-scraper-7b64584c5c-jmkls   1/1     Running   <span class=m>0</span>          6m15s
@@ -282,7 +282,7 @@ Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=
 <div class=widget--toc>
 <nav id=TableOfContents>
 <ol>
-<li><a href=#步骤-1---启动minikube>步骤 1 - 启动<code>Minikube</code></a></li>
+<li><a href=#步骤-1---启动-minikube>步骤 1 - 启动 <em>Minikube</em></a></li>
 <li><a href=#步骤-2---集群信息>步骤 2 - 集群信息</a></li>
 <li><a href=#步骤-3---部署容器>步骤 3 - 部署容器</a></li>
 <li><a href=#步骤-4---仪表盘>步骤 4 - 仪表盘</a></li>
