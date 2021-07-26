@@ -1,0 +1,1083 @@
+<!doctype html><html lang=zh-cn>
+<head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="Helm - K8S包管理工具"><title>Kubernetes初探（十一）</title>
+<link rel=canonical href=https://www.catfish.top/p/k8s-basic-11/>
+<link rel=stylesheet href=/scss/style.min.css><meta property="og:title" content="Kubernetes初探（十一）">
+<meta property="og:description" content="Helm - K8S包管理工具">
+<meta property="og:url" content="https://www.catfish.top/p/k8s-basic-11/">
+<meta property="og:site_name" content="Catfish">
+<meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="K8S"><meta property="article:tag" content="容器"><meta property="article:tag" content="Katacoda"><meta property="article:tag" content="YAML"><meta property="article:tag" content="Helm"><meta property="article:published_time" content="2021-07-23T14:54:00+08:00"><meta property="article:modified_time" content="2021-07-23T15:24:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/k8s-basic-11/kubernates.png">
+<meta name=twitter:title content="Kubernetes初探（十一）">
+<meta name=twitter:description content="Helm - K8S包管理工具"><meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://www.catfish.top/p/k8s-basic-11/kubernates.png">
+<link rel="shortcut icon" href=/favicon.ico>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MPS4W3GMH8"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-MPS4W3GMH8')</script>
+</head>
+<body class="article-page has-toc">
+<script>(function(){const a='StackColorScheme';localStorage.getItem(a)||localStorage.setItem(a,"auto")})()</script><script>(function(){const b='StackColorScheme',a=localStorage.getItem(b),c=window.matchMedia('(prefers-color-scheme: dark)').matches===!0;a=='dark'||a==='auto'&&c?document.documentElement.dataset.scheme='dark':document.documentElement.dataset.scheme='light'})()</script>
+<div class="container main-container flex
+extended">
+<div id=article-toolbar>
+<a href=https://www.catfish.top class=back-home><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="15 6 9 12 15 18"/></svg>
+<span>返回</span>
+</a>
+</div>
+<main class="main full-width">
+<article class="has-image main-article">
+<header class=article-header>
+<div class=article-image>
+<a href=/p/k8s-basic-11/>
+<img src=/p/k8s-basic-11/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_3.png srcset="/p/k8s-basic-11/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_800x0_resize_box_3.png 800w, /p/k8s-basic-11/kubernates_hu999cd8b4a0602898549f5ade1550b92a_32166_1600x0_resize_box_3.png 1600w" width=800 height=173 loading=lazy alt="Featured image of post Kubernetes初探（十一）">
+</a>
+</div>
+<div class=article-details>
+<header class=article-category>
+<a href=/categories/k8s-basic/>
+Kubernate 初探
+</a>
+<a href=/categories/katacoda/>
+Katacoda
+</a>
+<a href=/categories/helm/>
+Helm
+</a>
+</header>
+<h2 class=article-title>
+<a href=/p/k8s-basic-11/>Kubernetes初探（十一）</a>
+</h2>
+<h3 class=article-subtitle>
+Helm - K8S包管理工具
+</h3>
+<footer class=article-time>
+<div><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
+<time class=article-time--published>Jul 23, 2021</time>
+</div>
+</footer>
+</div>
+</header>
+<section class=article-content>
+<blockquote>
+<p>Katacoda在线课：<a class=link href=https://www.katacoda.com/courses/kubernetes/helm-package-manager target=_blank rel=noopener>Helm Package Manager</a></p>
+<p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
+本系列教程将使用 <a class=link href=https://www.katacoda.com target=_blank rel=noopener>Katacoda在线学习平台</a> 完成学习。</p>
+</blockquote>
+<p>这个场景教你如何使用 <em>Kubernetes</em> 的包管理器 <em>Helm</em> 来部署 <em>Redis</em>。 <em>Helm</em> 简化了服务发现和部署到 <em>Kubernetes</em> 集群的步骤。。</p>
+<blockquote>
+<p><strong>&ldquo;Helm is the best way to find, share, and use software built for Kubernetes."</strong></p>
+<p><strong><em>Helm</em> 是查找、共享和使用为 <em>Kubernetes</em> 构建的软件的最佳方式</strong></p>
+</blockquote>
+<p>更多细节可以前往官网：<a class=link href=http://www.helm.sh/ target=_blank rel=noopener>http://www.helm.sh/</a></p>
+<h2 id=安装-helm>安装 Helm</h2>
+<p><em>Helm</em> 是一个单独的二进制文件，用于管理将 <em>Charts</em> 部署到 <em>Kubernetes</em>。 <em>Chart</em> 是 <em>kubernetes</em> 应用的一个打包单元。<em>Helm</em> 可以从 <a class=link href=https://github.com/kubernetes/helm/releases target=_blank rel=noopener>https://github.com/kubernetes/helm/releases</a> 下载。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ curl -LO https://storage.googleapis.com/kubernetes-helm/helm-v2.8.2-linux-amd64.tar.gz
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+<span class=m>100</span> 14.2M  <span class=m>100</span> 14.2M    <span class=m>0</span>     <span class=m>0</span>  19.4M      <span class=m>0</span> --:--:-- --:--:-- --:--:-- 19.4M
+controlplane $ tar -xvf helm-v2.8.2-linux-amd64.tar.gz
+linux-amd64/
+linux-amd64/helm
+linux-amd64/README.md
+linux-amd64/LICENSE
+controlplane $ mv linux-amd64/helm /usr/local/bin/
+</code></pre></div><p>安装后，初始化更新本地缓存将最新的包与本地安装环境同步。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ helm init --stable-repo-url https://charts.helm.sh/stable
+Creating /root/.helm 
+Creating /root/.helm/repository 
+Creating /root/.helm/repository/cache 
+Creating /root/.helm/repository/local 
+Creating /root/.helm/plugins 
+Creating /root/.helm/starters 
+Creating /root/.helm/cache/archive 
+Creating /root/.helm/repository/repositories.yaml 
+Adding stable repo with URL: https://charts.helm.sh/stable 
+Adding <span class=nb>local</span> repo with URL: http://127.0.0.1:8879/charts 
+<span class=nv>$HELM_HOME</span> has been configured at /root/.helm.
+
+Tiller <span class=o>(</span>the Helm server-side component<span class=o>)</span> has been installed into your Kubernetes Cluster.
+
+Please note: by default, Tiller is deployed with an insecure <span class=s1>&#39;allow unauthenticated users&#39;</span> policy.
+For more information on securing your installation see: https://docs.helm.sh/using_helm/#securing-your-helm-installation
+Happy Helming!
+controlplane $ helm repo update
+Hang tight <span class=k>while</span> we grab the latest from your chart repositories...
+...Skip <span class=nb>local</span> chart repository
+...Successfully got an update from the <span class=s2>&#34;stable&#34;</span> chart repository
+Update Complete. ⎈ Happy Helming!⎈
+</code></pre></div><h2 id=搜索-chart>搜索 Chart</h2>
+<p>您现在可以开始部署软件。可以使用搜索命令查找可用图表 <em>Chart</em> 。</p>
+<p>例如，要部署 Redis，我们需要找到一个 <em>Redis</em> 的 <em>Chart</em> 。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ helm search redis
+NAME                                    CHART VERSION   APP VERSION     DESCRIPTION                                       
+stable/prometheus-redis-exporter        3.5.1           1.3.4           DEPRECATED Prometheus exporter <span class=k>for</span> Redis metrics  
+stable/redis                            10.5.7          5.0.7           DEPRECATED Open source, advanced key-value stor...
+stable/redis-ha                         4.4.6           5.0.6           DEPRECATED - Highly available Kubernetes implem...
+stable/sensu                            0.2.5           0.28            DEPRECATED Sensu monitoring framework backed by..
+</code></pre></div><p>通过 <em>inspect</em> 命令，我们可以查看更多关于 <em>stable/redis</em> 的信息，信息量很大。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ helm inspect stable/redis
+apiVersion: v1
+appVersion: 5.0.7
+deprecated: <span class=nb>true</span>
+description: DEPRECATED Open source, advanced key-value store. It is often referred
+  to as a data structure server since keys can contain strings, hashes, lists, sets
+  and sorted sets.
+engine: gotpl
+home: http://redis.io/
+icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
+keywords:
+- redis
+- keyvalue
+- database
+name: redis
+sources:
+- https://github.com/bitnami/bitnami-docker-redis
+version: 10.5.7
+
+---
+<span class=c1>## Global Docker image parameters</span>
+<span class=c1>## Please, note that this will override the image parameters, including dependencies, configured to use the global value</span>
+<span class=c1>## Current available global Docker image parameters: imageRegistry and imagePullSecrets</span>
+<span class=c1>##</span>
+global:
+<span class=c1>#   imageRegistry: myRegistryName</span>
+<span class=c1>#   imagePullSecrets:</span>
+<span class=c1>#     - myRegistryKeySecretName</span>
+<span class=c1>#   storageClass: myStorageClass</span>
+  redis: <span class=o>{}</span>
+
+<span class=c1>## Bitnami Redis image version</span>
+<span class=c1>## ref: https://hub.docker.com/r/bitnami/redis/tags/</span>
+<span class=c1>##</span>
+image:
+  registry: docker.io
+  repository: bitnami/redis
+  <span class=c1>## Bitnami Redis image tag</span>
+  <span class=c1>## ref: https://github.com/bitnami/bitnami-docker-redis#supported-tags-and-respective-dockerfile-links</span>
+  <span class=c1>##</span>
+  tag: 5.0.7-debian-10-r32
+  <span class=c1>## Specify a imagePullPolicy</span>
+  <span class=c1>## Defaults to &#39;Always&#39; if image tag is &#39;latest&#39;, else set to &#39;IfNotPresent&#39;</span>
+  <span class=c1>## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images</span>
+  <span class=c1>##</span>
+  pullPolicy: IfNotPresent
+  <span class=c1>## Optionally specify an array of imagePullSecrets.</span>
+  <span class=c1>## Secrets must be manually created in the namespace.</span>
+  <span class=c1>## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/</span>
+  <span class=c1>##</span>
+  <span class=c1># pullSecrets:</span>
+  <span class=c1>#   - myRegistryKeySecretName</span>
+
+<span class=c1>## String to partially override redis.fullname template (will maintain the release name)</span>
+<span class=c1>##</span>
+<span class=c1># nameOverride:</span>
+
+<span class=c1>## String to fully override redis.fullname template</span>
+<span class=c1>##</span>
+<span class=c1># fullnameOverride:</span>
+
+<span class=c1>## Cluster settings</span>
+cluster:
+  enabled: <span class=nb>true</span>
+  slaveCount: <span class=m>2</span>
+
+<span class=c1>## Use redis sentinel in the redis pod. This will disable the master and slave services and</span>
+<span class=c1>## create one redis service with ports to the sentinel and the redis instances</span>
+sentinel:
+  enabled: <span class=nb>false</span>
+  <span class=c1>## Require password authentication on the sentinel itself</span>
+  <span class=c1>## ref: https://redis.io/topics/sentinel</span>
+  usePassword: <span class=nb>true</span>
+  <span class=c1>## Bitnami Redis Sentintel image version</span>
+  <span class=c1>## ref: https://hub.docker.com/r/bitnami/redis-sentinel/tags/</span>
+  <span class=c1>##</span>
+  image:
+    registry: docker.io
+    repository: bitnami/redis-sentinel
+    <span class=c1>## Bitnami Redis image tag</span>
+    <span class=c1>## ref: https://github.com/bitnami/bitnami-docker-redis-sentinel#supported-tags-and-respective-dockerfile-links</span>
+    <span class=c1>##</span>
+    tag: 5.0.7-debian-10-r27
+    <span class=c1>## Specify a imagePullPolicy</span>
+    <span class=c1>## Defaults to &#39;Always&#39; if image tag is &#39;latest&#39;, else set to &#39;IfNotPresent&#39;</span>
+    <span class=c1>## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images</span>
+    <span class=c1>##</span>
+    pullPolicy: IfNotPresent
+    <span class=c1>## Optionally specify an array of imagePullSecrets.</span>
+    <span class=c1>## Secrets must be manually created in the namespace.</span>
+    <span class=c1>## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/</span>
+    <span class=c1>##</span>
+    <span class=c1># pullSecrets:</span>
+    <span class=c1>#   - myRegistryKeySecretName</span>
+  masterSet: mymaster
+  initialCheckTimeout: <span class=m>5</span>
+  quorum: <span class=m>2</span>
+  downAfterMilliseconds: <span class=m>60000</span>
+  failoverTimeout: <span class=m>18000</span>
+  parallelSyncs: <span class=m>1</span>
+  port: <span class=m>26379</span>
+  <span class=c1>## Additional Redis configuration for the sentinel nodes</span>
+  <span class=c1>## ref: https://redis.io/topics/config</span>
+  <span class=c1>##</span>
+  configmap:
+  <span class=c1>## Enable or disable static sentinel IDs for each replicas</span>
+  <span class=c1>## If disabled each sentinel will generate a random id at startup</span>
+  <span class=c1>## If enabled, each replicas will have a constant ID on each start-up</span>
+  <span class=c1>##</span>
+  staticID: <span class=nb>false</span>
+  <span class=c1>## Configure extra options for Redis Sentinel liveness and readiness probes</span>
+  <span class=c1>## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)</span>
+  <span class=c1>##</span>
+  livenessProbe:
+    enabled: <span class=nb>true</span>
+    initialDelaySeconds: <span class=m>5</span>
+    periodSeconds: <span class=m>5</span>
+    timeoutSeconds: <span class=m>5</span>
+    successThreshold: <span class=m>1</span>
+    failureThreshold: <span class=m>5</span>
+  readinessProbe:
+    enabled: <span class=nb>true</span>
+    initialDelaySeconds: <span class=m>5</span>
+    periodSeconds: <span class=m>5</span>
+    timeoutSeconds: <span class=m>1</span>
+    successThreshold: <span class=m>1</span>
+    failureThreshold: <span class=m>5</span>
+  <span class=c1>## Redis Sentinel resource requests and limits</span>
+  <span class=c1>## ref: http://kubernetes.io/docs/user-guide/compute-resources/</span>
+  <span class=c1># resources:</span>
+  <span class=c1>#   requests:</span>
+  <span class=c1>#     memory: 256Mi</span>
+  <span class=c1>#     cpu: 100m</span>
+  <span class=c1>## Redis Sentinel Service properties</span>
+  service:
+    <span class=c1>##  Redis Sentinel Service type</span>
+    type: ClusterIP
+    sentinelPort: <span class=m>26379</span>
+    redisPort: <span class=m>6379</span>
+
+    <span class=c1>## Specify the nodePort value for the LoadBalancer and NodePort service types.</span>
+    <span class=c1>## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport</span>
+    <span class=c1>##</span>
+    <span class=c1># sentinelNodePort:</span>
+    <span class=c1># redisNodePort:</span>
+
+    <span class=c1>## Provide any additional annotations which may be required. This can be used to</span>
+    <span class=c1>## set the LoadBalancer service type to internal only.</span>
+    <span class=c1>## ref: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer</span>
+    <span class=c1>##</span>
+    annotations: <span class=o>{}</span>
+    labels: <span class=o>{}</span>
+    loadBalancerIP:
+
+<span class=c1>## Specifies the Kubernetes Cluster&#39;s Domain Name.</span>
+<span class=c1>##</span>
+clusterDomain: cluster.local
+
+networkPolicy:
+  <span class=c1>## Specifies whether a NetworkPolicy should be created</span>
+  <span class=c1>##</span>
+  enabled: <span class=nb>false</span>
+
+  <span class=c1>## The Policy model to apply. When set to false, only pods with the correct</span>
+  <span class=c1>## client label will have network access to the port Redis is listening</span>
+  <span class=c1>## on. When true, Redis will accept connections from any source</span>
+  <span class=c1>## (with the correct destination port).</span>
+  <span class=c1>##</span>
+  <span class=c1># allowExternal: true</span>
+
+  <span class=c1>## Allow connections from other namespacess. Just set label for namespace and set label for pods (optional).</span>
+  <span class=c1>##</span>
+  ingressNSMatchLabels: <span class=o>{}</span>
+  ingressNSPodMatchLabels: <span class=o>{}</span>
+
+serviceAccount:
+  <span class=c1>## Specifies whether a ServiceAccount should be created</span>
+  <span class=c1>##</span>
+  create: <span class=nb>false</span>
+  <span class=c1>## The name of the ServiceAccount to use.</span>
+  <span class=c1>## If not set and create is true, a name is generated using the fullname template</span>
+  name:
+
+rbac:
+  <span class=c1>## Specifies whether RBAC resources should be created</span>
+  <span class=c1>##</span>
+  create: <span class=nb>false</span>
+
+  role:
+    <span class=c1>## Rules to create. It follows the role specification</span>
+    <span class=c1># rules:</span>
+    <span class=c1>#  - apiGroups:</span>
+    <span class=c1>#    - extensions</span>
+    <span class=c1>#    resources:</span>
+    <span class=c1>#      - podsecuritypolicies</span>
+    <span class=c1>#    verbs:</span>
+    <span class=c1>#      - use</span>
+    <span class=c1>#    resourceNames:</span>
+    <span class=c1>#      - gce.unprivileged</span>
+    rules: <span class=o>[]</span>
+
+<span class=c1>## Redis pod Security Context</span>
+securityContext:
+  enabled: <span class=nb>true</span>
+  fsGroup: <span class=m>1001</span>
+  runAsUser: <span class=m>1001</span>
+  <span class=c1>## sysctl settings for master and slave pods</span>
+  <span class=c1>##</span>
+  <span class=c1>## Uncomment the setting below to increase the net.core.somaxconn value</span>
+  <span class=c1>##</span>
+  <span class=c1># sysctls:</span>
+  <span class=c1># - name: net.core.somaxconn</span>
+  <span class=c1>#   value: &#34;10000&#34;</span>
+
+<span class=c1>## Use password authentication</span>
+usePassword: <span class=nb>true</span>
+<span class=c1>## Redis password (both master and slave)</span>
+<span class=c1>## Defaults to a random 10-character alphanumeric string if not set and usePassword is true</span>
+<span class=c1>## ref: https://github.com/bitnami/bitnami-docker-redis#setting-the-server-password-on-first-run</span>
+<span class=c1>##</span>
+password: <span class=s2>&#34;&#34;</span>
+<span class=c1>## Use existing secret (ignores previous password)</span>
+<span class=c1># existingSecret:</span>
+<span class=c1>## Password key to be retrieved from Redis secret</span>
+<span class=c1>##</span>
+<span class=c1># existingSecretPasswordKey:</span>
+
+<span class=c1>## Mount secrets as files instead of environment variables</span>
+usePasswordFile: <span class=nb>false</span>
+
+<span class=c1>## Persist data to a persistent volume (Redis Master)</span>
+persistence: <span class=o>{}</span>
+  <span class=c1>## A manually managed Persistent Volume and Claim</span>
+  <span class=c1>## Requires persistence.enabled: true</span>
+  <span class=c1>## If defined, PVC must be created manually before volume will be bound</span>
+  <span class=c1># existingClaim:</span>
+
+<span class=c1># Redis port</span>
+redisPort: <span class=m>6379</span>
+
+<span class=c1>##</span>
+<span class=c1>## Redis Master parameters</span>
+<span class=c1>##</span>
+master:
+  <span class=c1>## Redis command arguments</span>
+  <span class=c1>##</span>
+  <span class=c1>## Can be used to specify command line arguments, for example:</span>
+  <span class=c1>##</span>
+  command: <span class=s2>&#34;/run.sh&#34;</span>
+  <span class=c1>## Additional Redis configuration for the master nodes</span>
+  <span class=c1>## ref: https://redis.io/topics/config</span>
+  <span class=c1>##</span>
+  configmap:
+  <span class=c1>## Redis additional command line flags</span>
+  <span class=c1>##</span>
+  <span class=c1>## Can be used to specify command line flags, for example:</span>
+  <span class=c1>##</span>
+  <span class=c1>## extraFlags:</span>
+  <span class=c1>##  - &#34;--maxmemory-policy volatile-ttl&#34;</span>
+  <span class=c1>##  - &#34;--repl-backlog-size 1024mb&#34;</span>
+  extraFlags: <span class=o>[]</span>
+  <span class=c1>## Comma-separated list of Redis commands to disable</span>
+  <span class=c1>##</span>
+  <span class=c1>## Can be used to disable Redis commands for security reasons.</span>
+  <span class=c1>## Commands will be completely disabled by renaming each to an empty string.</span>
+  <span class=c1>## ref: https://redis.io/topics/security#disabling-of-specific-commands</span>
+  <span class=c1>##</span>
+  disableCommands:
+  - FLUSHDB
+  - FLUSHALL
+
+  <span class=c1>## Redis Master additional pod labels and annotations</span>
+  <span class=c1>## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/</span>
+  podLabels: <span class=o>{}</span>
+  podAnnotations: <span class=o>{}</span>
+
+  <span class=c1>## Redis Master resource requests and limits</span>
+  <span class=c1>## ref: http://kubernetes.io/docs/user-guide/compute-resources/</span>
+  <span class=c1># resources:</span>
+  <span class=c1>#   requests:</span>
+  <span class=c1>#     memory: 256Mi</span>
+  <span class=c1>#     cpu: 100m</span>
+  <span class=c1>## Use an alternate scheduler, e.g. &#34;stork&#34;.</span>
+  <span class=c1>## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/</span>
+  <span class=c1>##</span>
+  <span class=c1># schedulerName:</span>
+
+  <span class=c1>## Configure extra options for Redis Master liveness and readiness probes</span>
+  <span class=c1>## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)</span>
+  <span class=c1>##</span>
+  livenessProbe:
+    enabled: <span class=nb>true</span>
+    initialDelaySeconds: <span class=m>5</span>
+    periodSeconds: <span class=m>5</span>
+    timeoutSeconds: <span class=m>5</span>
+    successThreshold: <span class=m>1</span>
+    failureThreshold: <span class=m>5</span>
+  readinessProbe:
+    enabled: <span class=nb>true</span>
+    initialDelaySeconds: <span class=m>5</span>
+    periodSeconds: <span class=m>5</span>
+    timeoutSeconds: <span class=m>1</span>
+    successThreshold: <span class=m>1</span>
+    failureThreshold: <span class=m>5</span>
+
+  <span class=c1>## Redis Master Node selectors and tolerations for pod assignment</span>
+  <span class=c1>## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector</span>
+  <span class=c1>## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#taints-and-tolerations-beta-feature</span>
+  <span class=c1>##</span>
+  <span class=c1># nodeSelector: {&#34;beta.kubernetes.io/arch&#34;: &#34;amd64&#34;}</span>
+  <span class=c1># tolerations: []</span>
+  <span class=c1>## Redis Master pod/node affinity/anti-affinity</span>
+  <span class=c1>##</span>
+  affinity: <span class=o>{}</span>
+
+  <span class=c1>## Redis Master Service properties</span>
+  service:
+    <span class=c1>##  Redis Master Service type</span>
+    type: ClusterIP
+    port: <span class=m>6379</span>
+
+    <span class=c1>## Specify the nodePort value for the LoadBalancer and NodePort service types.</span>
+    <span class=c1>## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport</span>
+    <span class=c1>##</span>
+    <span class=c1># nodePort:</span>
+
+    <span class=c1>## Provide any additional annotations which may be required. This can be used to</span>
+    <span class=c1>## set the LoadBalancer service type to internal only.</span>
+    <span class=c1>## ref: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer</span>
+    <span class=c1>##</span>
+    annotations: <span class=o>{}</span>
+    labels: <span class=o>{}</span>
+    loadBalancerIP:
+    <span class=c1># loadBalancerSourceRanges: [&#34;10.0.0.0/8&#34;]</span>
+
+  <span class=c1>## Enable persistence using Persistent Volume Claims</span>
+  <span class=c1>## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/</span>
+  <span class=c1>##</span>
+  persistence:
+    enabled: <span class=nb>true</span>
+    <span class=c1>## The path the volume will be mounted at, useful when using different</span>
+    <span class=c1>## Redis images.</span>
+    path: /data
+    <span class=c1>## The subdirectory of the volume to mount to, useful in dev environments</span>
+    <span class=c1>## and one PV for multiple services.</span>
+    subPath: <span class=s2>&#34;&#34;</span>
+    <span class=c1>## redis data Persistent Volume Storage Class</span>
+    <span class=c1>## If defined, storageClassName: &lt;storageClass&gt;</span>
+    <span class=c1>## If set to &#34;-&#34;, storageClassName: &#34;&#34;, which disables dynamic provisioning</span>
+    <span class=c1>## If undefined (the default) or set to null, no storageClassName spec is</span>
+    <span class=c1>##   set, choosing the default provisioner.  (gp2 on AWS, standard on</span>
+    <span class=c1>##   GKE, AWS &amp; OpenStack)</span>
+    <span class=c1>##</span>
+    <span class=c1># storageClass: &#34;-&#34;</span>
+    accessModes:
+    - ReadWriteOnce
+    size: 8Gi
+    <span class=c1>## Persistent Volume selectors</span>
+    <span class=c1>## https://kubernetes.io/docs/concepts/storage/persistent-volumes/#selector</span>
+    matchLabels: <span class=o>{}</span>
+    matchExpressions: <span class=o>{}</span>
+
+  <span class=c1>## Update strategy, can be set to RollingUpdate or onDelete by default.</span>
+  <span class=c1>## https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets</span>
+  statefulset:
+    updateStrategy: RollingUpdate
+    <span class=c1>## Partition update strategy</span>
+    <span class=c1>## https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#partitions</span>
+    <span class=c1># rollingUpdatePartition:</span>
+
+  <span class=c1>## Redis Master pod priorityClassName</span>
+  <span class=c1># priorityClassName: {}</span>
+
+<span class=c1>##</span>
+<span class=c1>## Redis Slave properties</span>
+<span class=c1>## Note: service.type is a mandatory parameter</span>
+<span class=c1>## The rest of the parameters are either optional or, if undefined, will inherit those declared in Redis Master</span>
+<span class=c1>##</span>
+slave:
+  <span class=c1>## Slave Service properties</span>
+  service:
+    <span class=c1>## Redis Slave Service type</span>
+    type: ClusterIP
+    <span class=c1>## Redis port</span>
+    port: <span class=m>6379</span>
+    <span class=c1>## Specify the nodePort value for the LoadBalancer and NodePort service types.</span>
+    <span class=c1>## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport</span>
+    <span class=c1>##</span>
+    <span class=c1># nodePort:</span>
+
+    <span class=c1>## Provide any additional annotations which may be required. This can be used to</span>
+    <span class=c1>## set the LoadBalancer service type to internal only.</span>
+    <span class=c1>## ref: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer</span>
+    <span class=c1>##</span>
+    annotations: <span class=o>{}</span>
+    labels: <span class=o>{}</span>
+    loadBalancerIP:
+    <span class=c1># loadBalancerSourceRanges: [&#34;10.0.0.0/8&#34;]</span>
+
+  <span class=c1>## Redis slave port</span>
+  port: <span class=m>6379</span>
+  <span class=c1>## Can be used to specify command line arguments, for example:</span>
+  <span class=c1>##</span>
+  command: <span class=s2>&#34;/run.sh&#34;</span>
+  <span class=c1>## Additional Redis configuration for the slave nodes</span>
+  <span class=c1>## ref: https://redis.io/topics/config</span>
+  <span class=c1>##</span>
+  configmap:
+  <span class=c1>## Redis extra flags</span>
+  extraFlags: <span class=o>[]</span>
+  <span class=c1>## List of Redis commands to disable</span>
+  disableCommands:
+  - FLUSHDB
+  - FLUSHALL
+
+  <span class=c1>## Redis Slave pod/node affinity/anti-affinity</span>
+  <span class=c1>##</span>
+  affinity: <span class=o>{}</span>
+
+  <span class=c1>## Configure extra options for Redis Slave liveness and readiness probes</span>
+  <span class=c1>## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)</span>
+  <span class=c1>##</span>
+  livenessProbe:
+    enabled: <span class=nb>true</span>
+    initialDelaySeconds: <span class=m>30</span>
+    periodSeconds: <span class=m>10</span>
+    timeoutSeconds: <span class=m>5</span>
+    successThreshold: <span class=m>1</span>
+    failureThreshold: <span class=m>5</span>
+  readinessProbe:
+    enabled: <span class=nb>true</span>
+    initialDelaySeconds: <span class=m>5</span>
+    periodSeconds: <span class=m>10</span>
+    timeoutSeconds: <span class=m>10</span>
+    successThreshold: <span class=m>1</span>
+    failureThreshold: <span class=m>5</span>
+
+  <span class=c1>## Redis slave Resource</span>
+  <span class=c1># resources:</span>
+  <span class=c1>#   requests:</span>
+  <span class=c1>#     memory: 256Mi</span>
+  <span class=c1>#     cpu: 100m</span>
+
+  <span class=c1>## Redis slave selectors and tolerations for pod assignment</span>
+  <span class=c1># nodeSelector: {&#34;beta.kubernetes.io/arch&#34;: &#34;amd64&#34;}</span>
+  <span class=c1># tolerations: []</span>
+
+  <span class=c1>## Use an alternate scheduler, e.g. &#34;stork&#34;.</span>
+  <span class=c1>## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/</span>
+  <span class=c1>##</span>
+  <span class=c1># schedulerName:</span>
+
+  <span class=c1>## Redis slave pod Annotation and Labels</span>
+  podLabels: <span class=o>{}</span>
+  podAnnotations: <span class=o>{}</span>
+
+  <span class=c1>## Redis slave pod priorityClassName</span>
+  <span class=c1># priorityClassName: {}</span>
+
+  <span class=c1>## Enable persistence using Persistent Volume Claims</span>
+  <span class=c1>## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/</span>
+  <span class=c1>##</span>
+  persistence:
+    enabled: <span class=nb>true</span>
+    <span class=c1>## The path the volume will be mounted at, useful when using different</span>
+    <span class=c1>## Redis images.</span>
+    path: /data
+    <span class=c1>## The subdirectory of the volume to mount to, useful in dev environments</span>
+    <span class=c1>## and one PV for multiple services.</span>
+    subPath: <span class=s2>&#34;&#34;</span>
+    <span class=c1>## redis data Persistent Volume Storage Class</span>
+    <span class=c1>## If defined, storageClassName: &lt;storageClass&gt;</span>
+    <span class=c1>## If set to &#34;-&#34;, storageClassName: &#34;&#34;, which disables dynamic provisioning</span>
+    <span class=c1>## If undefined (the default) or set to null, no storageClassName spec is</span>
+    <span class=c1>##   set, choosing the default provisioner.  (gp2 on AWS, standard on</span>
+    <span class=c1>##   GKE, AWS &amp; OpenStack)</span>
+    <span class=c1>##</span>
+    <span class=c1># storageClass: &#34;-&#34;</span>
+    accessModes:
+    - ReadWriteOnce
+    size: 8Gi
+    <span class=c1>## Persistent Volume selectors</span>
+    <span class=c1>## https://kubernetes.io/docs/concepts/storage/persistent-volumes/#selector</span>
+    matchLabels: <span class=o>{}</span>
+    matchExpressions: <span class=o>{}</span>
+
+  <span class=c1>## Update strategy, can be set to RollingUpdate or onDelete by default.</span>
+  <span class=c1>## https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets</span>
+  statefulset:
+    updateStrategy: RollingUpdate
+    <span class=c1>## Partition update strategy</span>
+    <span class=c1>## https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#partitions</span>
+    <span class=c1># rollingUpdatePartition:</span>
+
+<span class=c1>## Prometheus Exporter / Metrics</span>
+<span class=c1>##</span>
+metrics:
+  enabled: <span class=nb>false</span>
+
+  image:
+    registry: docker.io
+    repository: bitnami/redis-exporter
+    tag: 1.4.0-debian-10-r3
+    pullPolicy: IfNotPresent
+    <span class=c1>## Optionally specify an array of imagePullSecrets.</span>
+    <span class=c1>## Secrets must be manually created in the namespace.</span>
+    <span class=c1>## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/</span>
+    <span class=c1>##</span>
+    <span class=c1># pullSecrets:</span>
+    <span class=c1>#   - myRegistryKeySecretName</span>
+
+  <span class=c1>## Metrics exporter resource requests and limits</span>
+  <span class=c1>## ref: http://kubernetes.io/docs/user-guide/compute-resources/</span>
+  <span class=c1>##</span>
+  <span class=c1># resources: {}</span>
+
+  <span class=c1>## Extra arguments for Metrics exporter, for example:</span>
+  <span class=c1>## extraArgs:</span>
+  <span class=c1>##   check-keys: myKey,myOtherKey</span>
+  <span class=c1># extraArgs: {}</span>
+
+  <span class=c1>## Metrics exporter pod Annotation and Labels</span>
+  podAnnotations:
+    prometheus.io/scrape: <span class=s2>&#34;true&#34;</span>
+    prometheus.io/port: <span class=s2>&#34;9121&#34;</span>
+  <span class=c1># podLabels: {}</span>
+
+  <span class=c1># Enable this if you&#39;re using https://github.com/coreos/prometheus-operator</span>
+  serviceMonitor:
+    enabled: <span class=nb>false</span>
+    <span class=c1>## Specify a namespace if needed</span>
+    <span class=c1># namespace: monitoring</span>
+    <span class=c1># fallback to the prometheus default unless specified</span>
+    <span class=c1># interval: 10s</span>
+    <span class=c1>## Defaults to what&#39;s used if you follow CoreOS [Prometheus Install Instructions](https://github.com/helm/charts/tree/master/stable/prometheus-operator#tldr)</span>
+    <span class=c1>## [Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#prometheus-operator-1)</span>
+    <span class=c1>## [Kube Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#exporters)</span>
+    selector:
+      prometheus: kube-prometheus
+
+  <span class=c1>## Custom PrometheusRule to be defined</span>
+  <span class=c1>## The value is evaluated as a template, so, for example, the value can depend on .Release or .Chart</span>
+  <span class=c1>## ref: https://github.com/coreos/prometheus-operator#customresourcedefinitions</span>
+  prometheusRule:
+    enabled: <span class=nb>false</span>
+    additionalLabels: <span class=o>{}</span>
+    namespace: <span class=s2>&#34;&#34;</span>
+    rules: <span class=o>[]</span>
+      <span class=c1>## These are just examples rules, please adapt them to your needs.</span>
+      <span class=c1>## Make sure to constraint the rules to the current postgresql service.</span>
+      <span class=c1>#  - alert: RedisDown</span>
+      <span class=c1>#    expr: redis_up{service=&#34;{{ template &#34;redis.fullname&#34; . }}-metrics&#34;} == 0</span>
+      <span class=c1>#    for: 2m</span>
+      <span class=c1>#    labels:</span>
+      <span class=c1>#      severity: error</span>
+      <span class=c1>#    annotations:</span>
+      <span class=c1>#      summary: Redis instance {{ &#34;{{ $instance }}&#34; }} down</span>
+      <span class=c1>#      description: Redis instance {{ &#34;{{ $instance }}&#34; }} is down.</span>
+      <span class=c1>#  - alert: RedisMemoryHigh</span>
+      <span class=c1>#    expr: &gt;</span>
+      <span class=c1>#       redis_memory_used_bytes{service=&#34;{{ template &#34;redis.fullname&#34; . }}-metrics&#34;} * 100</span>
+      <span class=c1>#       /</span>
+      <span class=c1>#       redis_memory_max_bytes{service=&#34;{{ template &#34;redis.fullname&#34; . }}-metrics&#34;}</span>
+      <span class=c1>#       &gt; 90 =&lt; 100</span>
+      <span class=c1>#    for: 2m</span>
+      <span class=c1>#    labels:</span>
+      <span class=c1>#      severity: error</span>
+      <span class=c1>#    annotations:</span>
+      <span class=c1>#      summary: Redis instance {{ &#34;{{ $instance }}&#34; }} is using too much memory</span>
+      <span class=c1>#      description: Redis instance {{ &#34;{{ $instance }}&#34; }} is using {{ &#34;{{ $value }}&#34; }}% of its available memory.</span>
+      <span class=c1>#  - alert: RedisKeyEviction</span>
+      <span class=c1>#    expr: increase(redis_evicted_keys_total{service=&#34;{{ template &#34;redis.fullname&#34; . }}-metrics&#34;}[5m]) &gt; 0</span>
+      <span class=c1>#    for: 1s</span>
+      <span class=c1>#    labels:</span>
+      <span class=c1>#      severity: error</span>
+      <span class=c1>#    annotations:</span>
+      <span class=c1>#      summary: Redis instance {{ &#34;{{ $instance }}&#34; }} has evicted keys</span>
+      <span class=c1>#      description: Redis instance {{ &#34;{{ $instance }}&#34; }} has evicted {{ &#34;{{ $value }}&#34; }} keys in the last 5 minutes.</span>
+
+
+  <span class=c1>## Metrics exporter pod priorityClassName</span>
+  <span class=c1># priorityClassName: {}</span>
+  service:
+    type: ClusterIP
+    <span class=c1>## Use serviceLoadBalancerIP to request a specific static IP,</span>
+    <span class=c1>## otherwise leave blank</span>
+    <span class=c1># loadBalancerIP:</span>
+    annotations: <span class=o>{}</span>
+    labels: <span class=o>{}</span>
+
+<span class=c1>##</span>
+<span class=c1>## Init containers parameters:</span>
+<span class=c1>## volumePermissions: Change the owner of the persist volume mountpoint to RunAsUser:fsGroup</span>
+<span class=c1>##</span>
+volumePermissions:
+  enabled: <span class=nb>false</span>
+  image:
+    registry: docker.io
+    repository: bitnami/minideb
+    tag: buster
+    pullPolicy: Always
+    <span class=c1>## Optionally specify an array of imagePullSecrets.</span>
+    <span class=c1>## Secrets must be manually created in the namespace.</span>
+    <span class=c1>## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/</span>
+    <span class=c1>##</span>
+    <span class=c1># pullSecrets:</span>
+    <span class=c1>#   - myRegistryKeySecretName</span>
+  resources: <span class=o>{}</span>
+  <span class=c1># resources:</span>
+  <span class=c1>#   requests:</span>
+  <span class=c1>#     memory: 128Mi</span>
+  <span class=c1>#     cpu: 100m</span>
+
+<span class=c1>## Redis config file</span>
+<span class=c1>## ref: https://redis.io/topics/config</span>
+<span class=c1>##</span>
+configmap: <span class=p>|</span>-
+  <span class=c1># Enable AOF https://redis.io/topics/persistence#append-only-file</span>
+  appendonly yes
+  <span class=c1># Disable RDB persistence, AOF persistence already enabled.</span>
+  save <span class=s2>&#34;&#34;</span>
+
+<span class=c1>## Sysctl InitContainer</span>
+<span class=c1>## used to perform sysctl operation to modify Kernel settings (needed sometimes to avoid warnings)</span>
+sysctlImage:
+  enabled: <span class=nb>false</span>
+  command: <span class=o>[]</span>
+  registry: docker.io
+  repository: bitnami/minideb
+  tag: buster
+  pullPolicy: Always
+  <span class=c1>## Optionally specify an array of imagePullSecrets.</span>
+  <span class=c1>## Secrets must be manually created in the namespace.</span>
+  <span class=c1>## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/</span>
+  <span class=c1>##</span>
+  <span class=c1># pullSecrets:</span>
+  <span class=c1>#   - myRegistryKeySecretName</span>
+  mountHostSys: <span class=nb>false</span>
+  resources: <span class=o>{}</span>
+  <span class=c1># resources:</span>
+  <span class=c1>#   requests:</span>
+  <span class=c1>#     memory: 128Mi</span>
+  <span class=c1>#     cpu: 100m</span>
+
+<span class=c1>## PodSecurityPolicy configuration</span>
+<span class=c1>## ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/</span>
+<span class=c1>##</span>
+podSecurityPolicy:
+  <span class=c1>## Specifies whether a PodSecurityPolicy should be created</span>
+  <span class=c1>##</span>
+  create: <span class=nb>false</span>
+</code></pre></div><h2 id=部署-redis>部署 Redis</h2>
+<p>使用 <em>install</em> 命令部署 <em>Chart</em> 至集群中。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ helm install stable/redis
+NAME:   iced-ibis
+LAST DEPLOYED: Mon Jul <span class=m>26</span> 05:44:02 <span class=m>2021</span>
+NAMESPACE: default
+STATUS: DEPLOYED
+
+RESOURCES:
+<span class=o>==</span>&gt; v1/Service
+NAME                      TYPE       CLUSTER-IP      EXTERNAL-IP  PORT<span class=o>(</span>S<span class=o>)</span>   AGE
+iced-ibis-redis-headless  ClusterIP  None            &lt;none&gt;       6379/TCP  1s
+iced-ibis-redis-master    ClusterIP  10.105.234.211  &lt;none&gt;       6379/TCP  0s
+iced-ibis-redis-slave     ClusterIP  10.107.214.148  &lt;none&gt;       6379/TCP  <span class=nv>0s</span>
+
+<span class=o>==</span>&gt; v1/StatefulSet
+NAME                    DESIRED  CURRENT  AGE
+iced-ibis-redis-master  <span class=m>1</span>        <span class=m>1</span>        0s
+iced-ibis-redis-slave   <span class=m>2</span>        <span class=m>1</span>        <span class=nv>0s</span>
+
+<span class=o>==</span>&gt; v1/Pod<span class=o>(</span>related<span class=o>)</span>
+NAME                      READY  STATUS   RESTARTS  AGE
+iced-ibis-redis-master-0  0/1    Pending  <span class=m>0</span>         0s
+iced-ibis-redis-slave-0   0/1    Pending  <span class=m>0</span>         <span class=nv>0s</span>
+
+<span class=o>==</span>&gt; v1/Secret
+NAME             TYPE    DATA  AGE
+iced-ibis-redis  Opaque  <span class=m>1</span>     <span class=nv>1s</span>
+
+<span class=o>==</span>&gt; v1/ConfigMap
+NAME                    DATA  AGE
+iced-ibis-redis         <span class=m>3</span>     1s
+iced-ibis-redis-health  <span class=m>6</span>     1s
+
+
+NOTES:
+This Helm chart is deprecated
+
+Given the <span class=sb>`</span>stable<span class=sb>`</span> deprecation timeline <span class=o>(</span>https://github.com/helm/charts#deprecation-timeline<span class=o>)</span>, the Bitnami maintained Redis Helm chart is now located at bitnami/charts <span class=o>(</span>https://github.com/bitnami/charts/<span class=o>)</span>.
+
+The Bitnami repository is already included in the Hubs and we will <span class=k>continue</span> providing the same cadence of updates, support, etc that we<span class=s1>&#39;ve been keeping here these years. Installation instructions are very similar, just adding the _bitnami_ repo and using it during the installation (`bitnami/&lt;chart&gt;` instead of `stable/&lt;chart&gt;`)
+</span><span class=s1>
+</span><span class=s1>\\`\\`\\`bash
+</span><span class=s1>$ helm repo add bitnami https://charts.bitnami.com/bitnami
+</span><span class=s1>$ helm install my-release bitnami/&lt;chart&gt;           # Helm 3
+</span><span class=s1>$ helm install --name my-release bitnami/&lt;chart&gt;    # Helm 2
+</span><span class=s1>\\`\\`\\`
+</span><span class=s1>
+</span><span class=s1>To update an exisiting _stable_ deployment with a chart hosted in the bitnami repository you can execute
+</span><span class=s1>\\`\\`\\`bash                                                                                                                                               $ helm repo add bitnami https://charts.bitnami.com/bitnami
+</span><span class=s1>$ helm upgrade my-release bitnami/&lt;chart&gt;
+</span><span class=s1>\\`\\`\\`
+</span><span class=s1>
+</span><span class=s1>  Issues and PRs related to the chart itself will be redirected to `bitnami/charts` GitHub repository. In the same way, we&#39;</span>ll be happy to answer questions related to this migration process in this issue <span class=o>(</span>https://github.com/helm/charts/issues/20969<span class=o>)</span> created as a common place <span class=k>for</span> discussion.
+
+** Please be patient <span class=k>while</span> the chart is being deployed **
+Redis can be accessed via port <span class=m>6379</span> on the following DNS names from within your cluster:
+
+iced-ibis-redis-master.default.svc.cluster.local <span class=k>for</span> read/write operations
+iced-ibis-redis-slave.default.svc.cluster.local <span class=k>for</span> read-only operations
+
+
+To get your password run:
+
+    <span class=nb>export</span> <span class=nv>REDIS_PASSWORD</span><span class=o>=</span><span class=k>$(</span>kubectl get secret --namespace default iced-ibis-redis -o <span class=nv>jsonpath</span><span class=o>=</span><span class=s2>&#34;{.data.redis-password}&#34;</span> <span class=p>|</span> base64 --decode<span class=k>)</span>
+
+To connect to your Redis server:
+
+1. Run a Redis pod that you can use as a client:
+
+   kubectl run --namespace default iced-ibis-redis-client --rm --tty -i --restart<span class=o>=</span><span class=s1>&#39;Never&#39;</span> <span class=se>\
+</span><span class=se></span>    --env <span class=nv>REDIS_PASSWORD</span><span class=o>=</span><span class=nv>$REDIS_PASSWORD</span> <span class=se>\
+</span><span class=se></span>   --image docker.io/bitnami/redis:5.0.7-debian-10-r32 -- bash
+
+2. Connect using the Redis CLI:
+   redis-cli -h iced-ibis-redis-master -a <span class=nv>$REDIS_PASSWORD</span>
+   redis-cli -h iced-ibis-redis-slave -a <span class=nv>$REDIS_PASSWORD</span>
+
+To connect to your database from outside the cluster execute the following commands:
+
+    kubectl port-forward --namespace default svc/iced-ibis-redis-master 6379:6379 <span class=p>&amp;</span>
+    redis-cli -h 127.0.0.1 -p <span class=m>6379</span> -a <span class=nv>$REDIS_PASSWORD</span>
+</code></pre></div><p><em>Helm</em> 现在将启动所需的 <em>Pod</em>。您可以使用 <code>helm ls</code> 查看所有包。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ helm ls
+NAME            REVISION        UPDATED                         STATUS          CHART           NAMESPACE
+iced-ibis       <span class=m>1</span>               Mon Jul <span class=m>26</span> 05:44:02 <span class=m>2021</span>        DEPLOYED        redis-10.5.7    default  
+</code></pre></div><p>如果您收到 <em>Helm</em> <em>无法找到准备好的 Pod</em> 的错误消息，则表示 <em>helm</em> 仍在部署中。稍等片刻，直到 <em>Docker Image</em> 完成下载。</p>
+<p>在下一步中，我们将验证部署状态。</p>
+<h2 id=查看结果>查看结果</h2>
+<p><em>Helm</em> 部署了所有 <em>Pod</em>、<em>Replication Controller</em> 和 <em>Controller</em> 。使用 <em>kubectl</em> 找出部署的内容。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get all
+NAME                           READY   STATUS    RESTARTS   AGE
+pod/iced-ibis-redis-master-0   0/1     Pending   <span class=m>0</span>          12m
+pod/iced-ibis-redis-slave-0    0/1     Pending   <span class=m>0</span>          12m
+
+NAME                               TYPE        CLUSTER-IP       EXTERNAL-IP   PORT<span class=o>(</span>S<span class=o>)</span>    AGE
+service/iced-ibis-redis-headless   ClusterIP   None             &lt;none&gt;        6379/TCP   12m
+service/iced-ibis-redis-master     ClusterIP   10.105.234.211   &lt;none&gt;        6379/TCP   12m
+service/iced-ibis-redis-slave      ClusterIP   10.107.214.148   &lt;none&gt;        6379/TCP   12m
+service/kubernetes                 ClusterIP   10.96.0.1        &lt;none&gt;        443/TCP    53m
+
+NAME                                      READY   AGE
+statefulset.apps/iced-ibis-redis-master   0/1     12m
+statefulset.apps/iced-ibis-redis-slave    0/2     12m
+</code></pre></div><p>在下载 <em>Docker</em> 镜像时，<em>Pod</em> 将处于 <em>pending</em> 状态，直到 <em>Persistent Volume</em> 可用。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl apply -f pv.yaml
+persistentvolume/pv-volume1 created
+persistentvolume/pv-volume2 created
+persistentvolume/pv-volume3 created
+</code></pre></div><p><strong>pv.yaml</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>PersistentVolume</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>pv-volume1</span><span class=w>
+</span><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>local</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>capacity</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>storage</span><span class=p>:</span><span class=w> </span><span class=l>10Gi</span><span class=w>
+</span><span class=w>  </span><span class=nt>accessModes</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=l>ReadWriteOnce</span><span class=w>
+</span><span class=w>  </span><span class=nt>hostPath</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;/mnt/data1&#34;</span><span class=w>
+</span><span class=w></span><span class=nn>---</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>PersistentVolume</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>pv-volume2</span><span class=w>
+</span><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>local</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>capacity</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>storage</span><span class=p>:</span><span class=w> </span><span class=l>10Gi</span><span class=w>
+</span><span class=w>  </span><span class=nt>accessModes</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=l>ReadWriteOnce</span><span class=w>
+</span><span class=w>  </span><span class=nt>hostPath</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;/mnt/data2&#34;</span><span class=w>
+</span><span class=w></span><span class=nn>---</span><span class=w>
+</span><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>PersistentVolume</span><span class=w>
+</span><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>pv-volume3</span><span class=w>
+</span><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>local</span><span class=w>
+</span><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>capacity</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>storage</span><span class=p>:</span><span class=w> </span><span class=l>10Gi</span><span class=w>
+</span><span class=w>  </span><span class=nt>accessModes</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=l>ReadWriteOnce</span><span class=w>
+</span><span class=w>  </span><span class=nt>hostPath</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;/mnt/data3&#34;</span><span class=w>
+</span></code></pre></div><p><em>Redis</em> 需要写入权限。</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ chmod <span class=m>777</span> -R /mnt/data*
+</code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>controlplane $ kubectl get all
+NAME                            READY   STATUS             RESTARTS   AGE
+pod/iced-ibis-redis-master-0    1/1     Running            <span class=m>3</span>          18m
+pod/iced-ibis-redis-slave-0     0/1     CrashLoopBackOff   <span class=m>3</span>          18m
+
+NAME                                TYPE        CLUSTER-IP       EXTERNAL-IP   PORT<span class=o>(</span>S<span class=o>)</span>    AGE
+service/iced-ibis-redis-headless    ClusterIP   None             &lt;none&gt;        6379/TCP   18m
+service/iced-ibis-redis-master      ClusterIP   10.105.234.211   &lt;none&gt;        6379/TCP   18m
+service/iced-ibis-redis-slave       ClusterIP   10.107.214.148   &lt;none&gt;        6379/TCP   18m
+service/kubernetes                  ClusterIP   10.96.0.1        &lt;none&gt;        443/TCP    58m
+
+NAME                                       READY   AGE
+statefulset.apps/iced-ibis-redis-master    1/1     18m
+statefulset.apps/my-release-redis-master   1/1     36s
+</code></pre></div><p>一旦完成，它将进入<em>running</em> 状态。您现在将拥有一个在 <em>Kubernetes</em> 之上运行的 <em>Redis</em> 集群。</p>
+<p><em>Helm</em> 能够为部署的组件提供自定义的名称，例如：</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>helm install --name my-release stable/redis
+</code></pre></div>
+</section>
+<footer class=article-footer>
+<section class=article-tags>
+<a href=/tags/k8s/>K8S</a>
+<a href=/tags/%E5%AE%B9%E5%99%A8/>容器</a>
+<a href=/tags/katacoda/>Katacoda</a>
+<a href=/tags/yaml/>YAML</a>
+<a href=/tags/helm/>Helm</a>
+</section>
+<section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span>
+</section>
+<section class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<span class=article-time--modified>
+最后更新于 Jul 23, 2021 15:24 +0800
+</span>
+</section></footer>
+</article>
+<aside class=related-contents--wrapper>
+<h2 class=section-title>相关文章</h2>
+<div class=related-contents>
+<div class="flex article-list--tile">
+<article class=has-image>
+<a href=/p/k8s-basic-10/>
+<div class=article-image>
+<img src=/p/k8s-basic-10/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-10 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（十）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-9/>
+<div class=article-image>
+<img src=/p/k8s-basic-9/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-9 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（九）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-8/>
+<div class=article-image>
+<img src=/p/k8s-basic-8/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-8 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（八）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-7/>
+<div class=article-image>
+<img src=/p/k8s-basic-7/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-7 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（七）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/k8s-basic-6/>
+<div class=article-image>
+<img src=/p/k8s-basic-6/kubernates.e41528f5257d89d58028ff39c3c2f712_hu999cd8b4a0602898549f5ade1550b92a_32166_250x150_fill_box_smart1_3.png width=250 height=150 loading=lazy data-key=k8s-basic-6 data-hash="md5-5BUo9SV9idWAKP85w8L3Eg==">
+</div>
+<div class=article-details>
+<h2 class=article-title>Kubernetes初探（六）</h2>
+</div>
+</a>
+</article>
+</div>
+</div>
+</aside>
+<footer class=site-footer>
+<section class=copyright>
+&copy;
+2016 -
+2021 Catfish
+</section>
+<section class=powerby>
+Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a> <br>
+Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=2.5.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a>
+</section>
+</footer>
+<div class=pswp tabindex=-1 role=dialog aria-hidden=true>
+<div class=pswp__bg></div>
+<div class=pswp__scroll-wrap>
+<div class=pswp__container>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+</div>
+<div class="pswp__ui pswp__ui--hidden">
+<div class=pswp__top-bar>
+<div class=pswp__counter></div>
+<button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+<div class=pswp__preloader>
+<div class=pswp__preloader__icn>
+<div class=pswp__preloader__cut>
+<div class=pswp__preloader__donut></div>
+</div>
+</div>
+</div>
+</div>
+<div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+<div class=pswp__share-tooltip></div>
+</div>
+<button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+</button>
+<div class=pswp__caption>
+<div class=pswp__caption__center></div>
+</div>
+</div>
+</div>
+</div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css integrity="sha256-c0uckgykQ9v5k+IqViZOZKc47Jn7KQil4/MP3ySA3F8=" crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE=" crossorigin=anonymous>
+</main>
+<aside class="sidebar right-sidebar sticky">
+<section class="widget archives">
+<div class=widget-icon><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg>
+</div>
+<h2 class="widget-title section-title">目录</h2>
+<div class=widget--toc>
+<nav id=TableOfContents>
+<ol>
+<li><a href=#安装-helm>安装 Helm</a></li>
+<li><a href=#搜索-chart>搜索 Chart</a></li>
+<li><a href=#部署-redis>部署 Redis</a></li>
+<li><a href=#查看结果>查看结果</a></li>
+</ol>
+</nav>
+</div>
+</section>
+</aside>
+</div>
+<script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g=" crossorigin=anonymous defer></script><script type=text/javascript src=/ts/main.js defer></script>
+<script>(function(){const a=document.createElement('link');a.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",a.type="text/css",a.rel="stylesheet",document.head.appendChild(a)})()</script>
+</body>
+</html>
