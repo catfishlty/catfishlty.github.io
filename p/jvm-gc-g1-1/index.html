@@ -1,13 +1,13 @@
 <!doctype html><html lang=zh-cn>
 <head><meta charset=utf-8>
-<meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="JVM垃圾回收器 G1 介绍"><title>JVM 垃圾回收器 - G1</title>
+<meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="JVM垃圾回收器 G1 介绍"><title>JVM 垃圾回收器 - G1 （一）</title>
 <link rel=canonical href=https://www.catfish.top/p/jvm-gc-g1-1/>
-<link rel=stylesheet href=/scss/style.min.css><meta property="og:title" content="JVM 垃圾回收器 - G1">
+<link rel=stylesheet href=/scss/style.min.css><meta property="og:title" content="JVM 垃圾回收器 - G1 （一）">
 <meta property="og:description" content="JVM垃圾回收器 G1 介绍">
 <meta property="og:url" content="https://www.catfish.top/p/jvm-gc-g1-1/">
 <meta property="og:site_name" content="Catfish">
-<meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="JVM"><meta property="article:tag" content="GC"><meta property="article:tag" content="G1"><meta property="article:published_time" content="2021-08-09T10:33:00+08:00"><meta property="article:modified_time" content="2021-08-09T10:33:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/jvm-gc-g1-1/jvm-black.jpeg">
-<meta name=twitter:title content="JVM 垃圾回收器 - G1">
+<meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="JVM"><meta property="article:tag" content="GC"><meta property="article:tag" content="G1"><meta property="article:published_time" content="2021-08-09T10:33:00+08:00"><meta property="article:modified_time" content="2021-08-19T10:35:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/jvm-gc-g1-1/jvm-black.jpeg">
+<meta name=twitter:title content="JVM 垃圾回收器 - G1 （一）">
 <meta name=twitter:description content="JVM垃圾回收器 G1 介绍"><meta name=twitter:card content="summary_large_image">
 <meta name=twitter:image content="https://www.catfish.top/p/jvm-gc-g1-1/jvm-black.jpeg">
 <link rel="shortcut icon" href=/favicon.ico>
@@ -28,7 +28,7 @@ extended">
 <header class=article-header>
 <div class=article-image>
 <a href=/p/jvm-gc-g1-1/>
-<img src=/p/jvm-gc-g1-1/jvm-black_hu477442ae6bda7bfc8bc3ac8fce34800c_43268_800x0_resize_q75_box.jpeg srcset="/p/jvm-gc-g1-1/jvm-black_hu477442ae6bda7bfc8bc3ac8fce34800c_43268_800x0_resize_q75_box.jpeg 800w, /p/jvm-gc-g1-1/jvm-black_hu477442ae6bda7bfc8bc3ac8fce34800c_43268_1600x0_resize_q75_box.jpeg 1600w" width=800 height=450 loading=lazy alt="Featured image of post JVM 垃圾回收器 - G1">
+<img src=/p/jvm-gc-g1-1/jvm-black_hu477442ae6bda7bfc8bc3ac8fce34800c_43268_800x0_resize_q75_box.jpeg srcset="/p/jvm-gc-g1-1/jvm-black_hu477442ae6bda7bfc8bc3ac8fce34800c_43268_800x0_resize_q75_box.jpeg 800w, /p/jvm-gc-g1-1/jvm-black_hu477442ae6bda7bfc8bc3ac8fce34800c_43268_1600x0_resize_q75_box.jpeg 1600w" width=800 height=450 loading=lazy alt="Featured image of post JVM 垃圾回收器 - G1 （一）">
 </a>
 </div>
 <div class=article-details>
@@ -41,7 +41,7 @@ GC
 </a>
 </header>
 <h2 class=article-title>
-<a href=/p/jvm-gc-g1-1/>JVM 垃圾回收器 - G1</a>
+<a href=/p/jvm-gc-g1-1/>JVM 垃圾回收器 - G1 （一）</a>
 </h2>
 <h3 class=article-subtitle>
 JVM垃圾回收器 G1 介绍
@@ -54,7 +54,6 @@ JVM垃圾回收器 G1 介绍
 </div>
 </header>
 <section class=article-content>
-<h1 id=g1-gc>G1 GC</h1>
 <p><em>G1 GC</em>，全称 <em>Garbage-First Garbage Collector</em>，通过 <code>-XX:+UseG1GC</code>参数来启用。
 它是专门针对以下应用场景设计的:</p>
 <ul>
@@ -364,7 +363,11 @@ JVM垃圾回收器 G1 介绍
 <section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
 <span>Licensed under CC BY-NC-SA 4.0</span>
 </section>
-</footer>
+<section class=article-lastmod><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<span>
+最后更新于 Aug 19, 2021 10:35 +0800
+</span>
+</section></footer>
 </article>
 <aside class=related-contents--wrapper>
 </aside>
