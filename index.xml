@@ -1,4 +1,1393 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Fri, 23 Jul 2021 14:54:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes初探（十一）</title><link>https://www.catfish.top/p/k8s-basic-11/</link><pubDate>Fri, 23 Jul 2021 14:54:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-11/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-11/kubernates.png" alt="Featured image of post Kubernetes初探（十一）" />&lt;blockquote>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Mon, 09 Aug 2021 10:33:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>JVM 垃圾回收器 - G1</title><link>https://www.catfish.top/p/jvm-gc-g1-1/</link><pubDate>Mon, 09 Aug 2021 10:33:00 +0800</pubDate><guid>https://www.catfish.top/p/jvm-gc-g1-1/</guid><description>&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/jvm-black.jpeg" alt="Featured image of post JVM 垃圾回收器 - G1" />&lt;h1 id="g1-gc">G1 GC&lt;/h1>
+&lt;p>&lt;em>G1 GC&lt;/em>，全称 &lt;em>Garbage-First Garbage Collector&lt;/em>，通过 &lt;code>-XX:+UseG1GC&lt;/code>参数来启用。
+它是专门针对以下应用场景设计的:&lt;/p>
+&lt;ul>
+&lt;li>像 &lt;em>CMS&lt;/em> 收集器一样，能与应用程序线程并发执行。&lt;/li>
+&lt;li>整理空闲空间更快。&lt;/li>
+&lt;li>需要 &lt;em>GC&lt;/em> 停顿时间更好预测。
+不希望牺牲大量的吞吐性能。
+不需要更大的 &lt;em>Java&lt;/em> 堆内存。&lt;/li>
+&lt;/ul>
+&lt;p>&lt;em>G1&lt;/em> 收集器的设计目标是取代 &lt;em>CMS&lt;/em> 收集器，它同 &lt;em>CMS&lt;/em> 相比，在以下方面表现的更出色： &lt;em>G1&lt;/em> 是一个有整理内存过程的垃圾收集器，不会产生很多内存碎片。 &lt;em>G1&lt;/em> 的 &lt;em>Stop The World(STW)&lt;/em> 更可控，&lt;em>G1&lt;/em> 在停顿时间上添加了预测机制，用户可以指定期望停顿时间。&lt;/p>
+&lt;h2 id="重要概念">重要概念&lt;/h2>
+&lt;h3 id="region">Region&lt;/h3>
+&lt;p>传统的 &lt;em>GC&lt;/em> 收集器将连续的内存空间划分为新生代、老年代和永久代（&lt;em>JDK 8&lt;/em> 去除了永久代，引入了元空间 &lt;em>Metaspace&lt;/em> ），这种划分的特点是各代的存储地址（逻辑地址，下同）是连续的。如下图所示：&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 235; flex-basis: 564px">
+&lt;a href="https://www.catfish.top/p/jvm-gc-g1-1/jdk8-mem.png" data-size="496x211">&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/jdk8-mem.png"
+srcset="https://www.catfish.top/p/jvm-gc-g1-1/jdk8-mem_hue29f4098db7ced6aa09e9e84e752a07c_11885_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-gc-g1-1/jdk8-mem_hue29f4098db7ced6aa09e9e84e752a07c_11885_1024x0_resize_box_3.png 1024w"
+width="496"
+height="211"
+loading="lazy"
+alt="JDK 8 Memory Structure">
+&lt;/a>
+&lt;figcaption>JDK 8 Memory Structure&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;p>而 &lt;em>G1&lt;/em> 的各代存储地址是不连续的，每一代都使用了 &lt;em>n&lt;/em> 个不连续的大小相同的 &lt;em>Region&lt;/em>，每个* Region* 占有一块连续的虚拟内存地址。如下图所示：&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 143; flex-basis: 344px">
+&lt;a href="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-mem.png" data-size="461x321">&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-mem.png"
+srcset="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-mem_hub5a2f6a3bbb07ed0c6bb6af21d0ab432_14229_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-mem_hub5a2f6a3bbb07ed0c6bb6af21d0ab432_14229_1024x0_resize_box_3.png 1024w"
+width="461"
+height="321"
+loading="lazy"
+alt="JDK 8 G1 GC Memory Structure">
+&lt;/a>
+&lt;figcaption>JDK 8 G1 GC Memory Structure&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;p>&lt;em>G1&lt;/em> 的堆结构就是把一整块内存区域切分成多个固定大小的块，每一块被称为一个 &lt;em>Region&lt;/em> 。在JVM在启动时来决定每个小块，也就是 &lt;em>Region&lt;/em> 的大小。 JVM一般是把一整块堆切分成大约 &lt;em>2000&lt;/em> 个 &lt;em>Region&lt;/em> 。每个小 &lt;em>Region&lt;/em> 从 &lt;em>1&lt;/em> 到 &lt;em>32Mb&lt;/em> 不等，且是 &lt;em>2&lt;/em> 的指数，如果不设定，那么G1会根据Heap大小自动决定。这些 &lt;em>Region&lt;/em> 最后又被分别标记为&lt;em>Eden&lt;/em> , &lt;em>Survivor&lt;/em> 和 &lt;em>Old&lt;/em> 。这里的 &lt;em>Eden&lt;/em> ， &lt;em>Survivor&lt;/em> 和old已经是一个标签，也就是说只是一个逻辑表示，不是物理表示。&lt;em>O&lt;/em>表示老生代（ &lt;em>Old&lt;/em> ），&lt;em>E&lt;/em>表示 &lt;em>Eden&lt;/em> ，&lt;em>S&lt;/em>表示 &lt;em>Survivor&lt;/em> 。为了明了，我们分别用三种不同的颜色区分。存活下来的对象就被虚拟机从一个 &lt;em>Region&lt;/em> 里被移动到另一个中。这些小块 &lt;em>Region&lt;/em> 的回收是并行回收的，期间其他的应用线程照常工作。和以往的回收器一样， &lt;em>G1&lt;/em> 中也有 &lt;em>Eden&lt;/em> , &lt;em>Survivor&lt;/em> , &lt;em>Old&lt;/em> 。在这三个之外，还增加了第四种类型，叫 &lt;em>Humongous&lt;/em> 。这个单词翻译过来就是“堆积如山”的意思。这个类型主要是用来存储那些比标准块大50%，甚至更大的那些对象。这些大对象被保存到一整块连续的区域。这个堆积如山区就是堆里没有被使用的区域。记住一点： &lt;em>G1&lt;/em> 不是像老一辈的那些垃圾回收器一样要求每一代的块是连续的，在 &lt;em>G1&lt;/em> 中可以不是连续的。&lt;/p>
+&lt;h3 id="stab">STAB&lt;/h3>
+&lt;p>&lt;em>Snapshot-At-The-Beginning&lt;/em> ，由字面理解，是 &lt;em>GC&lt;/em> 开始时活着的对象的一个快照。它是通过&lt;em>Root Tracing&lt;/em> 得到的，作用是维持并发 &lt;em>GC&lt;/em> 的正确性。
+根据三色标记算法，我们知道对象存在三种状态：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>白&lt;/strong>：对象没有被标记到，标记阶段结束后，会被当做垃圾回收掉。&lt;/li>
+&lt;li>&lt;strong>灰&lt;/strong>：对象被标记了，但是它的field还没有被标记或标记完。&lt;/li>
+&lt;li>&lt;strong>黑&lt;/strong>：对象被标记了，且它的所有field也被标记完了。&lt;/li>
+&lt;/ul>
+&lt;p>由于并发阶段的存在，&lt;em>Mutator&lt;/em> 和 &lt;em>Garbage Collector&lt;/em> 线程同时对对象进行修改，就会出现&lt;strong>白&lt;/strong>对象漏标的情况，这种情况发生的前提是：&lt;/p>
+&lt;ul>
+&lt;li>Mutator赋予一个&lt;strong>黑&lt;/strong>对象该&lt;strong>白&lt;/strong>对象的引用。&lt;/li>
+&lt;li>Mutator删除了所有从&lt;strong>灰&lt;/strong>对象到该&lt;strong>白&lt;/strong>对象的直接或者间接引用。&lt;/li>
+&lt;/ul>
+&lt;p>对于第一个条件，在并发标记阶段，如果该&lt;strong>白&lt;/strong>对象是 &lt;em>new&lt;/em> 出来的，并没有被&lt;strong>灰&lt;/strong>对象持有，那么它会不会被漏标呢？Region中有两个 &lt;em>top-at-mark-start(TAMS)&lt;/em> 指针，分别为 &lt;em>prevTAMS&lt;/em> 和 &lt;em>nextTAMS&lt;/em>。在 &lt;em>TAMS&lt;/em> 以上的对象是新分配的，这是一种隐式的标记。对于在 &lt;em>GC&lt;/em> 时已经存在的&lt;strong>白&lt;/strong>对象，如果它是活着的，它必然会被另一个对象引用，即条件二中的&lt;strong>灰&lt;/strong>对象。如果&lt;strong>灰&lt;/strong>对象到&lt;strong>白&lt;/strong>对象的直接引用或者间接引用被替换了，或者删除了，&lt;strong>白&lt;/strong>对象就会被漏标，从而导致被回收掉，这是非常严重的错误，所以&lt;em>SATB&lt;/em> 破坏了第二个条件。也就是说，一个对象的引用被替换时，可以通过 &lt;em>Write Barrier&lt;/em> 将旧引用记录下来。&lt;/p>
+&lt;p>&lt;em>SATB&lt;/em> 也是有副作用的，如果被替换的&lt;strong>白&lt;/strong>对象就是要被收集的垃圾，这次的标记会让它躲过GC，这就是 &lt;em>float garbage&lt;/em>。因为 &lt;em>SATB&lt;/em>的做法精度比较低，所以造成的 &lt;em>Float Garbage&lt;/em> 也会比较多。&lt;/p>
+&lt;h3 id="rset---remembered-set">RSet - Remembered Set&lt;/h3>
+&lt;p>每个 &lt;em>Region&lt;/em> 初始化时，会初始化一个 &lt;em>Remembered Set&lt;/em> ，简称 &lt;em>RSet&lt;/em>，该集合用来记录并跟踪其它 &lt;em>Region&lt;/em> 指向该 &lt;em>Region&lt;/em> 中对象的引用，每个 &lt;em>Region&lt;/em> 默认按照 &lt;em>512Kb&lt;/em> 划分成多个 &lt;em>Card&lt;/em> ，所以 &lt;em>RSet&lt;/em> 需要记录的东西应该是 &lt;em>Region-n&lt;/em> 的 &lt;em>Card-n&lt;/em>。&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 255; flex-basis: 613px">
+&lt;a href="https://www.catfish.top/p/jvm-gc-g1-1/g1-gc-rset.png" data-size="552x216">&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/g1-gc-rset.png"
+srcset="https://www.catfish.top/p/jvm-gc-g1-1/g1-gc-rset_hu01b0ff73c603091312ecf6f22959d7e1_15051_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-gc-g1-1/g1-gc-rset_hu01b0ff73c603091312ecf6f22959d7e1_15051_1024x0_resize_box_3.png 1024w"
+width="552"
+height="216"
+loading="lazy"
+alt="JDK 8 G1 GC Remembered Set">
+&lt;/a>
+&lt;figcaption>JDK 8 G1 GC Remembered Set&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;p>&lt;em>G1 GC&lt;/em> 将一组或多组区域（称为回收集 (&lt;em>CSet&lt;/em>)）中的存活对象以增量、并行的方式复制到不同的新区域来实现压缩，从而减少堆碎片。目标是从可回收空间最多的区域开始，尽可能回收更多的堆空间，同时尽可能不超出暂停时间目标（垃圾优先）。&lt;/p>
+&lt;p>&lt;em>G1 GC&lt;/em> 使用独立的记忆集 (&lt;em>RSet&lt;/em>) 跟踪对区域的引用。独立的 &lt;em>RSet&lt;/em> 可以并行、独立地回收区域，因为只需要对区域（而不是整个堆）的 &lt;em>RSet&lt;/em> 进行区域引用扫描。&lt;em>G1 GC&lt;/em> 使用后 &lt;em>Write Barrier&lt;/em> 记录堆的更改和更新 &lt;em>RSet&lt;/em>。&lt;/p>
+&lt;h3 id="pause-prediction-model">&lt;em>Pause Prediction Model&lt;/em>&lt;/h3>
+&lt;p>&lt;em>Pause Prediction Model&lt;/em> 即停顿预测模型，&lt;em>G1&lt;/em> 使用暂停预测模型来满足用户定义的暂停时间目标，并根据指定的暂停时间目标选择要收集的区域数量。&lt;/p>
+&lt;p>&lt;em>G1 GC&lt;/em> 是一个响应时间优先的&lt;em>GC&lt;/em> 算法，它与 &lt;em>CMS&lt;/em> 最大的不同是，用户可以设定整个 &lt;em>GC&lt;/em> 过程的期望停顿时间，参数 &lt;code>-XX:MaxGCPauseMillis&lt;/code> 指定一个 &lt;em>G1&lt;/em> 收集过程目标停顿时间，默认值 &lt;code>200ms&lt;/code>，不过它不是硬性条件，只是期望值。那么 &lt;em>G1&lt;/em> 怎么满足用户的期望呢？就需要这个停顿预测模型了。&lt;em>G1&lt;/em> 根据这个模型统计计算出来的历史数据来预测本次收集需要选择的 &lt;em>Region&lt;/em> 数量，从而尽量满足用户设定的目标停顿时间。 停顿预测模型是以衰减标准偏差为理论基础实现的。&lt;/p>
+&lt;h2 id="gc-过程">&lt;em>GC&lt;/em> 过程&lt;/h2>
+&lt;h3 id="gc-步骤">&lt;em>GC&lt;/em> 步骤&lt;/h3>
+&lt;h4 id="年轻代-gc">年轻代 &lt;em>GC&lt;/em>&lt;/h4>
+&lt;h5 id="g1中的年轻代">G1中的年轻代&lt;/h5>
+&lt;p>堆内存将被分割为大约 2000 个 &lt;em>Region&lt;/em>。最小为 &lt;em>1Mb&lt;/em>，最大为 &lt;em>32Mb&lt;/em>，一般为 &lt;em>1Mb&lt;/em> ， &lt;em>2Mb&lt;/em> ， &lt;em>4Mb&lt;/em> ， &lt;em>8Mb&lt;/em> ， &lt;em>16Mb&lt;/em> ， &lt;em>32Mb&lt;/em> ，为 &lt;em>2&lt;/em> 的倍数。&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 143; flex-basis: 344px">
+&lt;a href="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-young-1.png" data-size="461x321">&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-young-1.png"
+srcset="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-young-1_hu4579304464d890321cad013eba65c39d_11637_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-young-1_hu4579304464d890321cad013eba65c39d_11637_1024x0_resize_box_3.png 1024w"
+width="461"
+height="321"
+loading="lazy"
+alt="Young Generation in G1">
+&lt;/a>
+&lt;figcaption>Young Generation in G1&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h5 id="g1-中的-young-gc">&lt;em>G1&lt;/em> 中的 &lt;em>Young GC&lt;/em>&lt;/h5>
+&lt;p>存活对象被疏散（即，复制或移动）到一个或多个幸存区域。 如果满足老年化阈值，则将一些对象提升到老年代区域。&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 143; flex-basis: 344px">
+&lt;a href="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-young-2.png" data-size="461x321">&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-young-2.png"
+srcset="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-young-2_hubb213a314f3a278b8545d59aea26657f_18417_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-young-2_hubb213a314f3a278b8545d59aea26657f_18417_1024x0_resize_box_3.png 1024w"
+width="461"
+height="321"
+loading="lazy"
+alt="A Young GC in G1">
+&lt;/a>
+&lt;figcaption>A Young GC in G1&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;p>这是一个 &lt;em>STW&lt;/em> 的暂停。 为下一个 &lt;em>Young GC&lt;/em> 计算 &lt;em>Eden&lt;/em> 大小和 &lt;em>Suvivor&lt;/em> 大小。 保留暂停时间目标之类的信息来帮助计算大小。&lt;/p>
+&lt;p>使用这样的方法可以很容易地调整区域的大小，根据需要弹性伸缩。&lt;/p>
+&lt;h5 id="young-gc-结束后">&lt;em>Young GC&lt;/em> 结束后&lt;/h5>
+&lt;p>存活对象被疏散到 &lt;em>Survivor&lt;/em> 区域或 &lt;em>Old&lt;/em> 区域。&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 143; flex-basis: 344px">
+&lt;a href="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-young-3.png" data-size="461x321">&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-young-3.png"
+srcset="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-young-3_hubb213a314f3a278b8545d59aea26657f_14500_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-young-3_hubb213a314f3a278b8545d59aea26657f_14500_1024x0_resize_box_3.png 1024w"
+width="461"
+height="321"
+loading="lazy"
+alt="End of Young GC in G1">
+&lt;/a>
+&lt;figcaption>End of Young GC in G1&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h5 id="总结">总结&lt;/h5>
+&lt;p>综上所述，关于 &lt;em>G1&lt;/em> 中的年轻代有如下描述：&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>堆是分割成区域的单个内存空间。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>年轻代内存由一组不连续的区域组成。 能够在需要时调整大小。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>年轻代垃圾回收，称为 &lt;em>Young GC&lt;/em>，是 &lt;em>STW&lt;/em> 事件，需要停止所有应用程序线程来进行操作。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;em>Young GC&lt;/em> 使用多个线程并行完成。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>存活对象被复制到新的 &lt;em>Survivor&lt;/em> 或 &lt;em>Old&lt;/em> 区域。&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;h4 id="老年代-gc">老年代 GC&lt;/h4>
+&lt;p>与 &lt;em>CMS GC&lt;/em> 一样，&lt;em>G1 GC&lt;/em> 被设计为老年代对象的低暂停收集器。 下表描述了老年代的 &lt;em>G1&lt;/em> 收集阶段。&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>阶段&lt;/th>
+&lt;th>&lt;em>STW&lt;/em>&lt;/th>
+&lt;th>描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>初始标记&lt;/td>
+&lt;td>&lt;em>STW&lt;/em>&lt;/td>
+&lt;td>对于 G1，它将在 &lt;em>Young GC&lt;/em> 中运行。标记可能引用老年代对象的幸存者区域（根区域）。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>根区域扫描&lt;/td>
+&lt;td>&lt;/td>
+&lt;td>在 &lt;em>Survivor&lt;/em> 区中扫描引用到老年代的引用。本阶段需要确保在 &lt;em>Young GC&lt;/em> 发生前完成。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>并发标记&lt;/td>
+&lt;td>&lt;/td>
+&lt;td>在整个堆中寻找存活对象，此阶段可能会被 &lt;em>Young GC&lt;/em> 打断。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>再次标记&lt;/td>
+&lt;td>&lt;em>STW&lt;/em>&lt;/td>
+&lt;td>使用 &lt;em>SATB&lt;/em> 算法完成对堆中存对象的标记，该算法比 &lt;em>CMS&lt;/em> 中的算法更快。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>清理&lt;/td>
+&lt;td>&lt;em>STW&lt;/em>&lt;/td>
+&lt;td>1. 记录存活对象和完全空白的区域。（STW）; 2. 清理 &lt;em>RSet&lt;/em>。（STW）; 3. 重置空区域并将它们返回到空闲列表。 （并发）&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>复制&lt;/td>
+&lt;td>&lt;em>STW&lt;/em>&lt;/td>
+&lt;td>这些是以 &lt;em>STW&lt;/em> 的形式将存活对象疏散或复制到新的未使用区域。 &lt;code>[GC pause (young)]&lt;/code>为完成 &lt;em>Young GC&lt;/em> 的记录。或者是以&lt;code>[GC Pause (mixed)]&lt;/code>为记录的年轻代和年老代区域。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h5 id="初始标记">初始标记&lt;/h5>
+&lt;p>存活对象的初始标记将在 &lt;em>Young GC&lt;/em> 中进行。在日志中，这被标记为 &lt;code> GC pause (young)(inital-mark)&lt;/code>。&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 189; flex-basis: 454px">
+&lt;a href="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-1.png" data-size="381x201">&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-1.png"
+srcset="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-1_hu6f9769434bfdd6f06be692baef3062cf_9646_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-1_hu6f9769434bfdd6f06be692baef3062cf_9646_1024x0_resize_box_3.png 1024w"
+width="381"
+height="201"
+loading="lazy"
+alt="Initial Marking Phase">
+&lt;/a>
+&lt;figcaption>Initial Marking Phase&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h5 id="并发标记">并发标记&lt;/h5>
+&lt;p>如果发现空 &lt;em>Region&lt;/em>（如“X”所示），则在 &lt;em>再次标记&lt;/em> 阶段立即将其删除。此外，也将记录计算的确定活跃度信息。&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 189; flex-basis: 454px">
+&lt;a href="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-2.png" data-size="381x201">&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-2.png"
+srcset="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-2_hu41e89c0647331901f00820fec540480a_12021_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-2_hu41e89c0647331901f00820fec540480a_12021_1024x0_resize_box_3.png 1024w"
+width="381"
+height="201"
+loading="lazy"
+alt="Concurrent Marking Phase">
+&lt;/a>
+&lt;figcaption>Concurrent Marking Phase&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h5 id="再次标记">再次标记&lt;/h5>
+&lt;p>删除并回收空 &lt;em>Region&lt;/em>，并计算所有 &lt;em>Region&lt;/em> 的区域活跃度。&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 189; flex-basis: 454px">
+&lt;a href="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-3.png" data-size="381x201">&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-3.png"
+srcset="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-3_hu5d70daf57bc3cb55ce24b0b7100a1806_9562_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-3_hu5d70daf57bc3cb55ce24b0b7100a1806_9562_1024x0_resize_box_3.png 1024w"
+width="381"
+height="201"
+loading="lazy"
+alt="Remark Phase">
+&lt;/a>
+&lt;figcaption>Remark Phase&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h5 id="复制清理">复制/清理&lt;/h5>
+&lt;p>&lt;em>G1&lt;/em> 选择 “活跃度” 最低的 &lt;em>Region&lt;/em> ，那些可以最快完成收集的 &lt;em>Region&lt;/em> 。然后这些 &lt;em>Region&lt;/em> 在 &lt;em>Young GC&lt;/em> 进行的同时被收集。在日志中表示为 [GC pause (mixed)]。所以年轻代和年老代将被同时收集。&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 189; flex-basis: 454px">
+&lt;a href="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-4.png" data-size="381x201">&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-4.png"
+srcset="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-4_hu3cdbceab84205a542c3ee74f970f615c_14261_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-4_hu3cdbceab84205a542c3ee74f970f615c_14261_1024x0_resize_box_3.png 1024w"
+width="381"
+height="201"
+loading="lazy"
+alt="Copying/Cleanup Phase">
+&lt;/a>
+&lt;figcaption>Copying/Cleanup Phase&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h5 id="复制清理-后">复制/清理 后&lt;/h5>
+&lt;p>选定的区域已被收集并压缩为图中所示的深蓝色区域和深绿色区域。&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 189; flex-basis: 454px">
+&lt;a href="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-5.png" data-size="381x201">&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-5.png"
+srcset="https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-5_hua05330af37ba9fb257de0b5af069b983_9653_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-gc-g1-1/jdk-g1-gc-old-5_hua05330af37ba9fb257de0b5af069b983_9653_1024x0_resize_box_3.png 1024w"
+width="381"
+height="201"
+loading="lazy"
+alt="After Copying/Cleanup Phase">
+&lt;/a>
+&lt;figcaption>After Copying/Cleanup Phase&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h5 id="总结-1">总结&lt;/h5>
+&lt;p>这里有几个老年代 &lt;em>GC&lt;/em> 的关键点:&lt;/p>
+&lt;ul>
+&lt;li>并发标记阶段
+&lt;ul>
+&lt;li>存活度信息是在程序运行期间并发计算的&lt;/li>
+&lt;li>存活度标明了在疏散暂停的时期哪些 &lt;em>Region&lt;/em> 更适合被回收。&lt;/li>
+&lt;li>没有像 &lt;em>CMS&lt;/em> 一样的清扫阶段&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>再次标记阶段
+&lt;ul>
+&lt;li>使用了比 &lt;em>CMS&lt;/em> 快很多的 &lt;em>Snapshot-at-the-Beginning (SATB)&lt;/em> 算法&lt;/li>
+&lt;li>完全空白的 &lt;em>Region&lt;/em> 将会被回收&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>复制/清理阶段
+&lt;ul>
+&lt;li>年轻代和老年代将会在同一时间被回收&lt;/li>
+&lt;li>基于存活度选择需要回收的老年代 &lt;em>Region&lt;/em>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;h3 id="gc-模式">&lt;em>GC&lt;/em> 模式&lt;/h3>
+&lt;h4 id="young-gc">&lt;em>Young GC&lt;/em>&lt;/h4>
+&lt;p>选定所有年轻代里的 &lt;em>Region&lt;/em> 。通过控制年轻代的 &lt;em>Region&lt;/em> 个数，即年轻代内存大小，来控制&lt;em>Young GC&lt;/em> 的时间开销。&lt;/p>
+&lt;h4 id="mixed-gc">&lt;em>Mixed GC&lt;/em>&lt;/h4>
+&lt;p>选定所有年轻代里的 &lt;em>Region&lt;/em> ，外加根据 &lt;em>Global Concurrent Marking&lt;/em> 统计得出收集收益高的若干老年代 &lt;em>Region&lt;/em> 。在用户指定的开销目标范围内尽可能选择收益高的老年代 &lt;em>Region&lt;/em> 。&lt;/p>
+&lt;p>&lt;em>Mixed GC&lt;/em> 不是 &lt;em>Full GC&lt;/em> ，它只能回收部分老年代的 &lt;em>Region&lt;/em> ，如果 &lt;em>Mixed GC&lt;/em> 实在无法跟上程序分配内存的速度，导致老年代填满无法继续进行 &lt;em>Mixed GC&lt;/em> ，就会使用 &lt;em>Serial Old GC (Full GC)&lt;/em> 来收集整个 &lt;em>GC heap&lt;/em> 。所以我们可以知道，&lt;em>G1&lt;/em> 是不提供 &lt;em>Full GC&lt;/em> 的。&lt;/p>
+&lt;h3 id="gc-日志">&lt;em>GC&lt;/em> 日志&lt;/h3>
+&lt;h2 id="参数调整">参数调整&lt;/h2>
+&lt;h3 id="参数详解">参数详解&lt;/h3>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数&lt;/th>
+&lt;th style="text-align:left">含义&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-XX:+UseG1GC&lt;/code>&lt;/td>
+&lt;td style="text-align:left">启用&lt;em>G1 GC&lt;/em>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">`-XX:G1HeapRegionSize=n&lt;/td>
+&lt;td style="text-align:left">设置Region大小，并非最终值&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-XX:MaxGCPauseMillis=200&lt;/code>&lt;/td>
+&lt;td style="text-align:left">设置G1收集过程目标时间，默认值200ms，不是硬性条件&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-XX:G1NewSizePercent=5&lt;/code>&lt;/td>
+&lt;td style="text-align:left">新生代最小值，默认值5%&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-XX:G1MaxNewSizePercent=60&lt;/code>&lt;/td>
+&lt;td style="text-align:left">新生代最大值，默认值60%&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-XX:ParallelGCThreads=n&lt;/code>&lt;/td>
+&lt;td style="text-align:left">&lt;em>STW&lt;/em> 期间，并行GC线程数&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-XX:ConcGCThreads=n&lt;/code>&lt;/td>
+&lt;td style="text-align:left">并发标记阶段，并行执行的线程数&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-XX:InitiatingHeapOccupancyPercent=45&lt;/code>&lt;/td>
+&lt;td style="text-align:left">设置触发标记周期的 &lt;em>Java&lt;/em> 堆占用率阈值。默认值是 &lt;em>45%&lt;/em>。这里的 &lt;em>Java&lt;/em> 堆占比指的是非 &lt;em>Young Region&lt;/em> 的大小占比 ，包括 &lt;em>Old&lt;/em> 与 &lt;em>Humongous&lt;/em>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-XX:G1MixedGCLiveThresholdPercent=65&lt;/code>&lt;/td>
+&lt;td style="text-align:left">为混合垃圾回收周期中要包括的旧区域设置占用率阈值，默认占用率为 &lt;em>65%&lt;/em> 。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-XX:G1HeapWastePercent=10&lt;/code>&lt;/td>
+&lt;td style="text-align:left">设置您愿意浪费的堆百分比。如果可回收百分比小于堆废物百分比，&lt;em>Java HotSpot VM&lt;/em> 不会启动混合垃圾回收周期。默认值是 &lt;em>10%&lt;/em>。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-XX:G1MixedGCCountTarget=8&lt;/code>&lt;/td>
+&lt;td style="text-align:left">设置标记周期完成后，对存活数据上限为 &lt;em>G1MixedGCLIveThresholdPercent&lt;/em> 的旧区域执行混合垃圾回收的目标次数。默认值是 &lt;em>8&lt;/em> 次混合垃圾回收，混合回收的目标是要控制在此目标次数以内。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-XX:G1OldCSetRegionThresholdPercent=10&lt;/code>&lt;/td>
+&lt;td style="text-align:left">设置混合垃圾回收期间要回收的最大旧区域数，默认值是 &lt;em>Java&lt;/em> 堆的 &lt;em>10%。&lt;/em>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-XX:G1ReservePercent=10&lt;/code>&lt;/td>
+&lt;td style="text-align:left">设置作为空闲空间的预留内存百分比，以降低目标空间溢出的风险,默认值是 &lt;em>10%&lt;/em>。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h3 id="建议">建议&lt;/h3>
+&lt;p>评估和微调 &lt;em>G1 GC&lt;/em> 时，请记住以下建议：&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>&lt;strong>年轻代大小&lt;/strong>：避免使用 -Xmn 选项或 -XX:NewRatio 等其他相关选项显式设置年轻代大小。固定年轻代的大小会覆盖暂停时间目标。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>暂停时间目标&lt;/strong>：每当对垃圾回收进行评估或调优时，都会涉及到延迟与吞吐量的权衡。&lt;em>G1 GC&lt;/em> 是增量垃圾回收器，暂停统一，同时应用程序线程的开销也更多。&lt;em>G1 GC&lt;/em> 的吞吐量目标是 &lt;em>90%&lt;/em> 的应用程序时间和 &lt;em>10%&lt;/em> 的垃圾回收时间。如果将其与 &lt;em>Java HotSpot VM&lt;/em> 的吞吐量回收器相比较，目标则是 &lt;em>99%&lt;/em> 的应用程序时间和 &lt;em>1%&lt;/em> 的垃圾回收时间。因此，当您评估 &lt;em>G1 GC&lt;/em> 的吞吐量时，暂停时间目标不要太严苛。目标太过严苛表示您愿意承受更多的垃圾回收开销，而这会直接影响到吞吐量。当您评估 &lt;em>G1 GC&lt;/em> 的延迟时，请设置所需的（软）实时目标，&lt;em>G1 GC&lt;/em> 会尽量满足。副作用是，吞吐量可能会受到影响。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>掌握混合垃圾回收：当您调优混合垃圾回收时，请尝试以下选项：&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>-XX:InitiatingHeapOccupancyPercent&lt;/code> 用于更改标记阈值。&lt;/li>
+&lt;li>&lt;code>-XX:G1MixedGCLiveThresholdPercent 和 -XX:G1HeapWastePercent&lt;/code> 当您想要更改混合垃圾回收决定时。&lt;/li>
+&lt;li>&lt;code>-XX:G1MixedGCCountTarget&lt;/code> 和 &lt;code>-XX:G1OldCSetRegionThresholdPercent&lt;/code> 当您想要调整旧区域的 &lt;em>CSet&lt;/em> 时。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;h2 id="总结-2">总结&lt;/h2>
+&lt;p>&lt;em>G1 GC&lt;/em> 是区域化、并行-并发、增量式垃圾回收器，相比其他 &lt;em>HotSpot&lt;/em> 垃圾回收器，可提供更多可预测的暂停。增量的特性使 &lt;em>G1 GC&lt;/em> 适用于更大的堆，在最坏的情况下仍能提供不错的响应。&lt;em>G1 GC&lt;/em> 的自适应特性使 &lt;em>JVM&lt;/em> 命令行只需要软实时暂停时间目标的最大值以及 &lt;em>Java&lt;/em> 堆大小的最大值和最小值，即可开始工作。&lt;/p>
+&lt;h2 id="参考">参考&lt;/h2>
+&lt;ol>
+&lt;li>&lt;a class="link" href="https://www.oracle.com/technetwork/tutorials/tutorials-1876574.html" target="_blank" rel="noopener"
+>Getting Started with the G1 Garbage Collector&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://www.oracle.com/java/technologies/javase/hotspot-garbage-collection.html" target="_blank" rel="noopener"
+>The Garbage First Garbage Collector&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://www.oracle.com/cn/technical-resources/articles/java/g1gc.html" target="_blank" rel="noopener"
+>垃圾优先型垃圾回收器调优&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://tech.meituan.com/2016/09/23/g1.html" target="_blank" rel="noopener"
+>Java Hotspot G1 GC的一些关键技术&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://blog.didispace.com/step-by-step-g1/" target="_blank" rel="noopener"
+>一步步图解G1&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://www.redhat.com/zh/blog/part-1-introduction-g1-garbage-collector" target="_blank" rel="noopener"
+>Part 1: Introduction to the G1 Garbage Collector&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://www.redhat.com/en/blog/collecting-and-reading-g1-garbage-collector-logs-part-2" target="_blank" rel="noopener"
+>Collecting and reading G1 garbage collector logs - part 2&lt;/a>&lt;/li>
+&lt;/ol></description></item><item><title>Kubernetes进阶（一）</title><link>https://www.catfish.top/p/k8s-inter-1/</link><pubDate>Mon, 26 Jul 2021 17:00:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-inter-1/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-inter-1/kubernates.png" alt="Featured image of post Kubernetes进阶（一）" />&lt;blockquote>
+&lt;p>Kubernetes官网文档：&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/overview/working-with-objects/" target="_blank" rel="noopener"
+>使用Kubernetes对象&lt;/a>&lt;/p>
+&lt;p>本系列教程是在 &lt;em>Kubernetes初探&lt;/em> 系列教程基础上，通过对官方文档的阅读完善各个重要知识点。&lt;/p>
+&lt;p>本章节将基于官网文档简化文章理解难度。&lt;/p>
+&lt;/blockquote>
+&lt;h1 id="理解-kubernetes-对象">理解 Kubernetes 对象&lt;/h1>
+&lt;p>在 &lt;em>Kubernetes&lt;/em> 中，&lt;em>Kubernetes 对象&lt;/em> 是持久化的实体。 &lt;em>Kubernetes&lt;/em> 使用这些实体去表示整个集群的状态。它们描述了如下信息：&lt;/p>
+&lt;ul>
+&lt;li>哪些容器化应用在运行（以及在哪些节点上）&lt;/li>
+&lt;li>可以被应用使用的资源&lt;/li>
+&lt;li>关于应用运行时表现的策略，比如重启策略、升级策略，以及容错策略&lt;/li>
+&lt;/ul>
+&lt;p>操作 &lt;em>Kubernetes&lt;/em> 对象 —— 无论是创建、修改，或者删除 —— 需要使用 &lt;em>Kubernetes API&lt;/em>。 比如，当使用 &lt;em>kubectl&lt;/em> 命令行接口时，&lt;em>CLI&lt;/em> 会执行必要的 &lt;em>Kubernetes API&lt;/em> 调用， 也可以在程序中使用 客户端库直接调用 &lt;em>Kubernetes API&lt;/em>。&lt;/p>
+&lt;h2 id="对象规约spec与状态status">对象规约（Spec）与状态（Status）&lt;/h2>
+&lt;p>几乎每个 &lt;em>Kubernetes&lt;/em> 对象包含两个嵌套的对象字段，它们负责管理对象的配置： 对象 &lt;em>spec&lt;/em>（规约） 和 对象 &lt;em>status&lt;/em>（状态） 。 对于具有 &lt;em>spec&lt;/em> 的对象，你必须在创建对象时设置其内容，描述你希望对象所具有的特征： &lt;em>期望状态&lt;/em>（Desired State） 。&lt;/p>
+&lt;p>&lt;em>status&lt;/em> 描述了对象的 当前状态（Current State），它是由 &lt;em>Kubernetes&lt;/em> 系统和组件 设置并更新的。在任何时刻，&lt;em>Kubernetes&lt;/em> 控制平面 都一直积极地管理着对象的实际状态，以使之与期望状态相匹配。&lt;/p>
+&lt;h2 id="描述-kubernetes-对象">描述 Kubernetes 对象&lt;/h2>
+&lt;p>创建 &lt;em>Kubernetes&lt;/em> 对象时，必须提供对象的规约，用来描述该对象的期望状态， 以及关于对象的一些基本信息（例如名称）。&lt;/p>
+&lt;p>这里有一个 &lt;em>.yaml&lt;/em> 示例文件，展示了 &lt;em>Kubernetes Deployment&lt;/em> 的必需字段和对象规约：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">apps/v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">nginx-deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">matchLabels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">nginx&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">2&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># tells deployment to run 2 pods matching the template&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">nginx&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">nginx&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">nginx:1.14.2&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">containerPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>使用类似于上面的 &lt;em>.yaml&lt;/em> 文件来创建 &lt;em>Deployment&lt;/em> 的一种方式是使用 &lt;em>kubectl&lt;/em> 命令行接口（&lt;em>CLI&lt;/em>）中的 &lt;em>kubectl apply&lt;/em> 命令， 将 &lt;em>.yaml&lt;/em> 文件作为参数。下面是一个示例：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">kubectl apply -f https://k8s.io/examples/application/deployment.yaml --record
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似如下这样：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">deployment.apps/nginx-deployment created
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="必需字段">必需字段&lt;/h2>
+&lt;p>在想要创建的 Kubernetes 对象对应的 .yaml 文件中，需要配置如下的字段：&lt;/p>
+&lt;ul>
+&lt;li>apiVersion - 创建该对象所使用的 Kubernetes API 的版本&lt;/li>
+&lt;li>kind - 想要创建的对象的类别&lt;/li>
+&lt;li>metadata - 帮助唯一性标识对象的一些数据，包括一个 name 字符串、UID 和可选的 namespace&lt;/li>
+&lt;/ul>
+&lt;h1 id="kubernetes-对象管理">Kubernetes 对象管理&lt;/h1>
+&lt;p>&lt;em>kubectl&lt;/em> 命令行工具支持多种不同的方式来创建和管理 &lt;em>Kubernetes&lt;/em> 对象。 本文档概述了不同的方法。 阅读 &lt;a class="link" href="https://kubectl.docs.kubernetes.io/" target="_blank" rel="noopener"
+>Kubectl book&lt;/a> 来了解 &lt;em>kubectl&lt;/em> 管理对象的详细信息。&lt;/p>
+&lt;h2 id="管理技巧">管理技巧&lt;/h2>
+&lt;p>&lt;strong>警告： 应该只使用一种技术来管理 Kubernetes 对象。混合和匹配技术作用在同一对象上将导致未定义行为。&lt;/strong>&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>管理技术&lt;/th>
+&lt;th>作用于&lt;/th>
+&lt;th>建议的环境&lt;/th>
+&lt;th>支持的写者&lt;/th>
+&lt;th>学习难度&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>指令式命令&lt;/td>
+&lt;td>活跃对象&lt;/td>
+&lt;td>开发项目&lt;/td>
+&lt;td>1+&lt;/td>
+&lt;td>最低&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>指令式对象配置&lt;/td>
+&lt;td>单个文件&lt;/td>
+&lt;td>生产项目&lt;/td>
+&lt;td>1&lt;/td>
+&lt;td>中等&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>声明式对象配置&lt;/td>
+&lt;td>文件目录&lt;/td>
+&lt;td>生产项目&lt;/td>
+&lt;td>1+&lt;/td>
+&lt;td>最高&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h2 id="指令式命令">指令式命令&lt;/h2>
+&lt;p>使用指令式命令时，用户可以在集群中的活动对象上进行操作。用户将操作传给 &lt;code>kubectl&lt;/code> 命令作为参数或标志。&lt;/p>
+&lt;p>这是开始或者在集群中运行一次性任务的推荐方法。因为这个技术直接在活跃对象 上操作，所以它不提供以前配置的历史记录。&lt;/p>
+&lt;h3 id="例子">例子&lt;/h3>
+&lt;p>通过创建 Deployment 对象来运行 nginx 容器的实例：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">kubectl create deployment nginx --image nginx
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="比较">比较&lt;/h3>
+&lt;p>与对象配置相比的优点：&lt;/p>
+&lt;ul>
+&lt;li>命令简单，易学且易于记忆。&lt;/li>
+&lt;li>命令仅需一步即可对集群进行更改。&lt;/li>
+&lt;/ul>
+&lt;p>与对象配置相比的缺点：&lt;/p>
+&lt;ul>
+&lt;li>命令不与变更审查流程集成。&lt;/li>
+&lt;li>命令不提供与更改关联的审核跟踪。&lt;/li>
+&lt;li>除了实时内容外，命令不提供记录源。&lt;/li>
+&lt;li>命令不提供用于创建新对象的模板。&lt;/li>
+&lt;/ul>
+&lt;h2 id="指令式对象配置">指令式对象配置&lt;/h2>
+&lt;p>在指令式对象配置中，kubectl 命令指定操作（创建，替换等），可选标志和 至少一个文件名。指定的文件必须包含 YAML 或 JSON 格式的对象的完整定义。&lt;/p>
+&lt;p>有关对象定义的详细信息，请查看 &lt;a class="link" href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/" target="_blank" rel="noopener"
+>API 参考&lt;/a>。&lt;/p>
+&lt;h3 id="例子-1">例子&lt;/h3>
+&lt;p>创建配置文件中定义的对象：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">kubectl create -f nginx.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>删除两个配置文件中定义的对象：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">kubectl delete -f nginx.yaml -f redis.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>通过覆盖活动配置来更新配置文件中定义的对象：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">kubectl replace -f nginx.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="比较-1">比较&lt;/h3>
+&lt;p>与指令式命令相比的优点：&lt;/p>
+&lt;ul>
+&lt;li>对象配置可以存储在源控制系统中，比如 Git。&lt;/li>
+&lt;li>对象配置可以与流程集成，例如在推送和审计之前检查更新。&lt;/li>
+&lt;li>对象配置提供了用于创建新对象的模板。&lt;/li>
+&lt;/ul>
+&lt;p>与指令式命令相比的缺点：&lt;/p>
+&lt;ul>
+&lt;li>对象配置需要对对象架构有基本的了解。&lt;/li>
+&lt;li>对象配置需要额外的步骤来编写 YAML 文件。&lt;/li>
+&lt;/ul>
+&lt;p>与声明式对象配置相比的优点：&lt;/p>
+&lt;ul>
+&lt;li>指令式对象配置行为更加简单易懂。&lt;/li>
+&lt;li>从 Kubernetes 1.5 版本开始，指令对象配置更加成熟。&lt;/li>
+&lt;/ul>
+&lt;p>与声明式对象配置相比的缺点：&lt;/p>
+&lt;ul>
+&lt;li>指令式对象配置更适合文件，而非目录。&lt;/li>
+&lt;li>对活动对象的更新必须反映在配置文件中，否则会在下一次替换时丢失。&lt;/li>
+&lt;/ul>
+&lt;h2 id="声明式对象配置">声明式对象配置&lt;/h2>
+&lt;p>使用声明式对象配置时，用户对本地存储的对象配置文件进行操作，但是用户 未定义要对该文件执行的操作。 &lt;code>kubectl&lt;/code> 会自动检测每个文件的创建、更新和删除操作。 这使得配置可以在目录上工作，根据目录中配置文件对不同的对象执行不同的操作。&lt;/p>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong>&lt;/p>
+&lt;p>声明式对象配置保留其他编写者所做的修改，即使这些更改并未合并到对象配置文件中。 可以通过使用 &lt;code>patch&lt;/code> API 操作仅写入观察到的差异，而不是使用 &lt;code>replace&lt;/code> API 操作来替换整个对象配置来实现。&lt;/p>
+&lt;/blockquote>
+&lt;h3 id="例子-2">例子&lt;/h3>
+&lt;p>处理 &lt;code>configs&lt;/code> 目录中的所有对象配置文件，创建并更新活跃对象。 可以首先使用 &lt;code>diff&lt;/code> 子命令查看将要进行的更改，然后在进行应用：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">kubectl diff -f configs/
+kubectl apply -f configs/
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>递归处理目录：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">kubectl diff -R -f configs/
+kubectl apply -R -f configs/
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="比较-2">比较&lt;/h3>
+&lt;p>与指令式对象配置相比的优点：&lt;/p>
+&lt;ul>
+&lt;li>对活动对象所做的更改即使未合并到配置文件中，也会被保留下来。&lt;/li>
+&lt;li>声明性对象配置更好地支持对目录进行操作并自动检测每个文件的操作类型（创建，修补，删除）。&lt;/li>
+&lt;/ul>
+&lt;p>与指令式对象配置相比的缺点：&lt;/p>
+&lt;ul>
+&lt;li>声明式对象配置难于调试并且出现异常时结果难以理解。&lt;/li>
+&lt;li>使用 diff 产生的部分更新会创建复杂的合并和补丁操作。&lt;/li>
+&lt;/ul>
+&lt;h1 id="名字空间namespace">名字空间（namespace）&lt;/h1>
+&lt;p>Kubernetes 支持多个虚拟集群，它们底层依赖于同一个物理集群。 这些虚拟集群被称为名字空间。 在一些文档里名字空间也称为命名空间。&lt;/p>
+&lt;h2 id="使用场景">使用场景&lt;/h2>
+&lt;p>名字空间适用于存在很多跨多个团队或项目的用户的场景。对于只有几到几十个用户的集群，根本不需要创建或考虑名字空间。当需要名称空间提供的功能时，请开始使用它们。&lt;/p>
+&lt;p>名字空间为名称提供了一个范围。资源的名称需要在名字空间内是唯一的，但不能跨名字空间。 名字空间不能相互嵌套，每个 Kubernetes 资源只能在一个名字空间中。&lt;/p>
+&lt;p>名字空间是在多个用户之间划分集群资源的一种方法（通过&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/policy/resource-quotas/" target="_blank" rel="noopener"
+>资源配额&lt;/a>）。&lt;/p>
+&lt;p>不必使用多个名字空间来分隔仅仅轻微不同的资源，例如同一软件的不同版本： 应该使用&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/overview/working-with-objects/labels/" target="_blank" rel="noopener"
+>标签&lt;/a> 来区分同一名字空间中的不同资源。&lt;/p>
+&lt;h2 id="使用名字空间">使用名字空间&lt;/h2>
+&lt;p>名字空间的创建和删除在&lt;a class="link" href="https://kubernetes.io/zh/docs/tasks/administer-cluster/namespaces/" target="_blank" rel="noopener"
+>名字空间的管理指南文档&lt;/a>描述。&lt;/p>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> 避免使用前缀 &lt;code>kube-&lt;/code> 创建名字空间，因为它是为 Kubernetes 系统名字空间保留的。&lt;/p>
+&lt;/blockquote>
+&lt;h3 id="查看名字空间">查看名字空间&lt;/h3>
+&lt;p>你可以使用以下命令列出集群中现存的名字空间：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get namespace
+NAME STATUS AGE
+default Active 1d
+kube-node-lease Active 1d
+kube-system Active 1d
+kube-public Active 1d
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>Kubernetes 会创建四个初始名字空间：&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>default&lt;/code> 没有指明使用其它名字空间的对象所使用的默认名字空间&lt;/li>
+&lt;li>&lt;code>kube-system&lt;/code> Kubernetes 系统创建对象所使用的名字空间&lt;/li>
+&lt;li>&lt;code>kube-public&lt;/code> 这个名字空间是自动创建的，所有用户（包括未经过身份验证的用户）都可以读取它。 这个名字空间主要用于集群使用，以防某些资源在整个集群中应该是可见和可读的。 这个名字空间的公共方面只是一种约定，而不是要求。&lt;/li>
+&lt;li>&lt;code>kube-node-lease&lt;/code> 此名字空间用于与各个节点相关的租期（Lease）对象； 此对象的设计使得集群规模很大时节点心跳检测性能得到提升。&lt;/li>
+&lt;/ul>
+&lt;h3 id="kubectl-名字空间参数">&lt;em>kubectl&lt;/em> 名字空间参数&lt;/h3>
+&lt;p>要为当前请求设置名字空间，请使用 &lt;code>--namespace&lt;/code> 参数。&lt;/p>
+&lt;p>例如：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl run nginx --image&lt;span class="o">=&lt;/span>nginx --namespace&lt;span class="o">=&lt;/span>&amp;lt;名字空间名称&amp;gt;
+kubectl get pods --namespace&lt;span class="o">=&lt;/span>&amp;lt;名字空间名称&amp;gt;
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="设置默认名字空间">设置默认名字空间&lt;/h3>
+&lt;p>你可以永久保存名字空间，以用于对应上下文中所有后续 kubectl 命令。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl config set-context --current --namespace&lt;span class="o">=&lt;/span>&amp;lt;名字空间名称&amp;gt;
+&lt;span class="c1"># 验证之&lt;/span>
+kubectl config view &lt;span class="p">|&lt;/span> grep namespace:
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="并非所有对象都在名字空间中">并非所有对象都在名字空间中&lt;/h2>
+&lt;p>大多数 kubernetes 资源（例如 Pod、Service、副本控制器等）都位于某些名字空间中。 但是名字空间资源本身并不在名字空间中。而且底层资源，例如 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/architecture/nodes/" target="_blank" rel="noopener"
+>节点&lt;/a> 和持久化卷不属于任何名字空间。&lt;/p>
+&lt;p>查看哪些 Kubernetes 资源在名字空间中，哪些不在名字空间中：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">&lt;span class="c1"># 位于名字空间中的资源&lt;/span>
+kubectl api-resources --namespaced&lt;span class="o">=&lt;/span>&lt;span class="nb">true&lt;/span>
+&lt;span class="c1"># 不在名字空间中的资源&lt;/span>
+kubectl api-resources --namespaced&lt;span class="o">=&lt;/span>&lt;span class="nb">false&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="自动打标签">自动打标签&lt;/h2>
+&lt;p>Kubernetes 控制面会为所有名字空间设置一个不可变更的 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/overview/working-with-objects/labels/" target="_blank" rel="noopener"
+>标签&lt;/a> &lt;code>kubernetes.io/metadata.name&lt;/code>，只要 &lt;code>NamespaceDefaultLabelName&lt;/code> 这一 &lt;a class="link" href="https://kubernetes.io/zh/docs/reference/command-line-tools-reference/feature-gates/" target="_blank" rel="noopener"
+>特性门控&lt;/a> 被启用。标签的值是名字空间的名称。&lt;/p>
+&lt;h1 id="各类对象">各类对象&lt;/h1>
+&lt;h2 id="工作负载资源">工作负载资源&lt;/h2>
+&lt;h3 id="pods">Pods&lt;/h3>
+&lt;p>&lt;em>Pod&lt;/em> 是可以在 Kubernetes 中创建和管理的、最小的可部署的计算单元。&lt;/p>
+&lt;p>&lt;em>Pod&lt;/em> （就像在鲸鱼荚或者豌豆荚中）是一组（一个或多个） &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/overview/what-is-kubernetes/#why-containers" target="_blank" rel="noopener"
+>容器&lt;/a>； 这些容器共享存储、网络、以及怎样运行这些容器的声明。 Pod 中的内容总是并置（colocated）的并且一同调度，在共享的上下文中运行。 Pod 所建模的是特定于应用的“逻辑主机”，其中包含一个或多个应用容器， 这些容器是相对紧密的耦合在一起的。 在非云环境中，在相同的物理机或虚拟机上运行的应用类似于 在同一逻辑主机上运行的云应用。&lt;/p>
+&lt;h4 id="什么是-pod">什么是 Pod？&lt;/h4>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> 除了 Docker 之外，Kubernetes 支持 很多其他&lt;a class="link" href="https://kubernetes.io/zh/docs/setup/production-environment/container-runtimes" target="_blank" rel="noopener"
+>容器运行时&lt;/a>， &lt;a class="link" href="https://www.docker.com/" target="_blank" rel="noopener"
+>Docker&lt;/a> 是最有名的运行时， 使用 Docker 的术语来描述 Pod 会很有帮助。&lt;/p>
+&lt;/blockquote>
+&lt;p>Pod 的共享上下文包括一组 Linux 名字空间、控制组（cgroup）和可能一些其他的隔离 方面，即用来隔离 Docker 容器的技术。 在 Pod 的上下文中，每个独立的应用可能会进一步实施隔离。&lt;/p>
+&lt;p>就 Docker 概念的术语而言，Pod 类似于共享名字空间和文件系统卷的一组 Docker 容器。&lt;/p>
+&lt;h4 id="使用-pod">使用 Pod&lt;/h4>
+&lt;p>通常你不需要直接创建 Pod，甚至单实例 Pod。 相反，你会使用诸如 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/" target="_blank" rel="noopener"
+>Deployment&lt;/a> 或 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/job/" target="_blank" rel="noopener"
+>Job&lt;/a> 这类工作负载资源 来创建 Pod。如果 Pod 需要跟踪状态， 可以考虑 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/statefulset/" target="_blank" rel="noopener"
+>StatefulSet&lt;/a> 资源。&lt;/p>
+&lt;p>Kubernetes 集群中的 Pod 主要有两种用法：&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>&lt;strong>运行单个容器的 Pod&lt;/strong>。&amp;ldquo;每个 Pod 一个容器&amp;quot;模型是最常见的 Kubernetes 用例； 在这种情况下，可以将 Pod 看作单个容器的包装器，并且 Kubernetes 直接管理 Pod，而不是容器。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>运行多个协同工作的容器的 Pod&lt;/strong>。 Pod 可能封装由多个紧密耦合且需要共享资源的共处容器组成的应用程序。 这些位于同一位置的容器可能形成单个内聚的服务单元 —— 一个容器将文件从共享卷提供给公众， 而另一个单独的“边车”（sidecar）容器则刷新或更新这些文件。 Pod 将这些容器和存储资源打包为一个可管理的实体。&lt;/p>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> 将多个并置、同管的容器组织到一个 Pod 中是一种相对高级的使用场景。 只有在一些场景中，容器之间紧密关联时你才应该使用这种模式。&lt;/p>
+&lt;/blockquote>
+&lt;/li>
+&lt;/ul>
+&lt;p>每个 Pod 都旨在运行给定应用程序的单个实例。如果希望横向扩展应用程序（例如，运行多个实例 以提供更多的资源），则应该使用多个 Pod，每个实例使用一个 Pod。 在 Kubernetes 中，这通常被称为 &lt;em>副本（Replication）&lt;/em>。 通常使用一种工作负载资源及其&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/architecture/controller/" target="_blank" rel="noopener"
+>控制器&lt;/a> 来创建和管理一组 Pod 副本。&lt;/p>
+&lt;p>参见 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#pods-and-controllers" target="_blank" rel="noopener"
+>Pod 和控制器&lt;/a>以了解 Kubernetes 如何使用工作负载资源及其控制器以实现应用的扩缩和自动修复。&lt;/p>
+&lt;h3 id="deployments">Deployments&lt;/h3>
+&lt;p>一个 &lt;em>Deployment&lt;/em> 为 &lt;a class="link" href="https://kubernetes.io/docs/concepts/workloads/pods/pod-overview/" target="_blank" rel="noopener"
+>Pods&lt;/a> 和 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/replicaset/" target="_blank" rel="noopener"
+>ReplicaSets&lt;/a> 提供声明式的更新能力。&lt;/p>
+&lt;p>你负责描述 Deployment 中的 &lt;em>目标状态&lt;/em>，而 Deployment &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/architecture/controller/" target="_blank" rel="noopener"
+>控制器（Controller）&lt;/a> 以受控速率更改实际状态， 使其变为期望状态。你可以定义 Deployment 以创建新的 ReplicaSet，或删除现有 Deployment， 并通过新的 Deployment 收养其资源。&lt;/p>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> 不要管理 Deployment 所拥有的 ReplicaSet 。 如果存在下面未覆盖的使用场景，请考虑在 Kubernetes 仓库中提出 Issue。&lt;/p>
+&lt;/blockquote>
+&lt;h2 id="用例">用例&lt;/h2>
+&lt;p>以下是 Deployments 的典型用例：&lt;/p>
+&lt;ul>
+&lt;li>&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#creating-a-deployment" target="_blank" rel="noopener"
+>创建 Deployment 以将 ReplicaSet 上线&lt;/a>。 ReplicaSet 在后台创建 Pods。 检查 ReplicaSet 的上线状态，查看其是否成功。&lt;/li>
+&lt;li>通过更新 Deployment 的 PodTemplateSpec，&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#updating-a-deployment" target="_blank" rel="noopener"
+>声明 Pod 的新状态&lt;/a> 。 新的 ReplicaSet 会被创建，Deployment 以受控速率将 Pod 从旧 ReplicaSet 迁移到新 ReplicaSet。 每个新的 ReplicaSet 都会更新 Deployment 的修订版本。&lt;/li>
+&lt;li>如果 Deployment 的当前状态不稳定，&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#rolling-back-a-deployment" target="_blank" rel="noopener"
+>回滚到较早的 Deployment 版本&lt;/a>。 每次回滚都会更新 Deployment 的修订版本。&lt;/li>
+&lt;li>&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#scaling-a-deployment" target="_blank" rel="noopener"
+>扩大 Deployment 规模以承担更多负载&lt;/a>。&lt;/li>
+&lt;li>&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#pausing-and-resuming-a-deployment" target="_blank" rel="noopener"
+>暂停 Deployment &lt;/a>以应用对 PodTemplateSpec 所作的多项修改， 然后恢复其执行以启动新的上线版本。&lt;/li>
+&lt;li>&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#deployment-status" target="_blank" rel="noopener"
+>使用 Deployment 状态&lt;/a> 来判定上线过程是否出现停滞。&lt;/li>
+&lt;li>&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#clean-up-policy" target="_blank" rel="noopener"
+>清理较旧的不再需要的 ReplicaSet&lt;/a> 。&lt;/li>
+&lt;/ul>
+&lt;h2 id="创建-deployment">创建 Deployment&lt;/h2>
+&lt;p>下面是 Deployment 示例。其中创建了一个 ReplicaSet，负责启动三个 &lt;code>nginx&lt;/code> Pods：&lt;/p>
+&lt;p>&lt;a class="link" href="https://raw.githubusercontent.com/kubernetes/website/main/content/zh/examples/controllers/nginx-deployment.yaml" target="_blank" rel="noopener"
+>&lt;code>controllers/nginx-deployment.yaml&lt;/code> &lt;/a>&lt;img src="https://d33wubrfki0l68.cloudfront.net/0901162ab78eb4ff2e9e5dc8b17c3824befc91a6/44ccd/images/copycode.svg" alt="Copy controllers/nginx-deployment.yaml to clipboard" />&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">apps/v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">nginx-deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">nginx&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">3&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">matchLabels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">nginx&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">nginx&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">nginx&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">nginx:1.14.2&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>- &lt;span class="nt">containerPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>在该例中：&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>创建名为 &lt;code>nginx-deployment&lt;/code>（由 &lt;code>.metadata.name&lt;/code> 字段标明）的 Deployment。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>该 Deployment 创建三个（由 &lt;code>replicas&lt;/code> 字段标明）Pod 副本。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;code>selector&lt;/code> 字段定义 Deployment 如何查找要管理的 Pods。 在这里，你选择在 Pod 模板中定义的标签（&lt;code>app: nginx&lt;/code>）。 不过，更复杂的选择规则是也可能的，只要 Pod 模板本身满足所给规则即可。&lt;/p>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong>&lt;/p>
+&lt;p>&lt;code>spec.selector.matchLabels&lt;/code> 字段是 &lt;code>{key,value}&lt;/code> 键值对映射。 在 &lt;code>matchLabels&lt;/code> 映射中的每个 &lt;code>{key,value}&lt;/code> 映射等效于 &lt;code>matchExpressions&lt;/code> 中的一个元素， 即其 &lt;code>key&lt;/code> 字段是 “key”，&lt;code>operator&lt;/code> 为 “In”，&lt;code>values&lt;/code> 数组仅包含 “value”。 在 &lt;code>matchLabels&lt;/code> 和 &lt;code>matchExpressions&lt;/code> 中给出的所有条件都必须满足才能匹配。&lt;/p>
+&lt;/blockquote>
+&lt;/li>
+&lt;li>
+&lt;pre>&lt;code>template
+&lt;/code>&lt;/pre>&lt;p>字段包含以下子字段：&lt;/p>
+&lt;ul>
+&lt;li>Pod 被使用 &lt;code>labels&lt;/code> 字段打上 &lt;code>app: nginx&lt;/code> 标签。&lt;/li>
+&lt;li>Pod 模板规约（即 &lt;code>.template.spec&lt;/code> 字段）指示 Pods 运行一个 &lt;code>nginx&lt;/code> 容器， 该容器运行版本为 1.14.2 的 &lt;code>nginx&lt;/code> &lt;a class="link" href="https://hub.docker.com/" target="_blank" rel="noopener"
+>Docker Hub&lt;/a>镜像。&lt;/li>
+&lt;li>创建一个容器并使用 &lt;code>name&lt;/code> 字段将其命名为 &lt;code>nginx&lt;/code>。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;p>开始之前，请确保的 Kubernetes 集群已启动并运行。 按照以下步骤创建上述 Deployment ：&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>通过运行以下命令创建 Deployment ：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl apply -f https://k8s.io/examples/controllers/nginx-deployment.yaml
+&lt;/code>&lt;/pre>&lt;/div>&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> 你可以设置 &lt;code>--record&lt;/code> 标志将所执行的命令写入资源注解 &lt;code>kubernetes.io/change-cause&lt;/code> 中。 这对于以后的检查是有用的。例如，要查看针对每个 Deployment 修订版本所执行过的命令。&lt;/p>
+&lt;/blockquote>
+&lt;/li>
+&lt;li>
+&lt;p>运行 &lt;code>kubectl get deployments&lt;/code> 检查 Deployment 是否已创建。如果仍在创建 Deployment， 则输出类似于：&lt;/p>
+&lt;pre>&lt;code>NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE
+nginx-deployment 3 0 0 0 1s
+&lt;/code>&lt;/pre>&lt;p>在检查集群中的 Deployment 时，所显示的字段有：&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>NAME&lt;/code> 列出了集群中 Deployment 的名称。&lt;/li>
+&lt;li>&lt;code>READY&lt;/code> 显示应用程序的可用的 &lt;em>副本&lt;/em> 数。显示的模式是“就绪个数/期望个数”。&lt;/li>
+&lt;li>&lt;code>UP-TO-DATE&lt;/code> 显示为了达到期望状态已经更新的副本数。&lt;/li>
+&lt;li>&lt;code>AVAILABLE&lt;/code> 显示应用可供用户使用的副本数。&lt;/li>
+&lt;li>&lt;code>AGE&lt;/code> 显示应用程序运行的时间。&lt;/li>
+&lt;/ul>
+&lt;p>请注意期望副本数是根据 &lt;code>.spec.replicas&lt;/code> 字段设置 3。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>要查看 Deployment 上线状态，运行 &lt;code>kubectl rollout status deployment/nginx-deployment&lt;/code>。&lt;/p>
+&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>Waiting for rollout to finish: 2 out of 3 new replicas have been updated...
+deployment &amp;quot;nginx-deployment&amp;quot; successfully rolled out
+&lt;/code>&lt;/pre>&lt;/li>
+&lt;li>
+&lt;p>几秒钟后再次运行 &lt;code>kubectl get deployments&lt;/code>。输出类似于：&lt;/p>
+&lt;pre>&lt;code>NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE
+nginx-deployment 3 3 3 3 18s
+&lt;/code>&lt;/pre>&lt;p>注意 Deployment 已创建全部三个副本，并且所有副本都是最新的（它们包含最新的 Pod 模板） 并且可用。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>要查看 Deployment 创建的 ReplicaSet（&lt;code>rs&lt;/code>），运行 &lt;code>kubectl get rs&lt;/code>。 输出类似于：&lt;/p>
+&lt;pre>&lt;code>NAME DESIRED CURRENT READY AGE
+nginx-deployment-75675f5897 3 3 3 18s
+&lt;/code>&lt;/pre>&lt;p>ReplicaSet 输出中包含以下字段：&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>NAME&lt;/code> 列出名字空间中 ReplicaSet 的名称；&lt;/li>
+&lt;li>&lt;code>DESIRED&lt;/code> 显示应用的期望副本个数，即在创建 Deployment 时所定义的值。 此为期望状态；&lt;/li>
+&lt;li>&lt;code>CURRENT&lt;/code> 显示当前运行状态中的副本个数；&lt;/li>
+&lt;li>&lt;code>READY&lt;/code> 显示应用中有多少副本可以为用户提供服务；&lt;/li>
+&lt;li>&lt;code>AGE&lt;/code> 显示应用已经运行的时间长度。&lt;/li>
+&lt;/ul>
+&lt;p>注意 ReplicaSet 的名称始终被格式化为&lt;code>[Deployment名称]-[随机字符串]&lt;/code>。 其中的随机字符串是使用 pod-template-hash 作为种子随机生成的。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>要查看每个 Pod 自动生成的标签，运行 &lt;code>kubectl get pods --show-labels&lt;/code>。返回以下输出：&lt;/p>
+&lt;pre>&lt;code>NAME READY STATUS RESTARTS AGE LABELS
+nginx-deployment-75675f5897-7ci7o 1/1 Running 0 18s app=nginx,pod-template-hash=3123191453
+nginx-deployment-75675f5897-kzszj 1/1 Running 0 18s app=nginx,pod-template-hash=3123191453
+nginx-deployment-75675f5897-qqcnn 1/1 Running 0 18s app=nginx,pod-template-hash=3123191453
+&lt;/code>&lt;/pre>&lt;p>所创建的 ReplicaSet 确保总是存在三个 &lt;code>nginx&lt;/code> Pod。&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> 你必须在 Deployment 中指定适当的选择算符和 Pod 模板标签（在本例中为 &lt;code>app: nginx&lt;/code>）。 标签或者选择算符不要与其他控制器（包括其他 Deployment 和 StatefulSet）重叠。 Kubernetes 不会阻止你这样做，但是如果多个控制器具有重叠的选择算符，它们可能会发生冲突 执行难以预料的操作。&lt;/p>
+&lt;/blockquote>
+&lt;h3 id="pod-template-hash-标签">Pod-template-hash 标签&lt;/h3>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> 不要更改此标签。&lt;/p>
+&lt;/blockquote>
+&lt;p>Deployment 控制器将 &lt;code>pod-template-hash&lt;/code> 标签添加到 Deployment 所创建或收留的 每个 ReplicaSet 。&lt;/p>
+&lt;p>此标签可确保 Deployment 的子 ReplicaSets 不重叠。 标签是通过对 ReplicaSet 的 &lt;code>PodTemplate&lt;/code> 进行哈希处理。 所生成的哈希值被添加到 ReplicaSet 选择算符、Pod 模板标签，并存在于在 ReplicaSet 可能拥有的任何现有 Pod 中。&lt;/p>
+&lt;h2 id="更新-deployment">更新 Deployment&lt;/h2>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> 仅当 Deployment Pod 模板（即 &lt;code>.spec.template&lt;/code>）发生改变时，例如模板的标签或容器镜像被更新， 才会触发 Deployment 上线。 其他更新（如对 Deployment 执行扩缩容的操作）不会触发上线动作。&lt;/p>
+&lt;/blockquote>
+&lt;p>按照以下步骤更新 Deployment：&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>先来更新 nginx Pod 以使用 &lt;code>nginx:1.16.1&lt;/code> 镜像，而不是 &lt;code>nginx:1.14.2&lt;/code> 镜像。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl --record deployment.apps/nginx-deployment &lt;span class="nb">set&lt;/span> image &lt;span class="se">\
+&lt;/span>&lt;span class="se">&lt;/span> deployment.v1.apps/nginx-deployment &lt;span class="nv">nginx&lt;/span>&lt;span class="o">=&lt;/span>nginx:1.16.1
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>或者使用下面的命令：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl &lt;span class="nb">set&lt;/span> image deployment/nginx-deployment &lt;span class="nv">nginx&lt;/span>&lt;span class="o">=&lt;/span>nginx:1.16.1 --record
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>deployment.apps/nginx-deployment image updated
+&lt;/code>&lt;/pre>&lt;p>或者，可以 &lt;code>edit&lt;/code> Deployment 并将 &lt;code>.spec.template.spec.containers[0].image&lt;/code> 从 &lt;code>nginx:1.14.2&lt;/code> 更改至 &lt;code>nginx:1.16.1&lt;/code>。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl edit deployment.v1.apps/nginx-deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>deployment.apps/nginx-deployment edited
+&lt;/code>&lt;/pre>&lt;/li>
+&lt;li>
+&lt;p>要查看上线状态，运行：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl rollout status deployment/nginx-deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>Waiting for rollout to finish: 2 out of 3 new replicas have been updated...
+&lt;/code>&lt;/pre>&lt;p>或者&lt;/p>
+&lt;pre>&lt;code>deployment &amp;quot;nginx-deployment&amp;quot; successfully rolled out
+&lt;/code>&lt;/pre>&lt;/li>
+&lt;/ol>
+&lt;p>获取关于已更新的 Deployment 的更多信息：&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>在上线成功后，可以通过运行 &lt;code>kubectl get deployments&lt;/code> 来查看 Deployment： 输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE
+nginx-deployment &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> 36s
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>运行 &lt;code>kubectl get rs&lt;/code> 以查看 Deployment 通过创建新的 ReplicaSet 并将其扩容到 3 个副本并将旧 ReplicaSet 缩容到 0 个副本完成了 Pod 的更新操作：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get rs
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>NAME DESIRED CURRENT READY AGE
+nginx-deployment-1564180365 3 3 3 6s
+nginx-deployment-2035384211 0 0 0 36s
+&lt;/code>&lt;/pre>&lt;/li>
+&lt;li>
+&lt;p>现在运行 &lt;code>get pods&lt;/code> 应仅显示新的 Pods:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get pods
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>NAME READY STATUS RESTARTS AGE
+nginx-deployment-1564180365-khku8 1/1 Running 0 14s
+nginx-deployment-1564180365-nacti 1/1 Running 0 14s
+nginx-deployment-1564180365-z9gth 1/1 Running 0 14s
+&lt;/code>&lt;/pre>&lt;p>下次要更新这些 Pods 时，只需再次更新 Deployment Pod 模板即可。&lt;/p>
+&lt;p>Deployment 可确保在更新时仅关闭一定数量的 Pod。默认情况下，它确保至少所需 Pods 75% 处于运行状态（最大不可用比例为 25%）。&lt;/p>
+&lt;p>Deployment 还确保仅所创建 Pod 数量只可能比期望 Pods 数高一点点。 默认情况下，它可确保启动的 Pod 个数比期望个数最多多出 25%（最大峰值 25%）。&lt;/p>
+&lt;p>例如，如果仔细查看上述 Deployment ，将看到它首先创建了一个新的 Pod，然后删除了一些旧的 Pods， 并创建了新的 Pods。它不会杀死老 Pods，直到有足够的数量新的 Pods 已经出现。 在足够数量的旧 Pods 被杀死前并没有创建新 Pods。它确保至少 2 个 Pod 可用，同时 最多总共 4 个 Pod 可用。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>获取 Deployment 的更多信息&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl describe deployments
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>Name: nginx-deployment
+Namespace: default
+CreationTimestamp: Thu, 30 Nov 2017 10:56:25 +0000
+Labels: app=nginx
+Annotations: deployment.kubernetes.io/revision=2
+Selector: app=nginx
+Replicas: 3 desired | 3 updated | 3 total | 3 available | 0 unavailable
+StrategyType: RollingUpdate
+MinReadySeconds: 0
+RollingUpdateStrategy: 25% max unavailable, 25% max surge
+Pod Template:
+Labels: app=nginx
+Containers:
+nginx:
+Image: nginx:1.16.1
+Port: 80/TCP
+Environment: &amp;lt;none&amp;gt;
+Mounts: &amp;lt;none&amp;gt;
+Volumes: &amp;lt;none&amp;gt;
+Conditions:
+Type Status Reason
+---- ------ ------
+Available True MinimumReplicasAvailable
+Progressing True NewReplicaSetAvailable
+OldReplicaSets: &amp;lt;none&amp;gt;
+NewReplicaSet: nginx-deployment-1564180365 (3/3 replicas created)
+Events:
+Type Reason Age From Message
+---- ------ ---- ---- -------
+Normal ScalingReplicaSet 2m deployment-controller Scaled up replica set nginx-deployment-2035384211 to 3
+Normal ScalingReplicaSet 24s deployment-controller Scaled up replica set nginx-deployment-1564180365 to 1
+Normal ScalingReplicaSet 22s deployment-controller Scaled down replica set nginx-deployment-2035384211 to 2
+Normal ScalingReplicaSet 22s deployment-controller Scaled up replica set nginx-deployment-1564180365 to 2
+Normal ScalingReplicaSet 19s deployment-controller Scaled down replica set nginx-deployment-2035384211 to 1
+Normal ScalingReplicaSet 19s deployment-controller Scaled up replica set nginx-deployment-1564180365 to 3
+Normal ScalingReplicaSet 14s deployment-controller Scaled down replica set nginx-deployment-2035384211 to 0
+&lt;/code>&lt;/pre>&lt;p>可以看到，当第一次创建 Deployment 时，它创建了一个 ReplicaSet（nginx-deployment-2035384211） 并将其直接扩容至 3 个副本。更新 Deployment 时，它创建了一个新的 ReplicaSet （nginx-deployment-1564180365），并将其扩容为 1，然后将旧 ReplicaSet 缩容到 2， 以便至少有 2 个 Pod 可用且最多创建 4 个 Pod。 然后，它使用相同的滚动更新策略继续对新的 ReplicaSet 扩容并对旧的 ReplicaSet 缩容。 最后，你将有 3 个可用的副本在新的 ReplicaSet 中，旧 ReplicaSet 将缩容到 0。&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;h3 id="翻转多-deployment-动态更新">翻转（多 Deployment 动态更新）&lt;/h3>
+&lt;p>Deployment 控制器每次注意到新的 Deployment 时，都会创建一个 ReplicaSet 以启动所需的 Pods。 如果更新了 Deployment，则控制标签匹配 &lt;code>.spec.selector&lt;/code> 但模板不匹配 &lt;code>.spec.template&lt;/code> 的 Pods 的现有 ReplicaSet 被缩容。最终，新的 ReplicaSet 缩放为 &lt;code>.spec.replicas&lt;/code> 个副本， 所有旧 ReplicaSets 缩放为 0 个副本。&lt;/p>
+&lt;p>当 Deployment 正在上线时被更新，Deployment 会针对更新创建一个新的 ReplicaSet 并开始对其扩容，之前正在被扩容的 ReplicaSet 会被翻转，添加到旧 ReplicaSets 列表 并开始缩容。&lt;/p>
+&lt;p>例如，假定你在创建一个 Deployment 以生成 &lt;code>nginx:1.14.2&lt;/code> 的 5 个副本，但接下来 更新 Deployment 以创建 5 个 &lt;code>nginx:1.16.1&lt;/code> 的副本，而此时只有 3 个&lt;code>nginx:1.14.2&lt;/code> 副本已创建。在这种情况下，Deployment 会立即开始杀死 3 个 &lt;code>nginx:1.14.2&lt;/code> Pods， 并开始创建 &lt;code>nginx:1.16.1&lt;/code> Pods。它不会等待 &lt;code>nginx:1.14.2&lt;/code> 的 5 个副本都创建完成 后才开始执行变更动作。&lt;/p>
+&lt;h3 id="更改标签选择算符">更改标签选择算符&lt;/h3>
+&lt;p>通常不鼓励更新标签选择算符。建议你提前规划选择算符。 在任何情况下，如果需要更新标签选择算符，请格外小心，并确保自己了解 这背后可能发生的所有事情。&lt;/p>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> 在 API 版本 &lt;code>apps/v1&lt;/code> 中，Deployment 标签选择算符在创建后是不可变的。&lt;/p>
+&lt;/blockquote>
+&lt;ul>
+&lt;li>添加选择算符时要求使用新标签更新 Deployment 规约中的 Pod 模板标签，否则将返回验证错误。 此更改是非重叠的，也就是说新的选择算符不会选择使用旧选择算符所创建的 ReplicaSet 和 Pod， 这会导致创建新的 ReplicaSet 时所有旧 ReplicaSet 都会被孤立。&lt;/li>
+&lt;li>选择算符的更新如果更改了某个算符的键名，这会导致与添加算符时相同的行为。&lt;/li>
+&lt;li>删除选择算符的操作会删除从 Deployment 选择算符中删除现有算符。 此操作不需要更改 Pod 模板标签。现有 ReplicaSet 不会被孤立，也不会因此创建新的 ReplicaSet， 但请注意已删除的标签仍然存在于现有的 Pod 和 ReplicaSet 中。&lt;/li>
+&lt;/ul>
+&lt;h2 id="回滚-deployment">回滚 Deployment&lt;/h2>
+&lt;p>有时，你可能想要回滚 Deployment；例如，当 Deployment 不稳定时（例如进入反复崩溃状态）。 默认情况下，Deployment 的所有上线记录都保留在系统中，以便可以随时回滚 （你可以通过修改修订历史记录限制来更改这一约束）。&lt;/p>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> Deployment 被触发上线时，系统就会创建 Deployment 的新的修订版本。 这意味着仅当 Deployment 的 Pod 模板（&lt;code>.spec.template&lt;/code>）发生更改时，才会创建新修订版本 &amp;ndash; 例如，模板的标签或容器镜像发生变化。 其他更新，如 Deployment 的扩缩容操作不会创建 Deployment 修订版本。 这是为了方便同时执行手动缩放或自动缩放。 换言之，当你回滚到较早的修订版本时，只有 Deployment 的 Pod 模板部分会被回滚。&lt;/p>
+&lt;/blockquote>
+&lt;ul>
+&lt;li>
+&lt;p>假设你在更新 Deployment 时犯了一个拼写错误，将镜像名称命名设置为 &lt;code>nginx:1.161&lt;/code> 而不是 &lt;code>nginx:1.16.1&lt;/code>：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl &lt;span class="nb">set&lt;/span> image deployment.v1.apps/nginx-deployment &lt;span class="nv">nginx&lt;/span>&lt;span class="o">=&lt;/span>nginx:1.161 --record&lt;span class="o">=&lt;/span>&lt;span class="nb">true&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">deployment.apps/nginx-deployment image updated
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>此上线进程会出现停滞。你可以通过检查上线状态来验证：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl rollout status deployment/nginx-deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>Waiting for rollout to finish: 1 out of 3 new replicas have been updated...
+&lt;/code>&lt;/pre>&lt;/li>
+&lt;li>
+&lt;p>按 Ctrl-C 停止上述上线状态观测。有关上线停滞的详细信息，&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#deployment-status" target="_blank" rel="noopener"
+>参考这里&lt;/a>。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>你可以看到旧的副本有两个（&lt;code>nginx-deployment-1564180365&lt;/code> 和 &lt;code>nginx-deployment-2035384211&lt;/code>）， 新的副本有 1 个（&lt;code>nginx-deployment-3066724191&lt;/code>）：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get rs
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">NAME DESIRED CURRENT READY AGE
+nginx-deployment-1564180365 &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> 25s
+nginx-deployment-2035384211 &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> 36s
+nginx-deployment-3066724191 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">0&lt;/span> 6s
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>查看所创建的 Pod，你会注意到新 ReplicaSet 所创建的 1 个 Pod 卡顿在镜像拉取循环中。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get pods
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">NAME READY STATUS RESTARTS AGE
+nginx-deployment-1564180365-70iae 1/1 Running &lt;span class="m">0&lt;/span> 25s
+nginx-deployment-1564180365-jbqqo 1/1 Running &lt;span class="m">0&lt;/span> 25s
+nginx-deployment-1564180365-hysrc 1/1 Running &lt;span class="m">0&lt;/span> 25s
+nginx-deployment-3066724191-08mng 0/1 ImagePullBackOff &lt;span class="m">0&lt;/span> 6s
+&lt;/code>&lt;/pre>&lt;/div>&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> Deployment 控制器自动停止有问题的上线过程，并停止对新的 ReplicaSet 扩容。 这行为取决于所指定的 rollingUpdate 参数（具体为 &lt;code>maxUnavailable&lt;/code>）。 默认情况下，Kubernetes 将此值设置为 25%。&lt;/p>
+&lt;/blockquote>
+&lt;/li>
+&lt;li>
+&lt;p>获取 Deployment 描述信息：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl describe deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">Name: nginx-deployment
+Namespace: default
+CreationTimestamp: Tue, &lt;span class="m">15&lt;/span> Mar &lt;span class="m">2016&lt;/span> 14:48:04 -0700
+Labels: &lt;span class="nv">app&lt;/span>&lt;span class="o">=&lt;/span>nginx
+Selector: &lt;span class="nv">app&lt;/span>&lt;span class="o">=&lt;/span>nginx
+Replicas: &lt;span class="m">3&lt;/span> desired &lt;span class="p">|&lt;/span> &lt;span class="m">1&lt;/span> updated &lt;span class="p">|&lt;/span> &lt;span class="m">4&lt;/span> total &lt;span class="p">|&lt;/span> &lt;span class="m">3&lt;/span> available &lt;span class="p">|&lt;/span> &lt;span class="m">1&lt;/span> unavailable
+StrategyType: RollingUpdate
+MinReadySeconds: &lt;span class="m">0&lt;/span>
+RollingUpdateStrategy: 25% max unavailable, 25% max surge
+Pod Template:
+Labels: &lt;span class="nv">app&lt;/span>&lt;span class="o">=&lt;/span>nginx
+Containers:
+nginx:
+Image: nginx:1.91
+Port: 80/TCP
+Host Port: 0/TCP
+Environment: &amp;lt;none&amp;gt;
+Mounts: &amp;lt;none&amp;gt;
+Volumes: &amp;lt;none&amp;gt;
+Conditions:
+Type Status Reason
+---- ------ ------
+Available True MinimumReplicasAvailable
+Progressing True ReplicaSetUpdated
+OldReplicaSets: nginx-deployment-1564180365 &lt;span class="o">(&lt;/span>3/3 replicas created&lt;span class="o">)&lt;/span>
+NewReplicaSet: nginx-deployment-3066724191 &lt;span class="o">(&lt;/span>1/1 replicas created&lt;span class="o">)&lt;/span>
+Events:
+FirstSeen LastSeen Count From SubobjectPath Type Reason Message
+--------- -------- ----- ---- ------------- -------- ------ -------
+1m 1m &lt;span class="m">1&lt;/span> &lt;span class="o">{&lt;/span>deployment-controller &lt;span class="o">}&lt;/span> Normal ScalingReplicaSet Scaled up replica &lt;span class="nb">set&lt;/span> nginx-deployment-2035384211 to &lt;span class="m">3&lt;/span>
+22s 22s &lt;span class="m">1&lt;/span> &lt;span class="o">{&lt;/span>deployment-controller &lt;span class="o">}&lt;/span> Normal ScalingReplicaSet Scaled up replica &lt;span class="nb">set&lt;/span> nginx-deployment-1564180365 to &lt;span class="m">1&lt;/span>
+22s 22s &lt;span class="m">1&lt;/span> &lt;span class="o">{&lt;/span>deployment-controller &lt;span class="o">}&lt;/span> Normal ScalingReplicaSet Scaled down replica &lt;span class="nb">set&lt;/span> nginx-deployment-2035384211 to &lt;span class="m">2&lt;/span>
+22s 22s &lt;span class="m">1&lt;/span> &lt;span class="o">{&lt;/span>deployment-controller &lt;span class="o">}&lt;/span> Normal ScalingReplicaSet Scaled up replica &lt;span class="nb">set&lt;/span> nginx-deployment-1564180365 to &lt;span class="m">2&lt;/span>
+21s 21s &lt;span class="m">1&lt;/span> &lt;span class="o">{&lt;/span>deployment-controller &lt;span class="o">}&lt;/span> Normal ScalingReplicaSet Scaled down replica &lt;span class="nb">set&lt;/span> nginx-deployment-2035384211 to &lt;span class="m">1&lt;/span>
+21s 21s &lt;span class="m">1&lt;/span> &lt;span class="o">{&lt;/span>deployment-controller &lt;span class="o">}&lt;/span> Normal ScalingReplicaSet Scaled up replica &lt;span class="nb">set&lt;/span> nginx-deployment-1564180365 to &lt;span class="m">3&lt;/span>
+13s 13s &lt;span class="m">1&lt;/span> &lt;span class="o">{&lt;/span>deployment-controller &lt;span class="o">}&lt;/span> Normal ScalingReplicaSet Scaled down replica &lt;span class="nb">set&lt;/span> nginx-deployment-2035384211 to &lt;span class="m">0&lt;/span>
+13s 13s &lt;span class="m">1&lt;/span> &lt;span class="o">{&lt;/span>deployment-controller &lt;span class="o">}&lt;/span> Normal ScalingReplicaSet Scaled up replica &lt;span class="nb">set&lt;/span> nginx-deployment-3066724191 to &lt;span class="m">1&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>要解决此问题，需要回滚到以前稳定的 Deployment 版本。&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;h3 id="检查-deployment-上线历史">检查 Deployment 上线历史&lt;/h3>
+&lt;p>按照如下步骤检查回滚历史：&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>首先，检查 Deployment 修订历史：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl rollout &lt;span class="nb">history&lt;/span> deployment.v1.apps/nginx-deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">deployments &lt;span class="s2">&amp;#34;nginx-deployment&amp;#34;&lt;/span>
+REVISION CHANGE-CAUSE
+&lt;span class="m">1&lt;/span> kubectl apply --filename&lt;span class="o">=&lt;/span>https://k8s.io/examples/controllers/nginx-deployment.yaml --record&lt;span class="o">=&lt;/span>&lt;span class="nb">true&lt;/span>
+&lt;span class="m">2&lt;/span> kubectl &lt;span class="nb">set&lt;/span> image deployment.v1.apps/nginx-deployment &lt;span class="nv">nginx&lt;/span>&lt;span class="o">=&lt;/span>nginx:1.9.1 --record&lt;span class="o">=&lt;/span>&lt;span class="nb">true&lt;/span>
+&lt;span class="m">3&lt;/span> kubectl &lt;span class="nb">set&lt;/span> image deployment.v1.apps/nginx-deployment &lt;span class="nv">nginx&lt;/span>&lt;span class="o">=&lt;/span>nginx:1.91 --record&lt;span class="o">=&lt;/span>&lt;span class="nb">true&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>CHANGE-CAUSE&lt;/code> 的内容是从 Deployment 的 &lt;code>kubernetes.io/change-cause&lt;/code> 注解复制过来的。 复制动作发生在修订版本创建时。你可以通过以下方式设置 &lt;code>CHANGE-CAUSE&lt;/code> 消息：&lt;/p>
+&lt;ul>
+&lt;li>使用 &lt;code>kubectl annotate deployment.v1.apps/nginx-deployment kubernetes.io/change-cause=&amp;quot;image updated to 1.9.1&amp;quot;&lt;/code> 为 Deployment 添加注解。&lt;/li>
+&lt;li>追加 &lt;code>--record&lt;/code> 命令行标志以保存正在更改资源的 &lt;code>kubectl&lt;/code> 命令。&lt;/li>
+&lt;li>手动编辑资源的清单。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>要查看修订历史的详细信息，运行：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl rollout &lt;span class="nb">history&lt;/span> deployment.v1.apps/nginx-deployment --revision&lt;span class="o">=&lt;/span>&lt;span class="m">2&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">deployments &lt;span class="s2">&amp;#34;nginx-deployment&amp;#34;&lt;/span> revision &lt;span class="m">2&lt;/span>
+Labels: &lt;span class="nv">app&lt;/span>&lt;span class="o">=&lt;/span>nginx
+pod-template-hash&lt;span class="o">=&lt;/span>&lt;span class="m">1159050644&lt;/span>
+Annotations: kubernetes.io/change-cause&lt;span class="o">=&lt;/span>kubectl &lt;span class="nb">set&lt;/span> image deployment.v1.apps/nginx-deployment &lt;span class="nv">nginx&lt;/span>&lt;span class="o">=&lt;/span>nginx:1.16.1 --record&lt;span class="o">=&lt;/span>&lt;span class="nb">true&lt;/span>
+Containers:
+nginx:
+Image: nginx:1.16.1
+Port: 80/TCP
+QoS Tier:
+cpu: BestEffort
+memory: BestEffort
+Environment Variables: &amp;lt;none&amp;gt;
+No volumes.
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;/ol>
+&lt;h3 id="回滚到之前的修订版本">回滚到之前的修订版本&lt;/h3>
+&lt;p>按照下面给出的步骤将 Deployment 从当前版本回滚到以前的版本（即版本 2）。&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>假定现在你已决定撤消当前上线并回滚到以前的修订版本：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl rollout undo deployment.v1.apps/nginx-deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>deployment.apps/nginx-deployment
+&lt;/code>&lt;/pre>&lt;p>或者，你也可以通过使用 &lt;code>--to-revision&lt;/code> 来回滚到特定修订版本：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl rollout undo deployment.v1.apps/nginx-deployment --to-revision&lt;span class="o">=&lt;/span>&lt;span class="m">2&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>deployment.apps/nginx-deployment
+&lt;/code>&lt;/pre>&lt;p>与回滚相关的指令的更详细信息，请参考 &lt;a class="link" href="https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#rollout" target="_blank" rel="noopener"
+>&lt;code>kubectl rollout&lt;/code>&lt;/a>。&lt;/p>
+&lt;p>现在，Deployment 正在回滚到以前的稳定版本。正如你所看到的，Deployment 控制器生成了 回滚到修订版本 2 的 &lt;code>DeploymentRollback&lt;/code> 事件。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>检查回滚是否成功以及 Deployment 是否正在运行，运行：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get deployment nginx-deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE
+nginx-deployment &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> 30m
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>获取 Deployment 描述信息：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl describe deployment nginx-deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>Name: nginx-deployment
+Namespace: default
+CreationTimestamp: Sun, 02 Sep 2018 18:17:55 -0500
+Labels: app=nginx
+Annotations: deployment.kubernetes.io/revision=4
+kubernetes.io/change-cause=kubectl set image deployment.v1.apps/nginx-deployment nginx=nginx:1.16.1 --record=true
+Selector: app=nginx
+Replicas: 3 desired | 3 updated | 3 total | 3 available | 0 unavailable
+StrategyType: RollingUpdate
+MinReadySeconds: 0
+RollingUpdateStrategy: 25% max unavailable, 25% max surge
+Pod Template:
+Labels: app=nginx
+Containers:
+nginx:
+Image: nginx:1.16.1
+Port: 80/TCP
+Host Port: 0/TCP
+Environment: &amp;lt;none&amp;gt;
+Mounts: &amp;lt;none&amp;gt;
+Volumes: &amp;lt;none&amp;gt;
+Conditions:
+Type Status Reason
+---- ------ ------
+Available True MinimumReplicasAvailable
+Progressing True NewReplicaSetAvailable
+OldReplicaSets: &amp;lt;none&amp;gt;
+NewReplicaSet: nginx-deployment-c4747d96c (3/3 replicas created)
+Events:
+Type Reason Age From Message
+---- ------ ---- ---- -------
+Normal ScalingReplicaSet 12m deployment-controller Scaled up replica set nginx-deployment-75675f5897 to 3
+Normal ScalingReplicaSet 11m deployment-controller Scaled up replica set nginx-deployment-c4747d96c to 1
+Normal ScalingReplicaSet 11m deployment-controller Scaled down replica set nginx-deployment-75675f5897 to 2
+Normal ScalingReplicaSet 11m deployment-controller Scaled up replica set nginx-deployment-c4747d96c to 2
+Normal ScalingReplicaSet 11m deployment-controller Scaled down replica set nginx-deployment-75675f5897 to 1
+Normal ScalingReplicaSet 11m deployment-controller Scaled up replica set nginx-deployment-c4747d96c to 3
+Normal ScalingReplicaSet 11m deployment-controller Scaled down replica set nginx-deployment-75675f5897 to 0
+Normal ScalingReplicaSet 11m deployment-controller Scaled up replica set nginx-deployment-595696685f to 1
+Normal DeploymentRollback 15s deployment-controller Rolled back deployment &amp;quot;nginx-deployment&amp;quot; to revision 2
+Normal ScalingReplicaSet 15s deployment-controller Scaled down replica set nginx-deployment-595696685f to 0
+&lt;/code>&lt;/pre>&lt;/li>
+&lt;/ol>
+&lt;h2 id="缩放-deployment">缩放 Deployment&lt;/h2>
+&lt;p>你可以使用如下指令缩放 Deployment：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl scale deployment.v1.apps/nginx-deployment --replicas&lt;span class="o">=&lt;/span>&lt;span class="m">10&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>deployment.apps/nginx-deployment scaled
+&lt;/code>&lt;/pre>&lt;p>假设集群启用了&lt;a class="link" href="https://kubernetes.io/zh/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/" target="_blank" rel="noopener"
+>Pod 的水平自动缩放&lt;/a>， 你可以为 Deployment 设置自动缩放器，并基于现有 Pods 的 CPU 利用率选择 要运行的 Pods 个数下限和上限。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl autoscale deployment.v1.apps/nginx-deployment --min&lt;span class="o">=&lt;/span>&lt;span class="m">10&lt;/span> --max&lt;span class="o">=&lt;/span>&lt;span class="m">15&lt;/span> --cpu-percent&lt;span class="o">=&lt;/span>&lt;span class="m">80&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>deployment.apps/nginx-deployment scaled
+&lt;/code>&lt;/pre>&lt;h3 id="比例缩放">比例缩放&lt;/h3>
+&lt;p>RollingUpdate 的 Deployment 支持同时运行应用程序的多个版本。 当自动缩放器缩放处于上线进程（仍在进行中或暂停）中的 RollingUpdate Deployment 时， Deployment 控制器会平衡现有的活跃状态的 ReplicaSets（含 Pods 的 ReplicaSets）中的额外副本， 以降低风险。这称为 &lt;em>比例缩放（Proportional Scaling）&lt;/em>。&lt;/p>
+&lt;p>例如，你正在运行一个 10 个副本的 Deployment，其 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#max-surge" target="_blank" rel="noopener"
+>maxSurge&lt;/a>=3，&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#max-unavailable" target="_blank" rel="noopener"
+>maxUnavailable&lt;/a>=2。&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>确保 Deployment 的这 10 个副本都在运行。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get deploy
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE
+nginx-deployment 10 10 10 10 50s
+&lt;/code>&lt;/pre>&lt;/li>
+&lt;li>
+&lt;p>更新 Deployment 使用新镜像，碰巧该镜像无法从集群内部解析。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl &lt;span class="nb">set&lt;/span> image deployment.v1.apps/nginx-deployment &lt;span class="nv">nginx&lt;/span>&lt;span class="o">=&lt;/span>nginx:sometag
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>deployment.apps/nginx-deployment image updated
+&lt;/code>&lt;/pre>&lt;/li>
+&lt;li>
+&lt;p>镜像更新使用 ReplicaSet &lt;code>nginx-deployment-1989198191&lt;/code> 启动新的上线过程， 但由于上面提到的 &lt;code>maxUnavailable&lt;/code> 要求，该进程被阻塞了。检查上线状态：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get rs
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>NAME DESIRED CURRENT READY AGE
+nginx-deployment-1989198191 5 5 0 9s
+nginx-deployment-618515232 8 8 8 1m
+&lt;/code>&lt;/pre>&lt;/li>
+&lt;li>
+&lt;p>然后，出现了新的 Deployment 扩缩请求。自动缩放器将 Deployment 副本增加到 15。 Deployment 控制器需要决定在何处添加 5 个新副本。如果未使用比例缩放，所有 5 个副本 都将添加到新的 ReplicaSet 中。使用比例缩放时，可以将额外的副本分布到所有 ReplicaSet。 较大比例的副本会被添加到拥有最多副本的 ReplicaSet，而较低比例的副本会进入到 副本较少的 ReplicaSet。所有剩下的副本都会添加到副本最多的 ReplicaSet。 具有零副本的 ReplicaSets 不会被扩容。&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;p>在上面的示例中，3 个副本被添加到旧 ReplicaSet 中，2 个副本被添加到新 ReplicaSet。 假定新的副本都很健康，上线过程最终应将所有副本迁移到新的 ReplicaSet 中。 要确认这一点，请运行：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get deploy
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE
+nginx-deployment 15 18 7 8 7m
+&lt;/code>&lt;/pre>&lt;p>上线状态确认了副本是如何被添加到每个 ReplicaSet 的。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get rs
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">NAME DESIRED CURRENT READY AGE
+nginx-deployment-1989198191 &lt;span class="m">7&lt;/span> &lt;span class="m">7&lt;/span> &lt;span class="m">0&lt;/span> 7m
+nginx-deployment-618515232 &lt;span class="m">11&lt;/span> &lt;span class="m">11&lt;/span> &lt;span class="m">11&lt;/span> 7m
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="暂停恢复-deployment">暂停、恢复 Deployment&lt;/h2>
+&lt;p>你可以在触发一个或多个更新之前暂停 Deployment，然后再恢复其执行。 这样做使得你能够在暂停和恢复执行之间应用多个修补程序，而不会触发不必要的上线操作。&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>例如，对于一个刚刚创建的 Deployment： 获取 Deployment 信息：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get deploy
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE
+nginx 3 3 3 3 1m
+&lt;/code>&lt;/pre>&lt;p>获取上线状态：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get rs
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">NAME DESIRED CURRENT READY AGE
+nginx-2142116321 &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> 1m
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>使用如下指令暂停运行：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl rollout pause deployment.v1.apps/nginx-deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">deployment.apps/nginx-deployment paused
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>接下来更新 Deployment 镜像：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl &lt;span class="nb">set&lt;/span> image deployment.v1.apps/nginx-deployment &lt;span class="nv">nginx&lt;/span>&lt;span class="o">=&lt;/span>nginx:1.16.1
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>deployment.apps/nginx-deployment image updated
+&lt;/code>&lt;/pre>&lt;/li>
+&lt;li>
+&lt;p>注意没有新的上线被触发：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl rollout &lt;span class="nb">history&lt;/span> deployment.v1.apps/nginx-deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">deployments &lt;span class="s2">&amp;#34;nginx&amp;#34;&lt;/span>
+REVISION CHANGE-CAUSE
+&lt;span class="m">1&lt;/span> &amp;lt;none&amp;gt;
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>获取上线状态确保 Deployment 更新已经成功：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get rs
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">NAME DESIRED CURRENT READY AGE
+nginx-2142116321 &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> &lt;span class="m">3&lt;/span> 2m
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>你可以根据需要执行很多更新操作，例如，可以要使用的资源：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl &lt;span class="nb">set&lt;/span> resources deployment.v1.apps/nginx-deployment -c&lt;span class="o">=&lt;/span>nginx --limits&lt;span class="o">=&lt;/span>&lt;span class="nv">cpu&lt;/span>&lt;span class="o">=&lt;/span>200m,memory&lt;span class="o">=&lt;/span>512Mi
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>deployment.apps/nginx-deployment resource requirements updated
+&lt;/code>&lt;/pre>&lt;p>暂停 Deployment 之前的初始状态将继续发挥作用，但新的更新在 Deployment 被 暂停期间不会产生任何效果。&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>最终，恢复 Deployment 执行并观察新的 ReplicaSet 的创建过程，其中包含了所应用的所有更新：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl rollout resume deployment.v1.apps/nginx-deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">deployment.apps/nginx-deployment resumed
+&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
+&lt;li>
+&lt;p>观察上线的状态，直到完成。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get rs -w
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>NAME DESIRED CURRENT READY AGE
+nginx-2142116321 2 2 2 2m
+nginx-3926361531 2 2 0 6s
+nginx-3926361531 2 2 1 18s
+nginx-2142116321 1 2 2 2m
+nginx-2142116321 1 2 2 2m
+nginx-3926361531 3 2 1 18s
+nginx-3926361531 3 2 1 18s
+nginx-2142116321 1 1 1 2m
+nginx-3926361531 3 3 1 18s
+nginx-3926361531 3 3 2 19s
+nginx-2142116321 0 1 1 2m
+nginx-2142116321 0 1 1 2m
+nginx-2142116321 0 0 0 2m
+nginx-3926361531 3 3 3 20s
+&lt;/code>&lt;/pre>&lt;/li>
+&lt;li>
+&lt;p>获取最近上线的状态：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl get rs
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>NAME DESIRED CURRENT READY AGE
+nginx-2142116321 0 0 0 2m
+nginx-3926361531 3 3 3 28s
+&lt;/code>&lt;/pre>&lt;/li>
+&lt;/ul>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> 你不可以回滚处于暂停状态的 Deployment，除非先恢复其执行状态。&lt;/p>
+&lt;/blockquote>
+&lt;h2 id="deployment-状态">Deployment 状态&lt;/h2>
+&lt;p>Deployment 的生命周期中会有许多状态。上线新的 ReplicaSet 期间可能处于 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#progressing-deployment" target="_blank" rel="noopener"
+>Progressing（进行中）&lt;/a>，可能是 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#complete-deployment" target="_blank" rel="noopener"
+>Complete（已完成）&lt;/a>，也可能是 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#failed-deployment" target="_blank" rel="noopener"
+>Failed（失败）&lt;/a>以至于无法继续进行。&lt;/p>
+&lt;h3 id="进行中的-deployment">进行中的 Deployment&lt;/h3>
+&lt;p>执行下面的任务期间，Kubernetes 标记 Deployment 为 &lt;em>进行中（Progressing）&lt;/em>：&lt;/p>
+&lt;ul>
+&lt;li>Deployment 创建新的 ReplicaSet&lt;/li>
+&lt;li>Deployment 正在为其最新的 ReplicaSet 扩容&lt;/li>
+&lt;li>Deployment 正在为其旧有的 ReplicaSet(s) 缩容&lt;/li>
+&lt;li>新的 Pods 已经就绪或者可用（就绪至少持续了 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#min-ready-seconds" target="_blank" rel="noopener"
+>MinReadySeconds&lt;/a> 秒）。&lt;/li>
+&lt;/ul>
+&lt;p>你可以使用 &lt;code>kubectl rollout status&lt;/code> 监视 Deployment 的进度。&lt;/p>
+&lt;h3 id="完成的-deployment">完成的 Deployment&lt;/h3>
+&lt;p>当 Deployment 具有以下特征时，Kubernetes 将其标记为 &lt;em>完成（Complete）&lt;/em>：&lt;/p>
+&lt;ul>
+&lt;li>与 Deployment 关联的所有副本都已更新到指定的最新版本，这意味着之前请求的所有更新都已完成。&lt;/li>
+&lt;li>与 Deployment 关联的所有副本都可用。&lt;/li>
+&lt;li>未运行 Deployment 的旧副本。&lt;/li>
+&lt;/ul>
+&lt;p>你可以使用 &lt;code>kubectl rollout status&lt;/code> 检查 Deployment 是否已完成。 如果上线成功完成，&lt;code>kubectl rollout status&lt;/code> 返回退出代码 0。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl rollout status deployment/nginx-deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">Waiting &lt;span class="k">for&lt;/span> rollout to finish: &lt;span class="m">2&lt;/span> of &lt;span class="m">3&lt;/span> updated replicas are available...
+deployment &lt;span class="s2">&amp;#34;nginx-deployment&amp;#34;&lt;/span> successfully rolled out
+$ &lt;span class="nb">echo&lt;/span> &lt;span class="nv">$?&lt;/span>
+&lt;span class="m">0&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="失败的-deployment">失败的 Deployment&lt;/h3>
+&lt;p>你的 Deployment 可能会在尝试部署其最新的 ReplicaSet 受挫，一直处于未完成状态。 造成此情况一些可能因素如下：&lt;/p>
+&lt;ul>
+&lt;li>配额（Quota）不足&lt;/li>
+&lt;li>就绪探测（Readiness Probe）失败&lt;/li>
+&lt;li>镜像拉取错误&lt;/li>
+&lt;li>权限不足&lt;/li>
+&lt;li>限制范围（Limit Ranges）问题&lt;/li>
+&lt;li>应用程序运行时的配置错误&lt;/li>
+&lt;/ul>
+&lt;p>检测此状况的一种方法是在 Deployment 规约中指定截止时间参数： （[&lt;code>.spec.progressDeadlineSeconds&lt;/code>]（#progress-deadline-seconds））。 &lt;code>.spec.progressDeadlineSeconds&lt;/code> 给出的是一个秒数值，Deployment 控制器在（通过 Deployment 状态） 标示 Deployment 进展停滞之前，需要等待所给的时长。&lt;/p>
+&lt;p>以下 &lt;code>kubectl&lt;/code> 命令设置规约中的 &lt;code>progressDeadlineSeconds&lt;/code>，从而告知控制器 在 10 分钟后报告 Deployment 没有进展：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl patch deployment.v1.apps/nginx-deployment -p &lt;span class="s1">&amp;#39;{&amp;#34;spec&amp;#34;:{&amp;#34;progressDeadlineSeconds&amp;#34;:600}}&amp;#39;&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>deployment.apps/nginx-deployment patched
+&lt;/code>&lt;/pre>&lt;p>超过截止时间后，Deployment 控制器将添加具有以下属性的 DeploymentCondition 到 Deployment 的 &lt;code>.status.conditions&lt;/code> 中：&lt;/p>
+&lt;ul>
+&lt;li>Type=Progressing&lt;/li>
+&lt;li>Status=False&lt;/li>
+&lt;li>Reason=ProgressDeadlineExceeded&lt;/li>
+&lt;/ul>
+&lt;p>参考 &lt;a class="link" href="https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties" target="_blank" rel="noopener"
+>Kubernetes API 约定&lt;/a> 获取更多状态状况相关的信息。&lt;/p>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong>&lt;/p>
+&lt;p>除了报告 &lt;code>Reason=ProgressDeadlineExceeded&lt;/code> 状态之外，Kubernetes 对已停止的 Deployment 不执行任何操作。更高级别的编排器可以利用这一设计并相应地采取行动。 例如，将 Deployment 回滚到其以前的版本。&lt;/p>
+&lt;p>如果你暂停了某个 Deployment，Kubernetes 不再根据指定的截止时间检查 Deployment 进展。 你可以在上线过程中间安全地暂停 Deployment 再恢复其执行，这样做不会导致超出最后时限的问题。&lt;/p>
+&lt;/blockquote>
+&lt;p>Deployment 可能会出现瞬时性的错误，可能因为设置的超时时间过短， 也可能因为其他可认为是临时性的问题。例如，假定所遇到的问题是配额不足。 如果描述 Deployment，你将会注意到以下部分：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl describe deployment nginx-deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>&amp;lt;...&amp;gt;
+Conditions:
+Type Status Reason
+---- ------ ------
+Available True MinimumReplicasAvailable
+Progressing True ReplicaSetUpdated
+ReplicaFailure True FailedCreate
+&amp;lt;...&amp;gt;
+&lt;/code>&lt;/pre>&lt;p>如果运行 &lt;code>kubectl get deployment nginx-deployment -o yaml&lt;/code>，Deployment 状态输出 将类似于这样：&lt;/p>
+&lt;pre>&lt;code>status:
+availableReplicas: 2
+conditions:
+- lastTransitionTime: 2016-10-04T12:25:39Z
+lastUpdateTime: 2016-10-04T12:25:39Z
+message: Replica set &amp;quot;nginx-deployment-4262182780&amp;quot; is progressing.
+reason: ReplicaSetUpdated
+status: &amp;quot;True&amp;quot;
+type: Progressing
+- lastTransitionTime: 2016-10-04T12:25:42Z
+lastUpdateTime: 2016-10-04T12:25:42Z
+message: Deployment has minimum availability.
+reason: MinimumReplicasAvailable
+status: &amp;quot;True&amp;quot;
+type: Available
+- lastTransitionTime: 2016-10-04T12:25:39Z
+lastUpdateTime: 2016-10-04T12:25:39Z
+message: 'Error creating: pods &amp;quot;nginx-deployment-4262182780-&amp;quot; is forbidden: exceeded quota:
+object-counts, requested: pods=1, used: pods=3, limited: pods=2'
+reason: FailedCreate
+status: &amp;quot;True&amp;quot;
+type: ReplicaFailure
+observedGeneration: 3
+replicas: 2
+unavailableReplicas: 2
+&lt;/code>&lt;/pre>&lt;p>最终，一旦超过 Deployment 进度限期，Kubernetes 将更新状态和进度状况的原因：&lt;/p>
+&lt;pre>&lt;code>Conditions:
+Type Status Reason
+---- ------ ------
+Available True MinimumReplicasAvailable
+Progressing False ProgressDeadlineExceeded
+ReplicaFailure True FailedCreate
+&lt;/code>&lt;/pre>&lt;p>可以通过缩容 Deployment 或者缩容其他运行状态的控制器，或者直接在命名空间中增加配额 来解决配额不足的问题。如果配额条件满足，Deployment 控制器完成了 Deployment 上线操作， Deployment 状态会更新为成功状况（&lt;code>Status=True&lt;/code> and &lt;code>Reason=NewReplicaSetAvailable&lt;/code>）。&lt;/p>
+&lt;pre>&lt;code>Conditions:
+Type Status Reason
+---- ------ ------
+Available True MinimumReplicasAvailable
+Progressing True NewReplicaSetAvailable
+&lt;/code>&lt;/pre>&lt;p>&lt;code>Type=Available&lt;/code> 加上 &lt;code>Status=True&lt;/code> 意味着 Deployment 具有最低可用性。 最低可用性由 Deployment 策略中的参数指定。 &lt;code>Type=Progressing&lt;/code> 加上 &lt;code>Status=True&lt;/code> 表示 Deployment 处于上线过程中，并且正在运行， 或者已成功完成进度，最小所需新副本处于可用。 请参阅对应状况的 Reason 了解相关细节。 在我们的案例中 &lt;code>Reason=NewReplicaSetAvailable&lt;/code> 表示 Deployment 已完成。&lt;/p>
+&lt;p>你可以使用 &lt;code>kubectl rollout status&lt;/code> 检查 Deployment 是否未能取得进展。 如果 Deployment 已超过进度限期，&lt;code>kubectl rollout status&lt;/code> 返回非零退出代码。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">kubectl rollout status deployment/nginx-deployment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>输出类似于：&lt;/p>
+&lt;pre>&lt;code>Waiting for rollout to finish: 2 out of 3 new replicas have been updated...
+error: deployment &amp;quot;nginx&amp;quot; exceeded its progress deadline
+&lt;/code>&lt;/pre>&lt;p>&lt;code>kubectl rollout&lt;/code> 命令的退出状态为 1（表明发生了错误）：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">$ &lt;span class="nb">echo&lt;/span> &lt;span class="nv">$?&lt;/span>
+&lt;span class="m">1&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="对失败-deployment-的操作">对失败 Deployment 的操作&lt;/h3>
+&lt;p>可应用于已完成的 Deployment 的所有操作也适用于失败的 Deployment。 你可以对其执行扩缩容、回滚到以前的修订版本等操作，或者在需要对 Deployment 的 Pod 模板应用多项调整时，将 Deployment 暂停。&lt;/p>
+&lt;h2 id="清理策略">清理策略&lt;/h2>
+&lt;p>你可以在 Deployment 中设置 &lt;code>.spec.revisionHistoryLimit&lt;/code> 字段以指定保留此 Deployment 的多少个旧有 ReplicaSet。其余的 ReplicaSet 将在后台被垃圾回收。 默认情况下，此值为 10。&lt;/p>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> 显式将此字段设置为 0 将导致 Deployment 的所有历史记录被清空，因此 Deployment 将无法回滚。&lt;/p>
+&lt;/blockquote>
+&lt;h2 id="金丝雀部署">金丝雀部署&lt;/h2>
+&lt;p>如果要使用 Deployment 向用户子集或服务器子集上线版本，则可以遵循 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/cluster-administration/manage-deployment/#canary-deployments" target="_blank" rel="noopener"
+>资源管理&lt;/a> 所描述的金丝雀模式，创建多个 Deployment，每个版本一个。&lt;/p>
+&lt;h2 id="编写-deployment-规约">编写 Deployment 规约&lt;/h2>
+&lt;p>同其他 Kubernetes 配置一样， Deployment 需要 &lt;code>apiVersion&lt;/code>，&lt;code>kind&lt;/code> 和 &lt;code>metadata&lt;/code> 字段。 有关配置文件的其他信息，请参考 &lt;a class="link" href="https://kubernetes.io/zh/docs/tasks/run-application/run-stateless-application-deployment/" target="_blank" rel="noopener"
+>部署 Deployment &lt;/a>、配置容器和 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/overview/working-with-objects/object-management/" target="_blank" rel="noopener"
+>使用 kubectl 管理资源&lt;/a>等相关文档。&lt;/p>
+&lt;p>Deployment 对象的名称必须是合法的 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/overview/working-with-objects/names#dns-subdomain-names" target="_blank" rel="noopener"
+>DNS 子域名&lt;/a>。 Deployment 还需要 &lt;a class="link" href="https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status" target="_blank" rel="noopener"
+>&lt;code>.spec&lt;/code> 部分&lt;/a>。&lt;/p>
+&lt;h3 id="pod-模板">Pod 模板&lt;/h3>
+&lt;p>&lt;code>.spec&lt;/code> 中只有 &lt;code>.spec.template&lt;/code> 和 &lt;code>.spec.selector&lt;/code> 是必需的字段。&lt;/p>
+&lt;p>&lt;code>.spec.template&lt;/code> 是一个 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#pod-templates" target="_blank" rel="noopener"
+>Pod 模板&lt;/a>。 它和 &lt;a class="link" href="https://kubernetes.io/docs/concepts/workloads/pods/pod-overview/" target="_blank" rel="noopener"
+>Pod&lt;/a> 的语法规则完全相同。 只是这里它是嵌套的，因此不需要 &lt;code>apiVersion&lt;/code> 或 &lt;code>kind&lt;/code>。&lt;/p>
+&lt;p>除了 Pod 的必填字段外，Deployment 中的 Pod 模板必须指定适当的标签和适当的重新启动策略。 对于标签，请确保不要与其他控制器重叠。请参考&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#selector" target="_blank" rel="noopener"
+>选择算符&lt;/a>。&lt;/p>
+&lt;p>只有 &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy" target="_blank" rel="noopener"
+>&lt;code>.spec.template.spec.restartPolicy&lt;/code>&lt;/a> 等于 &lt;code>Always&lt;/code> 才是被允许的，这也是在没有指定时的默认设置。&lt;/p>
+&lt;h3 id="副本">副本&lt;/h3>
+&lt;p>&lt;code>.spec.replicas&lt;/code> 是指定所需 Pod 的可选字段。它的默认值是1。&lt;/p>
+&lt;h3 id="选择算符">选择算符&lt;/h3>
+&lt;p>&lt;code>.spec.selector&lt;/code> 是指定本 Deployment 的 Pod &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/overview/working-with-objects/labels/" target="_blank" rel="noopener"
+>标签选择算符&lt;/a>的必需字段。&lt;/p>
+&lt;p>&lt;code>.spec.selector&lt;/code> 必须匹配 &lt;code>.spec.template.metadata.labels&lt;/code>，否则请求会被 API 拒绝。&lt;/p>
+&lt;p>在 API &lt;code>apps/v1&lt;/code>版本中，&lt;code>.spec.selector&lt;/code> 和 &lt;code>.metadata.labels&lt;/code> 如果没有设置的话， 不会被默认设置为 &lt;code>.spec.template.metadata.labels&lt;/code>，所以需要明确进行设置。 同时在 &lt;code>apps/v1&lt;/code>版本中，Deployment 创建后 &lt;code>.spec.selector&lt;/code> 是不可变的。&lt;/p>
+&lt;p>当 Pod 的标签和选择算符匹配，但其模板和 &lt;code>.spec.template&lt;/code> 不同时，或者此类 Pod 的总数超过 &lt;code>.spec.replicas&lt;/code> 的设置时，Deployment 会终结之。 如果 Pods 总数未达到期望值，Deployment 会基于 &lt;code>.spec.template&lt;/code> 创建新的 Pod。&lt;/p>
+&lt;blockquote>
+&lt;p>&lt;strong>说明：&lt;/strong> 你不应直接创建、或者通过创建另一个 Deployment，或者创建类似 ReplicaSet 或 ReplicationController 这类控制器来创建标签与此选择算符匹配的 Pod。 如果这样做，第一个 Deployment 会认为它创建了这些 Pod。 Kubernetes 不会阻止你这么做。&lt;/p>
+&lt;/blockquote>
+&lt;p>如果有多个控制器的选择算符发生重叠，则控制器之间会因冲突而无法正常工作。&lt;/p>
+&lt;h3 id="策略">策略&lt;/h3>
+&lt;p>&lt;code>.spec.strategy&lt;/code> 策略指定用于用新 Pods 替换旧 Pods 的策略。 &lt;code>.spec.strategy.type&lt;/code> 可以是 “Recreate” 或 “RollingUpdate”。“RollingUpdate” 是默认值。&lt;/p>
+&lt;h4 id="重新创建-deployment">重新创建 Deployment&lt;/h4>
+&lt;p>如果 &lt;code>.spec.strategy.type==Recreate&lt;/code>，在创建新 Pods 之前，所有现有的 Pods 会被杀死。&lt;/p>
+&lt;h4 id="滚动更新-deployment">滚动更新 Deployment&lt;/h4>
+&lt;p>Deployment 会在 &lt;code>.spec.strategy.type==RollingUpdate&lt;/code>时，采取 滚动更新的方式更新 Pods。你可以指定 &lt;code>maxUnavailable&lt;/code> 和 &lt;code>maxSurge&lt;/code> 来控制滚动更新 过程。&lt;/p>
+&lt;h5 id="最大不可用">最大不可用&lt;/h5>
+&lt;p>&lt;code>.spec.strategy.rollingUpdate.maxUnavailable&lt;/code> 是一个可选字段，用来指定 更新过程中不可用的 Pod 的个数上限。该值可以是绝对数字（例如，5），也可以是 所需 Pods 的百分比（例如，10%）。百分比值会转换成绝对数并去除小数部分。 如果 &lt;code>.spec.strategy.rollingUpdate.maxSurge&lt;/code> 为 0，则此值不能为 0。 默认值为 25%。&lt;/p>
+&lt;p>例如，当此值设置为 30% 时，滚动更新开始时会立即将旧 ReplicaSet 缩容到期望 Pod 个数的70%。 新 Pod 准备就绪后，可以继续缩容旧有的 ReplicaSet，然后对新的 ReplicaSet 扩容，确保在更新期间 可用的 Pods 总数在任何时候都至少为所需的 Pod 个数的 70%。&lt;/p>
+&lt;h5 id="最大峰值">最大峰值&lt;/h5>
+&lt;p>&lt;code>.spec.strategy.rollingUpdate.maxSurge&lt;/code> 是一个可选字段，用来指定可以创建的超出 期望 Pod 个数的 Pod 数量。此值可以是绝对数（例如，5）或所需 Pods 的百分比（例如，10%）。 如果 &lt;code>MaxUnavailable&lt;/code> 为 0，则此值不能为 0。百分比值会通过向上取整转换为绝对数。 此字段的默认值为 25%。&lt;/p>
+&lt;p>例如，当此值为 30% 时，启动滚动更新后，会立即对新的 ReplicaSet 扩容，同时保证新旧 Pod 的总数不超过所需 Pod 总数的 130%。一旦旧 Pods 被杀死，新的 ReplicaSet 可以进一步扩容， 同时确保更新期间的任何时候运行中的 Pods 总数最多为所需 Pods 总数的 130%。&lt;/p>
+&lt;h3 id="进度期限秒数">进度期限秒数&lt;/h3>
+&lt;p>&lt;code>.spec.progressDeadlineSeconds&lt;/code> 是一个可选字段，用于指定系统在报告 Deployment &lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#failed-deployment" target="_blank" rel="noopener"
+>进展失败&lt;/a> 之前等待 Deployment 取得进展的秒数。 这类报告会在资源状态中体现为 &lt;code>Type=Progressing&lt;/code>、&lt;code>Status=False&lt;/code>、 &lt;code>Reason=ProgressDeadlineExceeded&lt;/code>。Deployment 控制器将持续重试 Deployment。 将来，一旦实现了自动回滚，Deployment 控制器将在探测到这样的条件时立即回滚 Deployment。&lt;/p>
+&lt;p>如果指定，则此字段值需要大于 &lt;code>.spec.minReadySeconds&lt;/code> 取值。&lt;/p>
+&lt;h3 id="最短就绪时间">最短就绪时间&lt;/h3>
+&lt;p>&lt;code>.spec.minReadySeconds&lt;/code> 是一个可选字段，用于指定新创建的 Pod 在没有任意容器崩溃情况下的最小就绪时间， 只有超出这个时间 Pod 才被视为可用。默认值为 0（Pod 在准备就绪后立即将被视为可用）。 要了解何时 Pod 被视为就绪，可参考&lt;a class="link" href="https://kubernetes.io/zh/docs/concepts/workloads/pods/pod-lifecycle/#container-probes" target="_blank" rel="noopener"
+>容器探针&lt;/a>。&lt;/p>
+&lt;h3 id="修订历史限制">修订历史限制&lt;/h3>
+&lt;p>Deployment 的修订历史记录存储在它所控制的 ReplicaSets 中。&lt;/p>
+&lt;p>&lt;code>.spec.revisionHistoryLimit&lt;/code> 是一个可选字段，用来设定出于会滚目的所要保留的旧 ReplicaSet 数量。 这些旧 ReplicaSet 会消耗 etcd 中的资源，并占用 &lt;code>kubectl get rs&lt;/code> 的输出。 每个 Deployment 修订版本的配置都存储在其 ReplicaSets 中；因此，一旦删除了旧的 ReplicaSet， 将失去回滚到 Deployment 的对应修订版本的能力。 默认情况下，系统保留 10 个旧 ReplicaSet，但其理想值取决于新 Deployment 的频率和稳定性。&lt;/p>
+&lt;p>更具体地说，将此字段设置为 0 意味着将清理所有具有 0 个副本的旧 ReplicaSet。 在这种情况下，无法撤消新的 Deployment 上线，因为它的修订历史被清除了。&lt;/p>
+&lt;h3 id="paused暂停的">paused（暂停的）&lt;/h3>
+&lt;p>&lt;code>.spec.paused&lt;/code> 是用于暂停和恢复 Deployment 的可选布尔字段。 暂停的 Deployment 和未暂停的 Deployment 的唯一区别是，Deployment 处于暂停状态时， PodTemplateSpec 的任何修改都不会触发新的上线。 Deployment 在创建时是默认不会处于暂停状态。&lt;/p>
+&lt;h2 id="服务">服务&lt;/h2>
+&lt;h2 id="负载均衡">负载均衡&lt;/h2>
+&lt;h2 id="网络">网络&lt;/h2>
+&lt;h2 id="存储">存储&lt;/h2>
+&lt;h2 id="配置">配置&lt;/h2></description></item><item><title>Kubernetes初探（十一）</title><link>https://www.catfish.top/p/k8s-basic-11/</link><pubDate>Fri, 23 Jul 2021 14:54:00 +0800</pubDate><guid>https://www.catfish.top/p/k8s-basic-11/</guid><description>&lt;img src="https://www.catfish.top/p/k8s-basic-11/kubernates.png" alt="Featured image of post Kubernetes初探（十一）" />&lt;blockquote>
 &lt;p>Katacoda在线课：&lt;a class="link" href="https://www.katacoda.com/courses/kubernetes/helm-package-manager" target="_blank" rel="noopener"
 >Helm Package Manager&lt;/a>&lt;/p>
 &lt;p>本系列教程希望能通过交互式学习网站与传统方式结合，更高效、容易的学习知识。
