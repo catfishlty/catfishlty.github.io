@@ -1,4 +1,1542 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Mon, 09 Aug 2021 10:33:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>JVM 垃圾回收器 - G1 （一）</title><link>https://www.catfish.top/p/jvm-gc-g1-1/</link><pubDate>Mon, 09 Aug 2021 10:33:00 +0800</pubDate><guid>https://www.catfish.top/p/jvm-gc-g1-1/</guid><description>&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/jvm-black.jpeg" alt="Featured image of post JVM 垃圾回收器 - G1 （一）" />&lt;p>&lt;em>G1 GC&lt;/em>，全称 &lt;em>Garbage-First Garbage Collector&lt;/em>，通过 &lt;code>-XX:+UseG1GC&lt;/code>参数来启用。
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Thu, 19 Aug 2021 10:47:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>JVM调优（二）</title><link>https://www.catfish.top/p/jvm-2/</link><pubDate>Thu, 19 Aug 2021 10:47:00 +0800</pubDate><guid>https://www.catfish.top/p/jvm-2/</guid><description>&lt;img src="https://www.catfish.top/p/jvm-2/jvm-white.jpg" alt="Featured image of post JVM调优（二）" />&lt;h2 id="简述">简述&lt;/h2>
+&lt;p>&lt;em>Java&lt;/em> 自带很多工具能够辅助我们完成对 &lt;em>Java&lt;/em> 应用的性能指标分析。
+本文将介绍下列 &lt;em>5&lt;/em> 种命令行工具。&lt;/p>
+&lt;ul>
+&lt;li>&lt;a class="link" href="#jps" >jps&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="#jstat" >jstat&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="#jstack" >jstack&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="#jmap" >jmap&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="#jhat" >jhat&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;h2 id="jps">jps&lt;/h2>
+&lt;p>&lt;em>JPS&lt;/em> 全程 &lt;em>Java Virtual Machine Process Status Tool&lt;/em>，是 &lt;em>Java&lt;/em> 提供的一个显示当前所有 &lt;em>Java&lt;/em> 进程 &lt;em>PID&lt;/em> 的命令，适合简单查看当前 &lt;em>Java&lt;/em> 进程的信息。&lt;/p>
+&lt;p>详情见：&lt;a class="link" href="https://docs.oracle.com/javase/7/docs/technotes/tools/share/jps.html" target="_blank" rel="noopener"
+>jps - Java Virtual Machine Process Status Tool&lt;/a>&lt;/p>
+&lt;h3 id="运行格式">运行格式&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">jps &lt;span class="o">[&lt;/span> options &lt;span class="o">]&lt;/span> &lt;span class="o">[&lt;/span> hostid &lt;span class="o">]&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="参数介绍">参数介绍&lt;/h3>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-q&lt;/code>&lt;/td>
+&lt;td style="text-align:left">仅生成本地 &lt;em>VM&lt;/em> 标识符列表，不打印 &lt;em>main&lt;/em> 方法的类名、&lt;em>JAR&lt;/em> 文件名和参数的输出。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-m&lt;/code>&lt;/td>
+&lt;td style="text-align:left">输出传递给 &lt;em>main&lt;/em> 方法的参数。对于嵌入式 &lt;em>JVM&lt;/em>，输出可能为 &lt;em>null&lt;/em>。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-l&lt;/code>&lt;/td>
+&lt;td style="text-align:left">输出应用程序主类的完整包名或应用程序 &lt;em>JAR&lt;/em> 文件的完整路径名。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-v&lt;/code>&lt;/td>
+&lt;td style="text-align:left">输出 &lt;em>JVM&lt;/em> 的参数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-V&lt;/code>&lt;/td>
+&lt;td style="text-align:left">通过标志文件（&lt;em>.hotspotrc&lt;/em> 文件或 &lt;em>-XX:Flags=&amp;lsquo;filename&amp;rsquo;&lt;/em> 参数指定的文件）输出传递给 &lt;em>JVM&lt;/em> 的参数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-Joption&lt;/code>&lt;/td>
+&lt;td style="text-align:left">将参数传递给 &lt;em>JPS&lt;/em> 调用的 &lt;em>Java&lt;/em> 启动器。例如，&lt;code>-J-Xms48m&lt;/code> 将启动内存设置为 48Mb。 &lt;code>-J&lt;/code> 将选项传递给执行应用程序的底层 &lt;em>VM&lt;/em> 是一种一般规范。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h3 id="使用">使用&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jps
+&lt;span class="m">30444&lt;/span> rest-service-0.0.1-SNAPSHOT.jar
+&lt;span class="m">9460&lt;/span> Jps
+$ jps -q
+&lt;span class="m">30444&lt;/span>
+&lt;span class="m">9460&lt;/span>
+$ jps -m
+&lt;span class="m">30236&lt;/span> Jps -m
+&lt;span class="m">30444&lt;/span> rest-service-0.0.1-SNAPSHOT.jar -XX:+UseG1GC
+$ jps -l
+&lt;span class="m">31812&lt;/span> sun.tools.jps.Jps
+&lt;span class="m">30444&lt;/span> .&lt;span class="se">\r&lt;/span>est-service-0.0.1-SNAPSHOT.jar
+$ jps -v
+&lt;span class="m">29260&lt;/span> Jps -Denv.class.path&lt;span class="o">=&lt;/span>.&lt;span class="p">;&lt;/span>C:&lt;span class="se">\P&lt;/span>rogram Files&lt;span class="se">\A&lt;/span>doptOpenJDK&lt;span class="se">\j&lt;/span>dk-8.0.282.8-hotspot&lt;span class="se">\\&lt;/span>lib&lt;span class="se">\d&lt;/span>t.jar&lt;span class="p">;&lt;/span>C:&lt;span class="se">\P&lt;/span>rogram Files&lt;span class="se">\A&lt;/span>doptOpenJDK&lt;span class="se">\j&lt;/span>dk-8.0.282.8-hotspot&lt;span class="se">\\&lt;/span>lib&lt;span class="se">\t&lt;/span>ools.jar&lt;span class="p">;&lt;/span> -Dapplication.home&lt;span class="o">=&lt;/span>C:&lt;span class="se">\P&lt;/span>rogram Files&lt;span class="se">\A&lt;/span>doptOpenJDK&lt;span class="se">\j&lt;/span>dk-8.0.282.8-hotspot -Xms8m
+&lt;span class="m">30444&lt;/span> rest-service-0.0.1-SNAPSHOT.jar
+$ jps -J-Xms48m -v
+&lt;span class="m">16060&lt;/span> Jps -Denv.class.path&lt;span class="o">=&lt;/span>.&lt;span class="p">;&lt;/span>C:&lt;span class="se">\P&lt;/span>rogram Files&lt;span class="se">\A&lt;/span>doptOpenJDK&lt;span class="se">\j&lt;/span>dk-8.0.282.8-hotspot&lt;span class="se">\\&lt;/span>lib&lt;span class="se">\d&lt;/span>t.jar&lt;span class="p">;&lt;/span>C:&lt;span class="se">\P&lt;/span>rogram Files&lt;span class="se">\A&lt;/span>doptOpenJDK&lt;span class="se">\j&lt;/span>dk-8.0.282.8-hotspot&lt;span class="se">\\&lt;/span>lib&lt;span class="se">\t&lt;/span>ools.jar&lt;span class="p">;&lt;/span> -Dapplication.home&lt;span class="o">=&lt;/span>C:&lt;span class="se">\P&lt;/span>rogram Files&lt;span class="se">\A&lt;/span>doptOpenJDK&lt;span class="se">\j&lt;/span>dk-8.0.282.8-hotspot -Xms8m -Xms48m
+&lt;span class="m">30444&lt;/span> rest-service-0.0.1-SNAPSHOT.jar
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="jstat">jstat&lt;/h2>
+&lt;p>&lt;em>jstat&lt;/em> 工具能够显示 &lt;em>HotSpot Java&lt;/em> 虚拟机 (&lt;em>JVM&lt;/em>) 的性能统计信息。目标 &lt;em>JVM&lt;/em> 由其虚拟机标识符或下面描述的 &lt;em>vmid&lt;/em> 参数来确定。&lt;/p>
+&lt;p>JDK 1.7: &lt;a class="link" href="https://docs.oracle.com/javase/7/docs/technotes/tools/share/jstat.html" target="_blank" rel="noopener"
+>jstat - Java Virtual Machine Statistics Monitoring Tool&lt;/a>
+JDK 1.8: &lt;a class="link" href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstat.html" target="_blank" rel="noopener"
+>Java Platform, Standard Edition Tools Reference - jstat&lt;/a>&lt;/p>
+&lt;h3 id="运行格式-1">运行格式&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">jstat &lt;span class="o">[&lt;/span> generalOption &lt;span class="p">|&lt;/span> outputOptions vmid &lt;span class="o">[&lt;/span>interval&lt;span class="o">[&lt;/span>s&lt;span class="p">|&lt;/span>ms&lt;span class="o">]&lt;/span> &lt;span class="o">[&lt;/span>count&lt;span class="o">]]&lt;/span> &lt;span class="o">]&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="输出参数">输出参数&lt;/h3>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-help&lt;/code>&lt;/td>
+&lt;td style="text-align:left">显示帮助信息&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-options&lt;/code>&lt;/td>
+&lt;td style="text-align:left">显示统计参数列表。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数&lt;/th>
+&lt;th style="text-align:left">显示内容&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-class&lt;/code>&lt;/td>
+&lt;td style="text-align:left">类加载器行为统计信息。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-compiler&lt;/code>&lt;/td>
+&lt;td style="text-align:left">&lt;em>HotSpot JIT&lt;/em> 编译器行为统计信息。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-gc&lt;/code>&lt;/td>
+&lt;td style="text-align:left">&lt;em>GC&lt;/em> 堆的行为统计。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-gccapacity&lt;/code>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Heap&lt;/em> 中对象年龄代的容量及其相应空间的统计。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-gccause&lt;/code>&lt;/td>
+&lt;td style="text-align:left">垃圾收集统计信息摘要（与 &lt;code>-gcutil&lt;/code> 相同），以及上次和当前（如果适用）垃圾收集事件的原因。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-gcnew&lt;/code>&lt;/td>
+&lt;td style="text-align:left">新生代行为统计。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-gcnewcapacity&lt;/code>&lt;/td>
+&lt;td style="text-align:left">新生代的大小及其对应的空间的统计信息。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-gcold&lt;/code>&lt;/td>
+&lt;td style="text-align:left">老年代和永久代的行为统计。(JDK 1.7); 老年代和元空间的行为统计。(JDK 1.8);&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-gcoldcapacity&lt;/code>&lt;/td>
+&lt;td style="text-align:left">老年代容量的统计。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-gcmetacapacity&lt;/code>&lt;/td>
+&lt;td style="text-align:left">元空间容量的统计。(JDK 1.8)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-gcpermcapacity&lt;/code>&lt;/td>
+&lt;td style="text-align:left">永久代容量的统计。(JDK 1.7)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-gcutil&lt;/code>&lt;/td>
+&lt;td style="text-align:left">垃圾收集统计摘要。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-printcompilation&lt;/code>&lt;/td>
+&lt;td style="text-align:left">HotSpot 编译方法统计。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h3 id="使用-1">使用&lt;/h3>
+&lt;h4 id="-class">&lt;code>-class&lt;/code>&lt;/h4>
+&lt;p>&lt;em>Class loader&lt;/em> 统计信息&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jstat -class &lt;span class="m">30444&lt;/span>
+Loaded Bytes Unloaded Bytes Time
+&lt;span class="m">5544&lt;/span> 10174.8 &lt;span class="m">0&lt;/span> 0.0 1.73
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>Loaded&lt;/em>&lt;/td>
+&lt;td style="text-align:left">加载的类的数量。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>Bytes&lt;/em>&lt;/td>
+&lt;td style="text-align:left">加载的类大小，单位：&lt;em>KB&lt;/em>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>Unloaded&lt;/em>&lt;/td>
+&lt;td style="text-align:left">卸载的类的数量。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>Bytes&lt;/em>&lt;/td>
+&lt;td style="text-align:left">卸载的类大小，单位：&lt;em>KB&lt;/em>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>Time&lt;/em>&lt;/td>
+&lt;td style="text-align:left">执行类加载和卸载操作所花费的时间。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="-compiler">&lt;code>-compiler&lt;/code>&lt;/h4>
+&lt;p>&lt;em>Java HotSpot VM Just-in-Time&lt;/em> 编译器统计信息&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jstat -compiler &lt;span class="m">30444&lt;/span>
+Compiled Failed Invalid Time FailedType FailedMethod
+&lt;span class="m">3084&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">0&lt;/span> 3.29 &lt;span class="m">1&lt;/span> java/lang/StringCoding encode
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>Compiled&lt;/em>&lt;/td>
+&lt;td style="text-align:left">执行的编译数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>Failed&lt;/em>&lt;/td>
+&lt;td style="text-align:left">编译任务失败数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>Invalid&lt;/em>&lt;/td>
+&lt;td style="text-align:left">失效的编译数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>Time&lt;/em>&lt;/td>
+&lt;td style="text-align:left">执行编译任务所花费的时间。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FailedType&lt;/em>&lt;/td>
+&lt;td style="text-align:left">上次失败编译的编译类型。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FailedMethod&lt;/em>&lt;/td>
+&lt;td style="text-align:left">上次编译失败的类名和方法。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="-gc">&lt;code>-gc&lt;/code>&lt;/h4>
+&lt;p>堆 &lt;em>GC&lt;/em> 的统计信息。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jstat -gc &lt;span class="m">30444&lt;/span>
+S0C S1C S0U S1U EC EU OC OU MC MU CCSC CCSU YGC YGCT FGC FGCT GCT
+3072.0 10752.0 3008.0 0.0 96256.0 56913.5 104960.0 7314.0 27440.0 25574.4 3632.0 3186.9 &lt;span class="m">4&lt;/span> 0.020 &lt;span class="m">1&lt;/span> 0.018 0.038
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S0C&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Survivor 0&lt;/em> 的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S1C&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Survivor 1&lt;/em> 的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S0U&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Survivor 0&lt;/em> 的使用大小 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S1U&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Survivor 1&lt;/em> 的使用大小 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>EC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Eden&lt;/em> 区的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>EU&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Eden&lt;/em> 区的使用大小 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>OC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Old&lt;/em> 区的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>OU&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Old&lt;/em> 区的使用大小 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>PC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">永久代的容量 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.7&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>PU&lt;/em>&lt;/td>
+&lt;td style="text-align:left">永久代的使用大小 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.7&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>MC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">元空间的容量 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>MU&lt;/em>&lt;/td>
+&lt;td style="text-align:left">元空间的使用大小 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>CCSC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">类压缩空间的容量 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>CCSU&lt;/em>&lt;/td>
+&lt;td style="text-align:left">类压缩空间的使用大小 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>YGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Young GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>YGCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Young GC&lt;/em> 运行时间。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 运行时间。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>GCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">总 &lt;em>GC&lt;/em> 时间。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="-gccapacity">&lt;code>-gccapacity&lt;/code>&lt;/h4>
+&lt;p>内存池生成和空间容量。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jstat -gccapacity &lt;span class="m">30444&lt;/span>
+NGCMN NGCMX NGC S0C S1C EC OGCMN OGCMX OGC OC MCMN MCMX MC CCSMN CCSMX CCSC YGC FGC
+86528.0 1379328.0 143872.0 3072.0 10752.0 96256.0 173568.0 2759680.0 104960.0 104960.0 0.0 1073152.0 27440.0 0.0 1048576.0 3632.0 &lt;span class="m">4&lt;/span> &lt;span class="m">1&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>NGCMN&lt;/em>&lt;/td>
+&lt;td style="text-align:left">新生代最小容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>NGCMX&lt;/em>&lt;/td>
+&lt;td style="text-align:left">新生代最大容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>NGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前新生代容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S0C&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Survivor 0&lt;/em> 的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S1C&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Survivor 1&lt;/em> 的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>EC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Eden&lt;/em> 区的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>OGCMN&lt;/em>&lt;/td>
+&lt;td style="text-align:left">老年代最小容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>OGCMX&lt;/em>&lt;/td>
+&lt;td style="text-align:left">老年代最大容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>OGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前老年代容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>OC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Old&lt;/em> 空间容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>PGCMN&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最小永久代容量 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.7&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>PGCMX&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最大永久代容量 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.7&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>PGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前永久代容量 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.7&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>PC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Permanent&lt;/em> 空间容量 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.7&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>MCMN&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最小元空间容量 (&lt;em>KB&lt;/em>)。 (&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>MCMX&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最大元空间容量 (&lt;em>KB&lt;/em>)。 (&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>MC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前元空间大小 (&lt;em>KB&lt;/em>)。 (&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>CCSMN&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最小类压缩空间容量 (&lt;em>KB&lt;/em>)。 (&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>CCSMX&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最大类压缩空间容量 (&lt;em>KB&lt;/em>)。 (&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>CCSC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前类压缩空间容量 (&lt;em>KB&lt;/em>)。 (&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>YGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Young GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="-gccause">&lt;code>-gccause&lt;/code>&lt;/h4>
+&lt;p>此选项显示与 &lt;strong>&lt;a class="link" href="#-gcutil" >-gcutil&lt;/a>&lt;/strong> 选项相同的垃圾收集统计摘要信息，但包括上次垃圾收集事件和当前垃圾收集事件的原因（如果适用）。除了 &lt;strong>&lt;a class="link" href="#-gcutil" >-gcutil&lt;/a>&lt;/strong> 列出的之外，此选项还添加了以下列。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jstat -gccause &lt;span class="m">30444&lt;/span>
+S0 S1 E O M CCS YGC YGCT FGC FGCT GCT LGCC GCC
+97.92 0.00 59.13 6.97 93.20 87.74 &lt;span class="m">4&lt;/span> 0.020 &lt;span class="m">1&lt;/span> 0.018 0.038 Allocation Failure No GC
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>LGCC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">上次垃圾回收的原因。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>GCC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前垃圾回收的原因。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="-gcnew">&lt;code>-gcnew&lt;/code>&lt;/h4>
+&lt;p>新生代统计信息。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jstat -gcnew &lt;span class="m">30444&lt;/span>
+S0C S1C S0U S1U TT MTT DSS EC EU YGC YGCT
+3072.0 10752.0 3008.0 0.0 &lt;span class="m">7&lt;/span> &lt;span class="m">15&lt;/span> 10752.0 96256.0 56913.5 &lt;span class="m">4&lt;/span> 0.020
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S0C&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Survivor 0&lt;/em> 的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S1C&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Survivor 1&lt;/em> 的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S0U&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Survivor 0&lt;/em> 的使用大小 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S1U&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Survivor 0&lt;/em> 的使用大小 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>TT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">对象在新生代存活的次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>MTT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">对象在新生代存活的最大次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>DSS&lt;/em>&lt;/td>
+&lt;td style="text-align:left">期望的 &lt;em>Survivor&lt;/em> 区大小 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>EC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Eden&lt;/em> 区的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>EU&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Eden&lt;/em> 区的使用大小 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>YGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Young GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>YGCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Young GC&lt;/em> 运行时间。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="-gcnewcapacity">&lt;code>-gcnewcapacity&lt;/code>&lt;/h4>
+&lt;p>新生代空间大小统计。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jstat -gcnewcapacity &lt;span class="m">30444&lt;/span>
+NGCMN NGCMX NGC S0CMX S0C S1CMX S1C ECMX EC YGC FGC
+86528.0 1379328.0 143872.0 459776.0 3072.0 459776.0 10752.0 1378304.0 96256.0 &lt;span class="m">4&lt;/span> &lt;span class="m">1&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>NGCMN&lt;/em>&lt;/td>
+&lt;td style="text-align:left">新生代最小容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>NGCMX&lt;/em>&lt;/td>
+&lt;td style="text-align:left">新生代最小容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>NGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前新生代容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S0CMX&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最大 &lt;em>Survivor 0&lt;/em> 的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S0C&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Survivor 0&lt;/em> 的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S1CMX&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最大 &lt;em>Survivor 1&lt;/em> 的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S1C&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Survivor 1&lt;/em> 的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>ECMX&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最大 &lt;em>Eden&lt;/em> 区的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>EC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Eden&lt;/em> 区的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>YGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Young GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="-gcold">&lt;code>-gcold&lt;/code>&lt;/h4>
+&lt;ul>
+&lt;li>老一代和永久代统计。(&lt;strong>JDK 1.7&lt;/strong>)&lt;/li>
+&lt;li>老年代和元空间行为统计。(&lt;strong>JDK 1.8&lt;/strong>)&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jstat -gcold &lt;span class="m">30444&lt;/span>
+MC MU CCSC CCSU OC OU YGC FGC FGCT GCT
+27440.0 25574.4 3632.0 3186.9 104960.0 7314.0 &lt;span class="m">4&lt;/span> &lt;span class="m">1&lt;/span> 0.018 0.038
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>PC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">永久代的容量 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.7&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>PU&lt;/em>&lt;/td>
+&lt;td style="text-align:left">永久代的使用大小 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.7&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>MC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">元空间的容量 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>MU&lt;/em>&lt;/td>
+&lt;td style="text-align:left">元空间的使用大小 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>CCSC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">类压缩空间的容量 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>CCSU&lt;/em>&lt;/td>
+&lt;td style="text-align:left">类压缩空间的使用大小 (&lt;em>KB&lt;/em>)。(&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>OC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Old&lt;/em> 区的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>OU&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Old&lt;/em> 区的使用大小 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>YGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Young GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 运行时间。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>GCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">总 &lt;em>GC&lt;/em> 时间。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="-gcoldcapacity">&lt;code>-gcoldcapacity&lt;/code>&lt;/h4>
+&lt;p>老年代大小统计信息。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jstat -gcoldcapacity &lt;span class="m">30444&lt;/span>
+OGCMN OGCMX OGC OC YGC FGC FGCT GCT
+173568.0 2759680.0 104960.0 104960.0 &lt;span class="m">4&lt;/span> &lt;span class="m">1&lt;/span> 0.018 0.038
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>OGCMN&lt;/em>&lt;/td>
+&lt;td style="text-align:left">老年代最小容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>OGCMX&lt;/em>&lt;/td>
+&lt;td style="text-align:left">老年代最大容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>OGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前老年代容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>OC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Old&lt;/em> 区的容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>YGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Young GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 运行时间。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>GCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">总 &lt;em>GC&lt;/em> 时间。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="-gcpermcapacity-jdk-17-only">&lt;code>-gcpermcapacity&lt;/code> (&lt;strong>JDK 1.7 Only&lt;/strong>)&lt;/h4>
+&lt;p>永久代大小统计信息&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>PGCMN&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最小永久代容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>PGCMX&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最大永久代容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>PGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前永久代容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>PC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前 &lt;em>Permanent&lt;/em> 空间容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>YGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Young GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 运行时间。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>GCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">总 &lt;em>GC&lt;/em> 时间。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="-gcmetacapacity-jdk-18-only">&lt;code>-gcmetacapacity&lt;/code> (&lt;strong>JDK 1.8 Only&lt;/strong>)&lt;/h4>
+&lt;p>元空间大小统计信息。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jstat -gcmetacapacity &lt;span class="m">30444&lt;/span>
+MCMN MCMX MC CCSMN CCSMX CCSC YGC FGC FGCT GCT
+0.0 1073152.0 27440.0 0.0 1048576.0 3632.0 &lt;span class="m">4&lt;/span> &lt;span class="m">1&lt;/span> 0.018 0.038
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>MCMN&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最小元空间容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>MCMX&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最大元空间容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>MC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当前元空间大小 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>CCSMN&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最小类压缩空间容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>CCSMX&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最大类压缩空间容量 (&lt;em>KB&lt;/em>)。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>YGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Young GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 运行时间。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>GCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">总 &lt;em>GC&lt;/em> 时间。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="-gcutil">&lt;code>-gcutil&lt;/code>&lt;/h4>
+&lt;p>垃圾收集统计概要。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jstat -gcutil &lt;span class="m">30444&lt;/span>
+S0 S1 E O M CCS YGC YGCT FGC FGCT GCT
+97.92 0.00 59.13 6.97 93.20 87.74 &lt;span class="m">4&lt;/span> 0.020 &lt;span class="m">1&lt;/span> 0.018 0.038
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S0&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Survivor 0&lt;/em> 空间利用率。单位：&lt;em>%&lt;/em>。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>S1&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Survivor 1&lt;/em> 空间利用率。单位：&lt;em>%&lt;/em>。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>E&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Eden&lt;/em> 区空间利用率。单位：&lt;em>%&lt;/em>。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>O&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Old&lt;/em> 区空间利用率。单位：&lt;em>%&lt;/em>。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>P&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Permanent&lt;/em> 区空间利用率。单位：&lt;em>%&lt;/em>。(&lt;strong>JDK 1.7&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>M&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Metaspace&lt;/em> 空间利用率。单位：&lt;em>%&lt;/em>。(&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>CCS&lt;/em>&lt;/td>
+&lt;td style="text-align:left">类压缩空间利用率。单位：&lt;em>%&lt;/em>。(&lt;strong>JDK 1.8&lt;/strong>)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>YGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Young GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>YGCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Young GC&lt;/em> 运行时间。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGC&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 触发次数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>FGCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">&lt;em>Full GC&lt;/em> 运行时间。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>GCT&lt;/em>&lt;/td>
+&lt;td style="text-align:left">总 &lt;em>GC&lt;/em> 时间。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="-printcompilation">&lt;code>-printcompilation&lt;/code>&lt;/h4>
+&lt;p>Java HotSpot VM 编译器方法统计信息。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jstat -printcompilation &lt;span class="m">30444&lt;/span>
+Compiled Size Type Method
+&lt;span class="m">3107&lt;/span> &lt;span class="m">172&lt;/span> &lt;span class="m">1&lt;/span> java/util/concurrent/locks/AbstractQueuedSynchronizer release
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>Compiled&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最近编译的方法执行的编译任务数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>Size&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最近编译的方法的字节码的字节数。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>Type&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最近编译的方法的编译类型。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>Method&lt;/em>&lt;/td>
+&lt;td style="text-align:left">最近编译的方法的类名和方法名。类名使用斜线 (/) 而不是点 (.) 作为名称空间分隔符。方法名称是指定类中的方法。这两个字段的格式与 &lt;em>HotSpot&lt;/em> &lt;code>-XX:+PrintCompilation&lt;/code> 选项一致。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h2 id="jstack">jstack&lt;/h2>
+&lt;p>&lt;em>jstack&lt;/em> 是 &lt;em>Java&lt;/em> 虚拟机自带的一种堆栈跟踪工具。jstack 为给定的 &lt;em>Java&lt;/em> 进程或核心文件或远程调试服务器打印 &lt;em>Java&lt;/em> 线程的 &lt;em>Java&lt;/em> 堆栈跟踪。对于每个 &lt;em>Java&lt;/em> 框架，将打印完整的类名、方法名、&lt;code>bci&lt;/code>（字节码索引）和行号（如果有）。使用 &lt;code>-m&lt;/code> 选项，&lt;em>jstack&lt;/em> 命令使用程序计数器 (&lt;em>PC&lt;/em>) 打印所有线程的 &lt;em>Java&lt;/em> 和本机帧。对于每个原生帧，打印最接近 &lt;em>PC&lt;/em> 的原生符号（如果可用）。当指定的进程在 &lt;em>64&lt;/em> 位 &lt;em>Java&lt;/em> 虚拟机上运行时，您可能需要指定 &lt;code>-J-d64&lt;/code> 选项，例如：&lt;code>jstack -J-d64 -m pid&lt;/code>。&lt;/p>
+&lt;p>&lt;a class="link" href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstack.html" target="_blank" rel="noopener"
+>Oracle - Java Documentation - jstack&lt;/a>&lt;/p>
+&lt;h3 id="格式">格式&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">jstack &lt;span class="o">[&lt;/span> options &lt;span class="o">]&lt;/span> pid
+jstack &lt;span class="o">[&lt;/span> options &lt;span class="o">]&lt;/span> executable core
+jstack &lt;span class="o">[&lt;/span> options &lt;span class="o">]&lt;/span> &lt;span class="o">[&lt;/span> server-id@ &lt;span class="o">]&lt;/span> remote-hostname-or-IP
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">关键字&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>options&lt;/em>&lt;/td>
+&lt;td style="text-align:left">命令行参数&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>pid&lt;/em>&lt;/td>
+&lt;td style="text-align:left">打印堆栈跟踪的进程 &lt;em>ID&lt;/em>。该进程必须是 &lt;em>Java&lt;/em> 进程。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>executable&lt;/em>&lt;/td>
+&lt;td style="text-align:left">从中生成核心转储的 &lt;em>Java&lt;/em> 可执行文件。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>core&lt;/em>&lt;/td>
+&lt;td style="text-align:left">要打印堆栈跟踪的核心文件。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>remote-hostname-or-IP&lt;/em>&lt;/td>
+&lt;td style="text-align:left">远程调试服务器主机名或 &lt;em>IP&lt;/em> 地址。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>server-id&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当多个调试服务器在同一远程主机上运行时使用的可选唯一 &lt;em>ID&lt;/em>。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h3 id="参数">参数&lt;/h3>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-F&lt;/code>&lt;/td>
+&lt;td style="text-align:left">当 &lt;code>jstack [-l] pid&lt;/code> 没有响应时强制进行堆栈转储。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-l&lt;/code>&lt;/td>
+&lt;td style="text-align:left">大量列出信息。打印有关锁的附加信息，例如拥有的&lt;code>java.util.concurrent&lt;/code> 可拥有的同步器列表。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-m&lt;/code>&lt;/td>
+&lt;td style="text-align:left">打印具有 &lt;em>Java&lt;/em> 和 &lt;em>Native C/C++&lt;/em> 帧的混合模式堆栈跟踪。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-h&lt;/code>&lt;/td>
+&lt;td style="text-align:left">打印帮助消息。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-help&lt;/code>&lt;/td>
+&lt;td style="text-align:left">打印帮助消息。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h3 id="使用-2">使用&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jstack &lt;span class="m">30444&lt;/span>
+2021-08-19 16:05:29
+Full thread dump OpenJDK 64-Bit Server VM &lt;span class="o">(&lt;/span>25.282-b08 mixed mode&lt;span class="o">)&lt;/span>:
+&lt;span class="s2">&amp;#34;DestroyJavaVM&amp;#34;&lt;/span> &lt;span class="c1">#31 prio=5 os_prio=0 tid=0x00000187de146800 nid=0x78e8 waiting on condition [0x0000000000000000]&lt;/span>
+java.lang.Thread.State: RUNNABLE
+&lt;span class="s2">&amp;#34;http-nio-8080-Acceptor&amp;#34;&lt;/span> &lt;span class="c1">#30 daemon prio=5 os_prio=0 tid=0x00000187de145800 nid=0x4790 runnable [0x0000005d8d2ff000]&lt;/span>
+java.lang.Thread.State: RUNNABLE
+at sun.nio.ch.ServerSocketChannelImpl.accept0&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+at sun.nio.ch.ServerSocketChannelImpl.accept&lt;span class="o">(&lt;/span>ServerSocketChannelImpl.java:421&lt;span class="o">)&lt;/span>
+at sun.nio.ch.ServerSocketChannelImpl.accept&lt;span class="o">(&lt;/span>ServerSocketChannelImpl.java:249&lt;span class="o">)&lt;/span>
+- locked &amp;lt;0x000000076ed7ec98&amp;gt; &lt;span class="o">(&lt;/span>a java.lang.Object&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.net.NioEndpoint.serverSocketAccept&lt;span class="o">(&lt;/span>NioEndpoint.java:551&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.net.NioEndpoint.serverSocketAccept&lt;span class="o">(&lt;/span>NioEndpoint.java:80&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.net.Acceptor.run&lt;span class="o">(&lt;/span>Acceptor.java:106&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;http-nio-8080-ClientPoller&amp;#34;&lt;/span> &lt;span class="c1">#29 daemon prio=5 os_prio=0 tid=0x00000187de145000 nid=0x5848 runnable [0x0000005d8d1fe000]&lt;/span>
+java.lang.Thread.State: RUNNABLE
+at sun.nio.ch.WindowsSelectorImpl&lt;span class="nv">$SubSelector&lt;/span>.poll0&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+at sun.nio.ch.WindowsSelectorImpl&lt;span class="nv">$SubSelector&lt;/span>.poll&lt;span class="o">(&lt;/span>WindowsSelectorImpl.java:314&lt;span class="o">)&lt;/span>
+at sun.nio.ch.WindowsSelectorImpl&lt;span class="nv">$SubSelector&lt;/span>.access&lt;span class="nv">$400&lt;/span>&lt;span class="o">(&lt;/span>WindowsSelectorImpl.java:293&lt;span class="o">)&lt;/span>
+at sun.nio.ch.WindowsSelectorImpl.doSelect&lt;span class="o">(&lt;/span>WindowsSelectorImpl.java:174&lt;span class="o">)&lt;/span>
+at sun.nio.ch.SelectorImpl.lockAndDoSelect&lt;span class="o">(&lt;/span>SelectorImpl.java:86&lt;span class="o">)&lt;/span>
+- locked &amp;lt;0x000000076eef6158&amp;gt; &lt;span class="o">(&lt;/span>a sun.nio.ch.Util&lt;span class="nv">$3&lt;/span>&lt;span class="o">)&lt;/span>
+- locked &amp;lt;0x000000076eef6148&amp;gt; &lt;span class="o">(&lt;/span>a java.util.Collections&lt;span class="nv">$UnmodifiableSet&lt;/span>&lt;span class="o">)&lt;/span>
+- locked &amp;lt;0x000000076eef5ff8&amp;gt; &lt;span class="o">(&lt;/span>a sun.nio.ch.WindowsSelectorImpl&lt;span class="o">)&lt;/span>
+at sun.nio.ch.SelectorImpl.select&lt;span class="o">(&lt;/span>SelectorImpl.java:97&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.net.NioEndpoint&lt;span class="nv">$Poller&lt;/span>.run&lt;span class="o">(&lt;/span>NioEndpoint.java:793&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;http-nio-8080-exec-10&amp;#34;&lt;/span> &lt;span class="c1">#28 daemon prio=5 os_prio=0 tid=0x00000187de143000 nid=0x5584 waiting on condition [0x0000005d8d0fe000]&lt;/span>
+java.lang.Thread.State: WAITING &lt;span class="o">(&lt;/span>parking&lt;span class="o">)&lt;/span>
+at sun.misc.Unsafe.park&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- parking to &lt;span class="nb">wait&lt;/span> &lt;span class="k">for&lt;/span> &amp;lt;0x000000076ee9e510&amp;gt; &lt;span class="o">(&lt;/span>a java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.LockSupport.park&lt;span class="o">(&lt;/span>LockSupport.java:175&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>.await&lt;span class="o">(&lt;/span>AbstractQueuedSynchronizer.java:2039&lt;span class="o">)&lt;/span>
+at java.util.concurrent.LinkedBlockingQueue.take&lt;span class="o">(&lt;/span>LinkedBlockingQueue.java:442&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:108&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:33&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.getTask&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1074&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.runWorker&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1134&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor&lt;span class="nv">$Worker&lt;/span>.run&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:624&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskThread&lt;span class="nv">$WrappingRunnable&lt;/span>.run&lt;span class="o">(&lt;/span>TaskThread.java:61&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;http-nio-8080-exec-9&amp;#34;&lt;/span> &lt;span class="c1">#27 daemon prio=5 os_prio=0 tid=0x00000187de142800 nid=0x7bb8 waiting on condition [0x0000005d8cfff000]&lt;/span>
+java.lang.Thread.State: WAITING &lt;span class="o">(&lt;/span>parking&lt;span class="o">)&lt;/span>
+at sun.misc.Unsafe.park&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- parking to &lt;span class="nb">wait&lt;/span> &lt;span class="k">for&lt;/span> &amp;lt;0x000000076ee9e510&amp;gt; &lt;span class="o">(&lt;/span>a java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.LockSupport.park&lt;span class="o">(&lt;/span>LockSupport.java:175&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>.await&lt;span class="o">(&lt;/span>AbstractQueuedSynchronizer.java:2039&lt;span class="o">)&lt;/span>
+at java.util.concurrent.LinkedBlockingQueue.take&lt;span class="o">(&lt;/span>LinkedBlockingQueue.java:442&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:108&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:33&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.getTask&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1074&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.runWorker&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1134&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor&lt;span class="nv">$Worker&lt;/span>.run&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:624&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskThread&lt;span class="nv">$WrappingRunnable&lt;/span>.run&lt;span class="o">(&lt;/span>TaskThread.java:61&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;http-nio-8080-exec-8&amp;#34;&lt;/span> &lt;span class="c1">#26 daemon prio=5 os_prio=0 tid=0x00000187de148800 nid=0x83b0 waiting on condition [0x0000005d8ceff000]&lt;/span>
+java.lang.Thread.State: WAITING &lt;span class="o">(&lt;/span>parking&lt;span class="o">)&lt;/span>
+at sun.misc.Unsafe.park&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- parking to &lt;span class="nb">wait&lt;/span> &lt;span class="k">for&lt;/span> &amp;lt;0x000000076ee9e510&amp;gt; &lt;span class="o">(&lt;/span>a java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.LockSupport.park&lt;span class="o">(&lt;/span>LockSupport.java:175&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>.await&lt;span class="o">(&lt;/span>AbstractQueuedSynchronizer.java:2039&lt;span class="o">)&lt;/span>
+at java.util.concurrent.LinkedBlockingQueue.take&lt;span class="o">(&lt;/span>LinkedBlockingQueue.java:442&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:108&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:33&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.getTask&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1074&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.runWorker&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1134&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor&lt;span class="nv">$Worker&lt;/span>.run&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:624&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskThread&lt;span class="nv">$WrappingRunnable&lt;/span>.run&lt;span class="o">(&lt;/span>TaskThread.java:61&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;http-nio-8080-exec-7&amp;#34;&lt;/span> &lt;span class="c1">#25 daemon prio=5 os_prio=0 tid=0x00000187de149800 nid=0x8190 waiting on condition [0x0000005d8cdfe000]&lt;/span>
+java.lang.Thread.State: WAITING &lt;span class="o">(&lt;/span>parking&lt;span class="o">)&lt;/span>
+at sun.misc.Unsafe.park&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- parking to &lt;span class="nb">wait&lt;/span> &lt;span class="k">for&lt;/span> &amp;lt;0x000000076ee9e510&amp;gt; &lt;span class="o">(&lt;/span>a java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.LockSupport.park&lt;span class="o">(&lt;/span>LockSupport.java:175&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>.await&lt;span class="o">(&lt;/span>AbstractQueuedSynchronizer.java:2039&lt;span class="o">)&lt;/span>
+at java.util.concurrent.LinkedBlockingQueue.take&lt;span class="o">(&lt;/span>LinkedBlockingQueue.java:442&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:108&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:33&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.getTask&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1074&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.runWorker&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1134&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor&lt;span class="nv">$Worker&lt;/span>.run&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:624&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskThread&lt;span class="nv">$WrappingRunnable&lt;/span>.run&lt;span class="o">(&lt;/span>TaskThread.java:61&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;http-nio-8080-exec-6&amp;#34;&lt;/span> &lt;span class="c1">#24 daemon prio=5 os_prio=0 tid=0x00000187de144000 nid=0x3574 waiting on condition [0x0000005d8ccff000]&lt;/span>
+java.lang.Thread.State: WAITING &lt;span class="o">(&lt;/span>parking&lt;span class="o">)&lt;/span>
+at sun.misc.Unsafe.park&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- parking to &lt;span class="nb">wait&lt;/span> &lt;span class="k">for&lt;/span> &amp;lt;0x000000076ee9e510&amp;gt; &lt;span class="o">(&lt;/span>a java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.LockSupport.park&lt;span class="o">(&lt;/span>LockSupport.java:175&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>.await&lt;span class="o">(&lt;/span>AbstractQueuedSynchronizer.java:2039&lt;span class="o">)&lt;/span>
+at java.util.concurrent.LinkedBlockingQueue.take&lt;span class="o">(&lt;/span>LinkedBlockingQueue.java:442&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:108&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:33&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.getTask&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1074&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.runWorker&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1134&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor&lt;span class="nv">$Worker&lt;/span>.run&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:624&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskThread&lt;span class="nv">$WrappingRunnable&lt;/span>.run&lt;span class="o">(&lt;/span>TaskThread.java:61&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;http-nio-8080-exec-5&amp;#34;&lt;/span> &lt;span class="c1">#23 daemon prio=5 os_prio=0 tid=0x00000187de037000 nid=0x7b64 waiting on condition [0x0000005d8cbff000]&lt;/span>
+java.lang.Thread.State: WAITING &lt;span class="o">(&lt;/span>parking&lt;span class="o">)&lt;/span>
+at sun.misc.Unsafe.park&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- parking to &lt;span class="nb">wait&lt;/span> &lt;span class="k">for&lt;/span> &amp;lt;0x000000076ee9e510&amp;gt; &lt;span class="o">(&lt;/span>a java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.LockSupport.park&lt;span class="o">(&lt;/span>LockSupport.java:175&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>.await&lt;span class="o">(&lt;/span>AbstractQueuedSynchronizer.java:2039&lt;span class="o">)&lt;/span>
+at java.util.concurrent.LinkedBlockingQueue.take&lt;span class="o">(&lt;/span>LinkedBlockingQueue.java:442&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:108&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:33&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.getTask&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1074&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.runWorker&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1134&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor&lt;span class="nv">$Worker&lt;/span>.run&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:624&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskThread&lt;span class="nv">$WrappingRunnable&lt;/span>.run&lt;span class="o">(&lt;/span>TaskThread.java:61&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;http-nio-8080-exec-4&amp;#34;&lt;/span> &lt;span class="c1">#22 daemon prio=5 os_prio=0 tid=0x00000187dcb9e000 nid=0x2a50 waiting on condition [0x0000005d8cafe000]&lt;/span>
+java.lang.Thread.State: WAITING &lt;span class="o">(&lt;/span>parking&lt;span class="o">)&lt;/span>
+at sun.misc.Unsafe.park&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- parking to &lt;span class="nb">wait&lt;/span> &lt;span class="k">for&lt;/span> &amp;lt;0x000000076ee9e510&amp;gt; &lt;span class="o">(&lt;/span>a java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.LockSupport.park&lt;span class="o">(&lt;/span>LockSupport.java:175&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>.await&lt;span class="o">(&lt;/span>AbstractQueuedSynchronizer.java:2039&lt;span class="o">)&lt;/span>
+at java.util.concurrent.LinkedBlockingQueue.take&lt;span class="o">(&lt;/span>LinkedBlockingQueue.java:442&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:108&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:33&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.getTask&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1074&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.runWorker&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1134&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor&lt;span class="nv">$Worker&lt;/span>.run&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:624&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskThread&lt;span class="nv">$WrappingRunnable&lt;/span>.run&lt;span class="o">(&lt;/span>TaskThread.java:61&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;http-nio-8080-exec-3&amp;#34;&lt;/span> &lt;span class="c1">#21 daemon prio=5 os_prio=0 tid=0x00000187dcb9d800 nid=0x785c waiting on condition [0x0000005d8c9fe000]&lt;/span>
+java.lang.Thread.State: WAITING &lt;span class="o">(&lt;/span>parking&lt;span class="o">)&lt;/span>
+at sun.misc.Unsafe.park&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- parking to &lt;span class="nb">wait&lt;/span> &lt;span class="k">for&lt;/span> &amp;lt;0x000000076ee9e510&amp;gt; &lt;span class="o">(&lt;/span>a java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.LockSupport.park&lt;span class="o">(&lt;/span>LockSupport.java:175&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>.await&lt;span class="o">(&lt;/span>AbstractQueuedSynchronizer.java:2039&lt;span class="o">)&lt;/span>
+at java.util.concurrent.LinkedBlockingQueue.take&lt;span class="o">(&lt;/span>LinkedBlockingQueue.java:442&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:108&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:33&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.getTask&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1074&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.runWorker&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1134&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor&lt;span class="nv">$Worker&lt;/span>.run&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:624&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskThread&lt;span class="nv">$WrappingRunnable&lt;/span>.run&lt;span class="o">(&lt;/span>TaskThread.java:61&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;http-nio-8080-exec-2&amp;#34;&lt;/span> &lt;span class="c1">#20 daemon prio=5 os_prio=0 tid=0x00000187ddede800 nid=0x44c0 waiting on condition [0x0000005d8c8fe000]&lt;/span>
+java.lang.Thread.State: WAITING &lt;span class="o">(&lt;/span>parking&lt;span class="o">)&lt;/span>
+at sun.misc.Unsafe.park&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- parking to &lt;span class="nb">wait&lt;/span> &lt;span class="k">for&lt;/span> &amp;lt;0x000000076ee9e510&amp;gt; &lt;span class="o">(&lt;/span>a java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.LockSupport.park&lt;span class="o">(&lt;/span>LockSupport.java:175&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>.await&lt;span class="o">(&lt;/span>AbstractQueuedSynchronizer.java:2039&lt;span class="o">)&lt;/span>
+at java.util.concurrent.LinkedBlockingQueue.take&lt;span class="o">(&lt;/span>LinkedBlockingQueue.java:442&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:108&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:33&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.getTask&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1074&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.runWorker&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1134&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor&lt;span class="nv">$Worker&lt;/span>.run&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:624&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskThread&lt;span class="nv">$WrappingRunnable&lt;/span>.run&lt;span class="o">(&lt;/span>TaskThread.java:61&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;http-nio-8080-exec-1&amp;#34;&lt;/span> &lt;span class="c1">#19 daemon prio=5 os_prio=0 tid=0x00000187dd29d800 nid=0x4444 waiting on condition [0x0000005d8c7fe000]&lt;/span>
+java.lang.Thread.State: WAITING &lt;span class="o">(&lt;/span>parking&lt;span class="o">)&lt;/span>
+at sun.misc.Unsafe.park&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- parking to &lt;span class="nb">wait&lt;/span> &lt;span class="k">for&lt;/span> &amp;lt;0x000000076ee9e510&amp;gt; &lt;span class="o">(&lt;/span>a java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.LockSupport.park&lt;span class="o">(&lt;/span>LockSupport.java:175&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>.await&lt;span class="o">(&lt;/span>AbstractQueuedSynchronizer.java:2039&lt;span class="o">)&lt;/span>
+at java.util.concurrent.LinkedBlockingQueue.take&lt;span class="o">(&lt;/span>LinkedBlockingQueue.java:442&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:108&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskQueue.take&lt;span class="o">(&lt;/span>TaskQueue.java:33&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.getTask&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1074&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.runWorker&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1134&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor&lt;span class="nv">$Worker&lt;/span>.run&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:624&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskThread&lt;span class="nv">$WrappingRunnable&lt;/span>.run&lt;span class="o">(&lt;/span>TaskThread.java:61&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;http-nio-8080-BlockPoller&amp;#34;&lt;/span> &lt;span class="c1">#18 daemon prio=5 os_prio=0 tid=0x00000187dea3b800 nid=0x1d70 runnable [0x0000005d8c6fe000]&lt;/span>
+java.lang.Thread.State: RUNNABLE
+at sun.nio.ch.WindowsSelectorImpl&lt;span class="nv">$SubSelector&lt;/span>.poll0&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+at sun.nio.ch.WindowsSelectorImpl&lt;span class="nv">$SubSelector&lt;/span>.poll&lt;span class="o">(&lt;/span>WindowsSelectorImpl.java:314&lt;span class="o">)&lt;/span>
+at sun.nio.ch.WindowsSelectorImpl&lt;span class="nv">$SubSelector&lt;/span>.access&lt;span class="nv">$400&lt;/span>&lt;span class="o">(&lt;/span>WindowsSelectorImpl.java:293&lt;span class="o">)&lt;/span>
+at sun.nio.ch.WindowsSelectorImpl.doSelect&lt;span class="o">(&lt;/span>WindowsSelectorImpl.java:174&lt;span class="o">)&lt;/span>
+at sun.nio.ch.SelectorImpl.lockAndDoSelect&lt;span class="o">(&lt;/span>SelectorImpl.java:86&lt;span class="o">)&lt;/span>
+- locked &amp;lt;0x000000076ed81670&amp;gt; &lt;span class="o">(&lt;/span>a sun.nio.ch.Util&lt;span class="nv">$3&lt;/span>&lt;span class="o">)&lt;/span>
+- locked &amp;lt;0x000000076ed815e8&amp;gt; &lt;span class="o">(&lt;/span>a java.util.Collections&lt;span class="nv">$UnmodifiableSet&lt;/span>&lt;span class="o">)&lt;/span>
+- locked &amp;lt;0x000000076ed811e8&amp;gt; &lt;span class="o">(&lt;/span>a sun.nio.ch.WindowsSelectorImpl&lt;span class="o">)&lt;/span>
+at sun.nio.ch.SelectorImpl.select&lt;span class="o">(&lt;/span>SelectorImpl.java:97&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.net.NioBlockingSelector&lt;span class="nv">$BlockPoller&lt;/span>.run&lt;span class="o">(&lt;/span>NioBlockingSelector.java:313&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;container-0&amp;#34;&lt;/span> &lt;span class="c1">#17 prio=5 os_prio=0 tid=0x00000187de6c4800 nid=0x5488 waiting on condition [0x0000005d8c5ff000]&lt;/span>
+java.lang.Thread.State: TIMED_WAITING &lt;span class="o">(&lt;/span>sleeping&lt;span class="o">)&lt;/span>
+at java.lang.Thread.sleep&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+at org.apache.catalina.core.StandardServer.await&lt;span class="o">(&lt;/span>StandardServer.java:570&lt;span class="o">)&lt;/span>
+at org.springframework.boot.web.embedded.tomcat.TomcatWebServer&lt;span class="nv">$1&lt;/span>.run&lt;span class="o">(&lt;/span>TomcatWebServer.java:197&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;Catalina-utility-2&amp;#34;&lt;/span> &lt;span class="c1">#16 prio=1 os_prio=-2 tid=0x00000187dea67000 nid=0x66f4 waiting on condition [0x0000005d8c4fe000]&lt;/span>
+java.lang.Thread.State: TIMED_WAITING &lt;span class="o">(&lt;/span>parking&lt;span class="o">)&lt;/span>
+at sun.misc.Unsafe.park&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- parking to &lt;span class="nb">wait&lt;/span> &lt;span class="k">for&lt;/span> &amp;lt;0x00000007746f4b70&amp;gt; &lt;span class="o">(&lt;/span>a java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.LockSupport.parkNanos&lt;span class="o">(&lt;/span>LockSupport.java:215&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>.awaitNanos&lt;span class="o">(&lt;/span>AbstractQueuedSynchronizer.java:2078&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ScheduledThreadPoolExecutor&lt;span class="nv">$DelayedWorkQueue&lt;/span>.take&lt;span class="o">(&lt;/span>ScheduledThreadPoolExecutor.java:1093&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ScheduledThreadPoolExecutor&lt;span class="nv">$DelayedWorkQueue&lt;/span>.take&lt;span class="o">(&lt;/span>ScheduledThreadPoolExecutor.java:809&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.getTask&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1074&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.runWorker&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1134&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor&lt;span class="nv">$Worker&lt;/span>.run&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:624&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskThread&lt;span class="nv">$WrappingRunnable&lt;/span>.run&lt;span class="o">(&lt;/span>TaskThread.java:61&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;Catalina-utility-1&amp;#34;&lt;/span> &lt;span class="c1">#15 prio=1 os_prio=-2 tid=0x00000187de4b8800 nid=0x3bf4 waiting on condition [0x0000005d8c3fe000]&lt;/span>
+java.lang.Thread.State: WAITING &lt;span class="o">(&lt;/span>parking&lt;span class="o">)&lt;/span>
+at sun.misc.Unsafe.park&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- parking to &lt;span class="nb">wait&lt;/span> &lt;span class="k">for&lt;/span> &amp;lt;0x00000007746f4b70&amp;gt; &lt;span class="o">(&lt;/span>a java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.LockSupport.park&lt;span class="o">(&lt;/span>LockSupport.java:175&lt;span class="o">)&lt;/span>
+at java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$ConditionObject&lt;/span>.await&lt;span class="o">(&lt;/span>AbstractQueuedSynchronizer.java:2039&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ScheduledThreadPoolExecutor&lt;span class="nv">$DelayedWorkQueue&lt;/span>.take&lt;span class="o">(&lt;/span>ScheduledThreadPoolExecutor.java:1088&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ScheduledThreadPoolExecutor&lt;span class="nv">$DelayedWorkQueue&lt;/span>.take&lt;span class="o">(&lt;/span>ScheduledThreadPoolExecutor.java:809&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.getTask&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1074&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor.runWorker&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:1134&lt;span class="o">)&lt;/span>
+at java.util.concurrent.ThreadPoolExecutor&lt;span class="nv">$Worker&lt;/span>.run&lt;span class="o">(&lt;/span>ThreadPoolExecutor.java:624&lt;span class="o">)&lt;/span>
+at org.apache.tomcat.util.threads.TaskThread&lt;span class="nv">$WrappingRunnable&lt;/span>.run&lt;span class="o">(&lt;/span>TaskThread.java:61&lt;span class="o">)&lt;/span>
+at java.lang.Thread.run&lt;span class="o">(&lt;/span>Thread.java:748&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;Service Thread&amp;#34;&lt;/span> &lt;span class="c1">#10 daemon prio=9 os_prio=0 tid=0x00000187dc61f000 nid=0x2b7c runnable [0x0000000000000000]&lt;/span>
+java.lang.Thread.State: RUNNABLE
+&lt;span class="s2">&amp;#34;C1 CompilerThread3&amp;#34;&lt;/span> &lt;span class="c1">#9 daemon prio=9 os_prio=2 tid=0x00000187da84a800 nid=0x5184 waiting on condition [0x0000000000000000]&lt;/span>
+java.lang.Thread.State: RUNNABLE
+&lt;span class="s2">&amp;#34;C2 CompilerThread2&amp;#34;&lt;/span> &lt;span class="c1">#8 daemon prio=9 os_prio=2 tid=0x00000187da841800 nid=0x42f0 waiting on condition [0x0000000000000000]&lt;/span>
+java.lang.Thread.State: RUNNABLE
+&lt;span class="s2">&amp;#34;C2 CompilerThread1&amp;#34;&lt;/span> &lt;span class="c1">#7 daemon prio=9 os_prio=2 tid=0x00000187da840800 nid=0x5c34 waiting on condition [0x0000000000000000]&lt;/span>
+java.lang.Thread.State: RUNNABLE
+&lt;span class="s2">&amp;#34;C2 CompilerThread0&amp;#34;&lt;/span> &lt;span class="c1">#6 daemon prio=9 os_prio=2 tid=0x00000187da844800 nid=0x4184 waiting on condition [0x0000000000000000]&lt;/span>
+java.lang.Thread.State: RUNNABLE
+&lt;span class="s2">&amp;#34;Attach Listener&amp;#34;&lt;/span> &lt;span class="c1">#5 daemon prio=5 os_prio=2 tid=0x00000187da838000 nid=0x2638 waiting on condition [0x0000000000000000]&lt;/span>
+java.lang.Thread.State: RUNNABLE
+&lt;span class="s2">&amp;#34;Signal Dispatcher&amp;#34;&lt;/span> &lt;span class="c1">#4 daemon prio=9 os_prio=2 tid=0x00000187da7e5000 nid=0x5218 runnable [0x0000000000000000]&lt;/span>
+java.lang.Thread.State: RUNNABLE
+&lt;span class="s2">&amp;#34;Finalizer&amp;#34;&lt;/span> &lt;span class="c1">#3 daemon prio=8 os_prio=1 tid=0x00000187da7b0800 nid=0x7a3c in Object.wait() [0x0000005d8b9ff000]&lt;/span>
+java.lang.Thread.State: WAITING &lt;span class="o">(&lt;/span>on object monitor&lt;span class="o">)&lt;/span>
+at java.lang.Object.wait&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- waiting on &amp;lt;0x00000006c3630078&amp;gt; &lt;span class="o">(&lt;/span>a java.lang.ref.ReferenceQueue&lt;span class="nv">$Lock&lt;/span>&lt;span class="o">)&lt;/span>
+at java.lang.ref.ReferenceQueue.remove&lt;span class="o">(&lt;/span>ReferenceQueue.java:144&lt;span class="o">)&lt;/span>
+- locked &amp;lt;0x00000006c3630078&amp;gt; &lt;span class="o">(&lt;/span>a java.lang.ref.ReferenceQueue&lt;span class="nv">$Lock&lt;/span>&lt;span class="o">)&lt;/span>
+at java.lang.ref.ReferenceQueue.remove&lt;span class="o">(&lt;/span>ReferenceQueue.java:165&lt;span class="o">)&lt;/span>
+at java.lang.ref.Finalizer&lt;span class="nv">$FinalizerThread&lt;/span>.run&lt;span class="o">(&lt;/span>Finalizer.java:216&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;Reference Handler&amp;#34;&lt;/span> &lt;span class="c1">#2 daemon prio=10 os_prio=2 tid=0x00000187da7a8800 nid=0x685c in Object.wait() [0x0000005d8b8ff000]&lt;/span>
+java.lang.Thread.State: WAITING &lt;span class="o">(&lt;/span>on object monitor&lt;span class="o">)&lt;/span>
+at java.lang.Object.wait&lt;span class="o">(&lt;/span>Native Method&lt;span class="o">)&lt;/span>
+- waiting on &amp;lt;0x00000006c36099b0&amp;gt; &lt;span class="o">(&lt;/span>a java.lang.ref.Reference&lt;span class="nv">$Lock&lt;/span>&lt;span class="o">)&lt;/span>
+at java.lang.Object.wait&lt;span class="o">(&lt;/span>Object.java:502&lt;span class="o">)&lt;/span>
+at java.lang.ref.Reference.tryHandlePending&lt;span class="o">(&lt;/span>Reference.java:191&lt;span class="o">)&lt;/span>
+- locked &amp;lt;0x00000006c36099b0&amp;gt; &lt;span class="o">(&lt;/span>a java.lang.ref.Reference&lt;span class="nv">$Lock&lt;/span>&lt;span class="o">)&lt;/span>
+at java.lang.ref.Reference&lt;span class="nv">$ReferenceHandler&lt;/span>.run&lt;span class="o">(&lt;/span>Reference.java:153&lt;span class="o">)&lt;/span>
+&lt;span class="s2">&amp;#34;VM Thread&amp;#34;&lt;/span> &lt;span class="nv">os_prio&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="m">2&lt;/span> &lt;span class="nv">tid&lt;/span>&lt;span class="o">=&lt;/span>0x00000187da77d800 &lt;span class="nv">nid&lt;/span>&lt;span class="o">=&lt;/span>0x2fd4 runnable
+&lt;span class="s2">&amp;#34;GC task thread#0 (ParallelGC)&amp;#34;&lt;/span> &lt;span class="nv">os_prio&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="m">0&lt;/span> &lt;span class="nv">tid&lt;/span>&lt;span class="o">=&lt;/span>0x00000187bf85c800 &lt;span class="nv">nid&lt;/span>&lt;span class="o">=&lt;/span>0x715c runnable
+&lt;span class="s2">&amp;#34;GC task thread#1 (ParallelGC)&amp;#34;&lt;/span> &lt;span class="nv">os_prio&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="m">0&lt;/span> &lt;span class="nv">tid&lt;/span>&lt;span class="o">=&lt;/span>0x00000187bf85e000 &lt;span class="nv">nid&lt;/span>&lt;span class="o">=&lt;/span>0x558c runnable
+&lt;span class="s2">&amp;#34;GC task thread#2 (ParallelGC)&amp;#34;&lt;/span> &lt;span class="nv">os_prio&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="m">0&lt;/span> &lt;span class="nv">tid&lt;/span>&lt;span class="o">=&lt;/span>0x00000187bf85f800 &lt;span class="nv">nid&lt;/span>&lt;span class="o">=&lt;/span>0x2b90 runnable
+&lt;span class="s2">&amp;#34;GC task thread#3 (ParallelGC)&amp;#34;&lt;/span> &lt;span class="nv">os_prio&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="m">0&lt;/span> &lt;span class="nv">tid&lt;/span>&lt;span class="o">=&lt;/span>0x00000187bf861800 &lt;span class="nv">nid&lt;/span>&lt;span class="o">=&lt;/span>0x83f4 runnable
+&lt;span class="s2">&amp;#34;GC task thread#4 (ParallelGC)&amp;#34;&lt;/span> &lt;span class="nv">os_prio&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="m">0&lt;/span> &lt;span class="nv">tid&lt;/span>&lt;span class="o">=&lt;/span>0x00000187bf863800 &lt;span class="nv">nid&lt;/span>&lt;span class="o">=&lt;/span>0x3198 runnable
+&lt;span class="s2">&amp;#34;GC task thread#5 (ParallelGC)&amp;#34;&lt;/span> &lt;span class="nv">os_prio&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="m">0&lt;/span> &lt;span class="nv">tid&lt;/span>&lt;span class="o">=&lt;/span>0x00000187bf866000 &lt;span class="nv">nid&lt;/span>&lt;span class="o">=&lt;/span>0x413c runnable
+&lt;span class="s2">&amp;#34;GC task thread#6 (ParallelGC)&amp;#34;&lt;/span> &lt;span class="nv">os_prio&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="m">0&lt;/span> &lt;span class="nv">tid&lt;/span>&lt;span class="o">=&lt;/span>0x00000187bf869000 &lt;span class="nv">nid&lt;/span>&lt;span class="o">=&lt;/span>0x607c runnable
+&lt;span class="s2">&amp;#34;GC task thread#7 (ParallelGC)&amp;#34;&lt;/span> &lt;span class="nv">os_prio&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="m">0&lt;/span> &lt;span class="nv">tid&lt;/span>&lt;span class="o">=&lt;/span>0x00000187bf86b800 &lt;span class="nv">nid&lt;/span>&lt;span class="o">=&lt;/span>0x49cc runnable
+&lt;span class="s2">&amp;#34;VM Periodic Task Thread&amp;#34;&lt;/span> &lt;span class="nv">os_prio&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="m">2&lt;/span> &lt;span class="nv">tid&lt;/span>&lt;span class="o">=&lt;/span>0x00000187dc631000 &lt;span class="nv">nid&lt;/span>&lt;span class="o">=&lt;/span>0x5018 waiting on condition
+JNI global references: &lt;span class="m">1315&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="jmap">jmap&lt;/h2>
+&lt;p>打印进程、核心文件或远程调试服务器的共享对象内存映射或堆内存详细信息。
+&lt;em>jmap&lt;/em> 命令打印指定进程、核心文件或远程调试服务器的共享对象内存映射或堆内存详细信息。如果指定的进程在 &lt;em>64&lt;/em> 位 &lt;em>Java&lt;/em> 虚拟机 (&lt;em>JVM&lt;/em>) 上运行，那么您可能需要指定 &lt;code>-J-d64&lt;/code> 选项，例如：&lt;code>jmap -J-d64 -heap pid&lt;/code>。&lt;/p>
+&lt;p>&lt;a class="link" href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jmap.html" target="_blank" rel="noopener"
+>Oracle - Java Documentation - jmap&lt;/a>&lt;/p>
+&lt;h3 id="格式-1">格式&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">jmap &lt;span class="o">[&lt;/span> options &lt;span class="o">]&lt;/span> pid
+jmap &lt;span class="o">[&lt;/span> options &lt;span class="o">]&lt;/span> executable core
+jmap &lt;span class="o">[&lt;/span> options &lt;span class="o">]&lt;/span> &lt;span class="o">[&lt;/span> pid &lt;span class="o">]&lt;/span> server-id@ &lt;span class="o">]&lt;/span> remote-hostname-or-IP
+&lt;/code>&lt;/pre>&lt;/div>&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">关键字&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>options&lt;/em>&lt;/td>
+&lt;td style="text-align:left">命令行参数&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>pid&lt;/em>&lt;/td>
+&lt;td style="text-align:left">要为其打印内存映射的进程 &lt;em>ID&lt;/em>。该进程必须是 &lt;em>Java&lt;/em> 进程。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>executable&lt;/em>&lt;/td>
+&lt;td style="text-align:left">从中生成核心转储的 &lt;em>Java&lt;/em> 可执行文件。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>core&lt;/em>&lt;/td>
+&lt;td style="text-align:left">要为其打印内存映射的核心文件。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>remote-hostname-or-IP&lt;/em>&lt;/td>
+&lt;td style="text-align:left">远程调试服务器主机名或 &lt;em>IP&lt;/em> 地址。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;em>server-id&lt;/em>&lt;/td>
+&lt;td style="text-align:left">当多个调试服务器在同一远程主机上运行时使用的可选唯一 &lt;em>ID&lt;/em>。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h3 id="参数-1">参数&lt;/h3>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数名称&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>&amp;lt;no option&amp;gt;&lt;/code>&lt;/td>
+&lt;td style="text-align:left">当不使用任何选项时，&lt;em>jmap&lt;/em> 命令打印共享对象映射。对于目标JVM 中加载的每个共享对象，都会打印出该共享对象文件的起始地址、映射大小和完整路径。。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-dump:[live,] format=b, file=filename&lt;/code>&lt;/td>
+&lt;td style="text-align:left">将 &lt;em>hprof&lt;/em> 二进制格式的 &lt;em>Java&lt;/em> 堆转储到指定文件。 &lt;code>live&lt;/code> 是可选子选项，当指定时，只会转储堆中的活动对象，且会触发一次 &lt;em>Full GC&lt;/em>。要浏览堆转储，您可以使用 &lt;a class="link" href="#jhat" >jhat&lt;/a> 命令读取生成的 &lt;em>Dump&lt;/em> 文件。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-finalizerinfo&lt;/code>&lt;/td>
+&lt;td style="text-align:left">打印有关等待完成的对象的信息。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-heap&lt;/code>&lt;/td>
+&lt;td style="text-align:left">打印使用的垃圾收集的堆摘要、头配置和按代计算的堆使用情况。此外，还打印了已存入常量池字符串(&lt;a class="link" href="https://blog.csdn.net/guluhan/article/details/82385808" target="_blank" rel="noopener"
+>Interned String&lt;/a>)的数量和大小。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-histo[:live]&lt;/code>&lt;/td>
+&lt;td style="text-align:left">打印堆的直方图。对于每个 &lt;em>Java&lt;/em> 类，将打印对象数、内存大小（以&lt;em>Byte&lt;/em> 为单位）和完整的类名。&lt;em>JVM&lt;/em> 内部类以星号 (*) 前缀打印。如果指定了 &lt;code>live&lt;/code> 子选项，则只计算活动对象，且会触发 &lt;em>Full GC&lt;/em>。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-clstats&lt;/code>&lt;/td>
+&lt;td style="text-align:left">打印 &lt;em>Java&lt;/em> 堆的类加载器的统计信息。对于每个类加载器，它的名称、它的活跃程度、地址、父类加载器以及它已加载的类的数量和大小都被打印出来。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-F&lt;/code>&lt;/td>
+&lt;td style="text-align:left">强制执行。当 &lt;em>pid&lt;/em> 没有响应时，将此选项与 &lt;code>jmap -dump&lt;/code> 或 &lt;code>jmap -histo&lt;/code> 选项一起使用。此模式不支持 &lt;em>live&lt;/em> 子选项。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-h&lt;/code>&lt;/td>
+&lt;td style="text-align:left">Prints a help message.&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-help&lt;/code>&lt;/td>
+&lt;td style="text-align:left">Prints a help message.&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-Jflag&lt;/code>&lt;/td>
+&lt;td style="text-align:left">将 &lt;em>JVM&lt;/em>参数传递给运行 &lt;code>jmap&lt;/code> 命令的 &lt;em>Java&lt;/em> 虚拟机。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h3 id="使用-3">使用&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jmap &lt;span class="m">30444&lt;/span>
+Attaching to process ID 30444, please wait...
+Debugger attached successfully.
+Server compiler detected.
+JVM version is 25.282-b08
+0x0000000067ec0000 8616K C:&lt;span class="se">\P&lt;/span>rogram Files&lt;span class="se">\A&lt;/span>doptOpenJDK&lt;span class="se">\j&lt;/span>dk-8.0.282.8-hotspot&lt;span class="se">\j&lt;/span>re&lt;span class="se">\b&lt;/span>in&lt;span class="se">\s&lt;/span>erver&lt;span class="se">\j&lt;/span>vm.dll
+0x0000000068c90000 664K C:&lt;span class="se">\w&lt;/span>indows&lt;span class="se">\S&lt;/span>ystem32&lt;span class="se">\S&lt;/span>YSFER.DLL
+0x00007ff7f0680000 232K C:&lt;span class="se">\P&lt;/span>rogram Files&lt;span class="se">\A&lt;/span>doptOpenJDK&lt;span class="se">\j&lt;/span>dk-8.0.282.8-hotspot&lt;span class="se">\b&lt;/span>in&lt;span class="se">\j&lt;/span>ava.exe
+0x00007ff88ce30000 956K C:&lt;span class="se">\P&lt;/span>rogram Files&lt;span class="se">\A&lt;/span>doptOpenJDK&lt;span class="se">\j&lt;/span>dk-8.0.282.8-hotspot&lt;span class="se">\j&lt;/span>re&lt;span class="se">\b&lt;/span>in&lt;span class="se">\m&lt;/span>svcr120.dll
+0x00007ff88df40000 664K C:&lt;span class="se">\P&lt;/span>rogram Files&lt;span class="se">\A&lt;/span>doptOpenJDK&lt;span class="se">\j&lt;/span>dk-8.0.282.8-hotspot&lt;span class="se">\j&lt;/span>re&lt;span class="se">\b&lt;/span>in&lt;span class="se">\m&lt;/span>svcp120.dll
+0x00007ff8bddc0000 72K C:&lt;span class="se">\P&lt;/span>rogram Files&lt;span class="se">\A&lt;/span>doptOpenJDK&lt;span class="se">\j&lt;/span>dk-8.0.282.8-hotspot&lt;span class="se">\j&lt;/span>re&lt;span class="se">\b&lt;/span>in&lt;span class="se">\n&lt;/span>io.dll
+0x00007ff8bde40000 104K C:&lt;span class="se">\P&lt;/span>rogram Files&lt;span class="se">\A&lt;/span>doptOpenJDK&lt;span class="se">\j&lt;/span>dk-8.0.282.8-hotspot&lt;span class="se">\j&lt;/span>re&lt;span class="se">\b&lt;/span>in&lt;span class="se">\n&lt;/span>et.dll
+0x00007ff8c86d0000 88K C:&lt;span class="se">\P&lt;/span>rogram Files&lt;span class="se">\A&lt;/span>doptOpenJDK&lt;span class="se">\j&lt;/span>dk-8.0.282.8-hotspot&lt;span class="se">\j&lt;/span>re&lt;span class="se">\b&lt;/span>in&lt;span class="se">\z&lt;/span>ip.dll
+...
+&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="打印堆信息">打印堆信息&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jmap -heap &lt;span class="m">30444&lt;/span>
+Attaching to process ID 30444, please wait...
+Debugger attached successfully.
+Server compiler detected.
+JVM version is 25.282-b08
+using thread-local object allocation.
+Parallel GC with &lt;span class="m">8&lt;/span> thread&lt;span class="o">(&lt;/span>s&lt;span class="o">)&lt;/span>
+Heap Configuration:
+&lt;span class="nv">MinHeapFreeRatio&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">0&lt;/span>
+&lt;span class="nv">MaxHeapFreeRatio&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">100&lt;/span>
+&lt;span class="nv">MaxHeapSize&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">4238344192&lt;/span> &lt;span class="o">(&lt;/span>4042.0MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">NewSize&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">88604672&lt;/span> &lt;span class="o">(&lt;/span>84.5MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">MaxNewSize&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">1412431872&lt;/span> &lt;span class="o">(&lt;/span>1347.0MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">OldSize&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">177733632&lt;/span> &lt;span class="o">(&lt;/span>169.5MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">NewRatio&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">2&lt;/span>
+&lt;span class="nv">SurvivorRatio&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">8&lt;/span>
+&lt;span class="nv">MetaspaceSize&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">21807104&lt;/span> &lt;span class="o">(&lt;/span>20.796875MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">CompressedClassSpaceSize&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">1073741824&lt;/span> &lt;span class="o">(&lt;/span>1024.0MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">MaxMetaspaceSize&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">17592186044415&lt;/span> MB
+&lt;span class="nv">G1HeapRegionSize&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="o">(&lt;/span>0.0MB&lt;span class="o">)&lt;/span>
+Heap Usage:
+PS Young Generation
+Eden Space:
+&lt;span class="nv">capacity&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">96468992&lt;/span> &lt;span class="o">(&lt;/span>92.0MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">used&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">964752&lt;/span> &lt;span class="o">(&lt;/span>0.9200592041015625MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">free&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">95504240&lt;/span> &lt;span class="o">(&lt;/span>91.07994079589844MB&lt;span class="o">)&lt;/span>
+1.0000643522843071% used
+From Space:
+&lt;span class="nv">capacity&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">5767168&lt;/span> &lt;span class="o">(&lt;/span>5.5MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">used&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="o">(&lt;/span>0.0MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">free&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">5767168&lt;/span> &lt;span class="o">(&lt;/span>5.5MB&lt;span class="o">)&lt;/span>
+0.0% used
+To Space:
+&lt;span class="nv">capacity&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">8912896&lt;/span> &lt;span class="o">(&lt;/span>8.5MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">used&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="o">(&lt;/span>0.0MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">free&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">8912896&lt;/span> &lt;span class="o">(&lt;/span>8.5MB&lt;span class="o">)&lt;/span>
+0.0% used
+PS Old Generation
+&lt;span class="nv">capacity&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">152567808&lt;/span> &lt;span class="o">(&lt;/span>145.5MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">used&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">10801024&lt;/span> &lt;span class="o">(&lt;/span>10.3006591796875MB&lt;span class="o">)&lt;/span>
+&lt;span class="nv">free&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">141766784&lt;/span> &lt;span class="o">(&lt;/span>135.1993408203125MB&lt;span class="o">)&lt;/span>
+7.079490845146048% used
+&lt;span class="m">12198&lt;/span> interned Strings occupying &lt;span class="m">1055840&lt;/span> bytes.
+&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="打印直方图">打印直方图&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jmap -histo &lt;span class="m">30444&lt;/span>
+num &lt;span class="c1">#instances #bytes class name&lt;/span>
+----------------------------------------------
+1: &lt;span class="m">174537&lt;/span> &lt;span class="m">32059552&lt;/span> &lt;span class="o">[&lt;/span>C
+2: &lt;span class="m">18029&lt;/span> &lt;span class="m">10376192&lt;/span> &lt;span class="o">[&lt;/span>B
+3: &lt;span class="m">12024&lt;/span> &lt;span class="m">5422296&lt;/span> &lt;span class="o">[&lt;/span>I
+4: &lt;span class="m">120292&lt;/span> &lt;span class="m">2887008&lt;/span> java.lang.String
+5: &lt;span class="m">23155&lt;/span> &lt;span class="m">1576096&lt;/span> &lt;span class="o">[&lt;/span>Ljava.lang.Object&lt;span class="p">;&lt;/span>
+6: &lt;span class="m">15764&lt;/span> &lt;span class="m">1008896&lt;/span> java.net.URL
+7: &lt;span class="m">9748&lt;/span> &lt;span class="m">857824&lt;/span> java.lang.reflect.Method
+8: &lt;span class="m">34905&lt;/span> &lt;span class="m">721848&lt;/span> &lt;span class="o">[&lt;/span>Ljava.lang.Class&lt;span class="p">;&lt;/span>
+9: &lt;span class="m">5977&lt;/span> &lt;span class="m">660736&lt;/span> java.lang.Class
+10: &lt;span class="m">19036&lt;/span> &lt;span class="m">609152&lt;/span> java.util.concurrent.ConcurrentHashMap&lt;span class="nv">$Node&lt;/span>
+11: &lt;span class="m">6649&lt;/span> &lt;span class="m">532944&lt;/span> &lt;span class="o">[&lt;/span>Ljava.util.WeakHashMap&lt;span class="nv">$Entry&lt;/span>&lt;span class="p">;&lt;/span>
+12: &lt;span class="m">6217&lt;/span> &lt;span class="m">490744&lt;/span> &lt;span class="o">[&lt;/span>S
+13: &lt;span class="m">6596&lt;/span> &lt;span class="m">422144&lt;/span> org.springframework.boot.loader.jar.JarFileWrapper
+14: &lt;span class="m">10008&lt;/span> &lt;span class="m">400320&lt;/span> java.lang.ref.Finalizer
+15: &lt;span class="m">12209&lt;/span> &lt;span class="m">390688&lt;/span> org.springframework.boot.loader.jar.StringSequence
+16: &lt;span class="m">4053&lt;/span> &lt;span class="m">361672&lt;/span> &lt;span class="o">[&lt;/span>Ljava.util.HashMap&lt;span class="nv">$Node&lt;/span>&lt;span class="p">;&lt;/span>
+17: &lt;span class="m">8640&lt;/span> &lt;span class="m">345600&lt;/span> java.util.LinkedHashMap&lt;span class="nv">$Entry&lt;/span>
+18: &lt;span class="m">10670&lt;/span> &lt;span class="m">341440&lt;/span> java.util.ArrayList&lt;span class="nv">$Itr&lt;/span>
+19: &lt;span class="m">10071&lt;/span> &lt;span class="m">322272&lt;/span> java.util.concurrent.locks.AbstractQueuedSynchronizer&lt;span class="nv">$Node&lt;/span>
+20: &lt;span class="m">6645&lt;/span> &lt;span class="m">318960&lt;/span> java.util.WeakHashMap
+21: &lt;span class="m">9621&lt;/span> &lt;span class="m">307872&lt;/span> java.util.HashMap&lt;span class="nv">$Node&lt;/span>
+22: &lt;span class="m">12209&lt;/span> &lt;span class="m">293016&lt;/span> org.springframework.boot.loader.jar.JarURLConnection&lt;span class="nv">$JarEntryName&lt;/span>
+23: &lt;span class="m">4851&lt;/span> &lt;span class="m">271656&lt;/span> jdk.internal.org.objectweb.asm.Item
+24: &lt;span class="m">133&lt;/span> &lt;span class="m">258512&lt;/span> &lt;span class="o">[&lt;/span>Ljava.util.concurrent.ConcurrentHashMap&lt;span class="nv">$Node&lt;/span>&lt;span class="p">;&lt;/span>
+25: &lt;span class="m">7366&lt;/span> &lt;span class="m">235712&lt;/span> java.lang.ref.ReferenceQueue
+26: &lt;span class="m">6632&lt;/span> &lt;span class="m">212224&lt;/span> java.util.zip.ZipCoder
+27: &lt;span class="m">3646&lt;/span> &lt;span class="m">204176&lt;/span> java.util.LinkedHashMap
+28: &lt;span class="m">2516&lt;/span> &lt;span class="m">201280&lt;/span> org.springframework.boot.loader.jar.JarURLConnection
+29: &lt;span class="m">3454&lt;/span> &lt;span class="m">193424&lt;/span> java.util.concurrent.ConcurrentHashMap&lt;span class="nv">$KeyIterator&lt;/span>
+30: &lt;span class="m">11965&lt;/span> &lt;span class="m">191440&lt;/span> java.lang.Object
+31: &lt;span class="m">6765&lt;/span> &lt;span class="m">162360&lt;/span> java.util.ArrayDeque
+32: &lt;span class="m">3341&lt;/span> &lt;span class="m">160368&lt;/span> java.util.zip.Inflater
+33: &lt;span class="m">168&lt;/span> &lt;span class="m">158400&lt;/span> &lt;span class="o">[&lt;/span>Ljdk.internal.org.objectweb.asm.Item&lt;span class="p">;&lt;/span>
+34: &lt;span class="m">3588&lt;/span> &lt;span class="m">143520&lt;/span> java.util.HashMap&lt;span class="nv">$KeyIterator&lt;/span>
+35: &lt;span class="m">3614&lt;/span> &lt;span class="m">137896&lt;/span> &lt;span class="o">[&lt;/span>Ljava.lang.reflect.Method&lt;span class="p">;&lt;/span>
+36: &lt;span class="m">1980&lt;/span> &lt;span class="m">132072&lt;/span> &lt;span class="o">[&lt;/span>Ljava.lang.String&lt;span class="p">;&lt;/span>
+37: &lt;span class="m">1763&lt;/span> &lt;span class="m">126936&lt;/span> java.lang.reflect.Field
+38: &lt;span class="m">1052&lt;/span> &lt;span class="m">126240&lt;/span> org.springframework.boot.loader.jar.JarEntry
+39: &lt;span class="m">1556&lt;/span> &lt;span class="m">124480&lt;/span> java.lang.reflect.Constructor
+40: &lt;span class="m">7368&lt;/span> &lt;span class="m">117888&lt;/span> java.lang.ref.ReferenceQueue&lt;span class="nv">$Lock&lt;/span>
+41: &lt;span class="m">4855&lt;/span> &lt;span class="m">116520&lt;/span> java.lang.StringBuilder
+42: &lt;span class="m">2278&lt;/span> &lt;span class="m">109344&lt;/span> org.springframework.util.ConcurrentReferenceHashMap&lt;span class="nv">$SoftEntryReference&lt;/span>
+43: &lt;span class="m">2229&lt;/span> &lt;span class="m">106992&lt;/span> java.util.HashMap
+44: &lt;span class="m">4451&lt;/span> &lt;span class="m">106824&lt;/span> java.util.ArrayList
+45: &lt;span class="m">3169&lt;/span> &lt;span class="m">101408&lt;/span> java.util.LinkedHashMap&lt;span class="nv">$LinkedKeyIterator&lt;/span>
+46: &lt;span class="m">1644&lt;/span> &lt;span class="m">92064&lt;/span> java.lang.invoke.MemberName
+47: &lt;span class="m">2297&lt;/span> &lt;span class="m">91880&lt;/span> java.util.TreeMap&lt;span class="nv">$Entry&lt;/span>
+48: &lt;span class="m">1914&lt;/span> &lt;span class="m">91872&lt;/span> org.springframework.core.ResolvableType
+49: &lt;span class="m">3634&lt;/span> &lt;span class="m">87216&lt;/span> java.util.Collections&lt;span class="nv">$UnmodifiableCollection$1&lt;/span>
+50: &lt;span class="m">2153&lt;/span> &lt;span class="m">86120&lt;/span> java.lang.invoke.MethodType
+...
+Total &lt;span class="m">767708&lt;/span> &lt;span class="m">68849112&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="打印直方图---存活对象">打印直方图 - 存活对象&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jmap -histo:live &lt;span class="m">30444&lt;/span>
+num &lt;span class="c1">#instances #bytes class name&lt;/span>
+----------------------------------------------
+1: &lt;span class="m">29265&lt;/span> &lt;span class="m">2933672&lt;/span> &lt;span class="o">[&lt;/span>C
+2: &lt;span class="m">28974&lt;/span> &lt;span class="m">695376&lt;/span> java.lang.String
+3: &lt;span class="m">5977&lt;/span> &lt;span class="m">660736&lt;/span> java.lang.Class
+4: &lt;span class="m">17063&lt;/span> &lt;span class="m">546016&lt;/span> java.util.concurrent.ConcurrentHashMap&lt;span class="nv">$Node&lt;/span>
+5: &lt;span class="m">6121&lt;/span> &lt;span class="m">538648&lt;/span> java.lang.reflect.Method
+6: &lt;span class="m">7804&lt;/span> &lt;span class="m">477144&lt;/span> &lt;span class="o">[&lt;/span>Ljava.lang.Object&lt;span class="p">;&lt;/span>
+7: &lt;span class="m">3686&lt;/span> &lt;span class="m">366600&lt;/span> &lt;span class="o">[&lt;/span>I
+8: &lt;span class="m">2560&lt;/span> &lt;span class="m">321960&lt;/span> &lt;span class="o">[&lt;/span>B
+9: &lt;span class="m">6117&lt;/span> &lt;span class="m">244680&lt;/span> java.util.LinkedHashMap&lt;span class="nv">$Entry&lt;/span>
+10: &lt;span class="m">2719&lt;/span> &lt;span class="m">235344&lt;/span> &lt;span class="o">[&lt;/span>Ljava.util.HashMap&lt;span class="nv">$Node&lt;/span>&lt;span class="p">;&lt;/span>
+11: &lt;span class="m">2605&lt;/span> &lt;span class="m">209424&lt;/span> &lt;span class="o">[&lt;/span>Ljava.util.WeakHashMap&lt;span class="nv">$Entry&lt;/span>&lt;span class="p">;&lt;/span>
+12: &lt;span class="m">6069&lt;/span> &lt;span class="m">194208&lt;/span> java.util.HashMap&lt;span class="nv">$Node&lt;/span>
+13: &lt;span class="m">11619&lt;/span> &lt;span class="m">185904&lt;/span> java.lang.Object
+14: &lt;span class="m">101&lt;/span> &lt;span class="m">181904&lt;/span> &lt;span class="o">[&lt;/span>Ljava.util.concurrent.ConcurrentHashMap&lt;span class="nv">$Node&lt;/span>&lt;span class="p">;&lt;/span>
+15: &lt;span class="m">7568&lt;/span> &lt;span class="m">170520&lt;/span> &lt;span class="o">[&lt;/span>Ljava.lang.Class&lt;span class="p">;&lt;/span>
+16: &lt;span class="m">2553&lt;/span> &lt;span class="m">163392&lt;/span> org.springframework.boot.loader.jar.JarFileWrapper
+17: &lt;span class="m">2759&lt;/span> &lt;span class="m">154504&lt;/span> java.util.LinkedHashMap
+18: &lt;span class="m">3596&lt;/span> &lt;span class="m">143840&lt;/span> java.lang.ref.Finalizer
+19: &lt;span class="m">2602&lt;/span> &lt;span class="m">124896&lt;/span> java.util.WeakHashMap
+20: &lt;span class="m">3131&lt;/span> &lt;span class="m">100192&lt;/span> java.lang.ref.ReferenceQueue
+21: &lt;span class="m">2589&lt;/span> &lt;span class="m">82848&lt;/span> java.util.zip.ZipCoder
+22: &lt;span class="m">1002&lt;/span> &lt;span class="m">80160&lt;/span> java.lang.reflect.Constructor
+23: &lt;span class="m">1058&lt;/span> &lt;span class="m">76176&lt;/span> java.lang.reflect.Field
+24: &lt;span class="m">1308&lt;/span> &lt;span class="m">73248&lt;/span> java.lang.invoke.MemberName
+25: &lt;span class="m">2589&lt;/span> &lt;span class="m">62136&lt;/span> java.util.ArrayDeque
+26: &lt;span class="m">1261&lt;/span> &lt;span class="m">60528&lt;/span> java.util.HashMap
+27: &lt;span class="m">482&lt;/span> &lt;span class="m">57840&lt;/span> org.springframework.boot.loader.jar.JarEntry
+28: &lt;span class="m">941&lt;/span> &lt;span class="m">52696&lt;/span> java.lang.Class&lt;span class="nv">$ReflectionData&lt;/span>
+29: &lt;span class="m">1254&lt;/span> &lt;span class="m">50160&lt;/span> java.lang.ref.SoftReference
+30: &lt;span class="m">3133&lt;/span> &lt;span class="m">50128&lt;/span> java.lang.ref.ReferenceQueue&lt;span class="nv">$Lock&lt;/span>
+31: &lt;span class="m">984&lt;/span> &lt;span class="m">47232&lt;/span> java.util.zip.Inflater
+32: &lt;span class="m">937&lt;/span> &lt;span class="m">46024&lt;/span> &lt;span class="o">[&lt;/span>Ljava.lang.String&lt;span class="p">;&lt;/span>
+33: &lt;span class="m">792&lt;/span> &lt;span class="m">45120&lt;/span> &lt;span class="o">[&lt;/span>Ljava.lang.reflect.Method&lt;span class="p">;&lt;/span>
+34: &lt;span class="m">1090&lt;/span> &lt;span class="m">43600&lt;/span> java.lang.invoke.MethodType
+35: &lt;span class="m">939&lt;/span> &lt;span class="m">37560&lt;/span> java.util.TreeMap&lt;span class="nv">$Entry&lt;/span>
+36: &lt;span class="m">1152&lt;/span> &lt;span class="m">36864&lt;/span> java.lang.invoke.MethodType&lt;span class="nv">$ConcurrentWeakInternSet$WeakEntry&lt;/span>
+37: &lt;span class="m">752&lt;/span> &lt;span class="m">36096&lt;/span> org.springframework.core.ResolvableType
+38: &lt;span class="m">1&lt;/span> &lt;span class="m">32784&lt;/span> &lt;span class="o">[&lt;/span>Ljava.util.concurrent.ForkJoinTask&lt;span class="p">;&lt;/span>
+39: &lt;span class="m">1013&lt;/span> &lt;span class="m">32416&lt;/span> java.util.concurrent.locks.ReentrantLock&lt;span class="nv">$NonfairSync&lt;/span>
+40: &lt;span class="m">1094&lt;/span> &lt;span class="m">26256&lt;/span> java.util.ArrayList
+41: &lt;span class="m">806&lt;/span> &lt;span class="m">25792&lt;/span> java.lang.invoke.DirectMethodHandle
+42: &lt;span class="m">128&lt;/span> &lt;span class="m">24576&lt;/span> org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader&lt;span class="nv">$ConfigurationClassBeanDefinition&lt;/span>
+43: &lt;span class="m">984&lt;/span> &lt;span class="m">23616&lt;/span> java.util.zip.ZStreamRef
+44: &lt;span class="m">512&lt;/span> &lt;span class="m">20480&lt;/span> org.springframework.util.ConcurrentReferenceHashMap&lt;span class="nv">$Segment&lt;/span>
+45: &lt;span class="m">512&lt;/span> &lt;span class="m">20088&lt;/span> &lt;span class="o">[&lt;/span>Lorg.springframework.util.ConcurrentReferenceHashMap&lt;span class="nv">$Reference&lt;/span>&lt;span class="p">;&lt;/span>
+46: &lt;span class="m">351&lt;/span> &lt;span class="m">19656&lt;/span> java.lang.Package
+47: &lt;span class="m">809&lt;/span> &lt;span class="m">19416&lt;/span> sun.reflect.annotation.AnnotationInvocationHandler
+48: &lt;span class="m">535&lt;/span> &lt;span class="m">15720&lt;/span> &lt;span class="o">[&lt;/span>Ljava.lang.CharSequence&lt;span class="p">;&lt;/span>
+49: &lt;span class="m">487&lt;/span> &lt;span class="m">15584&lt;/span> org.springframework.boot.loader.jar.AsciiBytes
+50: &lt;span class="m">475&lt;/span> &lt;span class="m">15200&lt;/span> java.lang.invoke.LambdaForm&lt;span class="nv">$Name&lt;/span>
+...
+Total &lt;span class="m">215157&lt;/span> &lt;span class="m">10801024&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="dump-文件生成">&lt;em>Dump&lt;/em> 文件生成&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jmap -dump:format&lt;span class="o">=&lt;/span>b,file&lt;span class="o">=&lt;/span>./dump.hprof &lt;span class="m">30444&lt;/span>
+Dumping heap to E:&lt;span class="se">\t&lt;/span>emp&lt;span class="se">\d&lt;/span>ump.hprof ...
+Heap dump file created
+&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="dump-文件生成---存活对象">&lt;em>Dump&lt;/em> 文件生成 - 存活对象&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jmap -dump:live,format&lt;span class="o">=&lt;/span>b,file&lt;span class="o">=&lt;/span>./dump_live.hprof &lt;span class="m">30444&lt;/span>
+Dumping heap to E:&lt;span class="se">\t&lt;/span>emp&lt;span class="se">\d&lt;/span>ump_live.hprof ...
+Heap dump file created
+&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="jhat">jhat&lt;/h2>
+&lt;p>&lt;em>jhat&lt;/em> 命令解析 &lt;em>Java&lt;/em> 堆转储文件并启动 &lt;em>Web&lt;/em> 服务器。* jhat* 命令允许您使用您喜欢的 *Web* 浏览器浏览堆转储。 *jhat* 命令支持预先设计的查询，例如显示已知类 *MyClass* 和对象查询语言 (*OQL*) 的所有实例。除了查询堆转储之外，*OQL* 与 *SQL* 类似。可以从 *jhat* 命令显示的 *OQL* 帮助页面获得有关 *OQL* 的帮助。使用默认端口，可在 http://localhost:7000/oqlhelp/ 获得 *OQL* 帮助&lt;/p>
+&lt;p>&lt;a class="link" href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jhat.html" target="_blank" rel="noopener"
+>Oracle - Java Documentation - jhat&lt;/a>&lt;/p>
+&lt;h3 id="参数-2">参数&lt;/h3>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">`-stack false&lt;/td>
+&lt;td style="text-align:left">true`&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">`-refs false&lt;/td>
+&lt;td style="text-align:left">true`&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-port port-number&lt;/code>&lt;/td>
+&lt;td style="text-align:left">设置 &lt;em>jhat HTTP&lt;/em> 服务器的端口。默认值为 &lt;em>7000&lt;/em>。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-exclude exclude-file&lt;/code>&lt;/td>
+&lt;td style="text-align:left">指定一个文件，该文件列出应从可达对象查询中排除的数据成员。例如，如果文件列出了 &lt;em>java.lang.String.value&lt;/em> ，那么无论何时计算从特定对象 &lt;em>o&lt;/em> 可达的对象列表，都不会考虑涉及 &lt;em>java.lang.String.value&lt;/em> 字段的引用路径。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-baseline exclude-file&lt;/code>&lt;/td>
+&lt;td style="text-align:left">指定基线堆转储。两个堆转储中具有相同对象 &lt;em>ID&lt;/em> 的对象都被标记为不是新对象。其他对象被标记为新对象。这对于比较两个不同的堆转储很有用。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-debug int&lt;/code>&lt;/td>
+&lt;td style="text-align:left">设置此工具的调试级别。级别 &lt;em>0&lt;/em> 表示没有调试输出。为更详细的模式设置更高的值。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-version&lt;/code>&lt;/td>
+&lt;td style="text-align:left">输出版本号并退出&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-h&lt;/code>&lt;/td>
+&lt;td style="text-align:left">显示帮助消息并退出。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-help&lt;/code>&lt;/td>
+&lt;td style="text-align:left">显示帮助消息并退出。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-Jflag&lt;/code>&lt;/td>
+&lt;td style="text-align:left">将 &lt;em>JVM&lt;/em> 参数传递给运行 &lt;em>jhat&lt;/em> 命令的 &lt;em>Java&lt;/em> 虚拟机。例如，&lt;code>-J-Xmx512m&lt;/code> 使用 &lt;em>512 MB&lt;/em> 的最大堆大小。对于分析 &lt;em>Dump&lt;/em> 大小较大的文件，需要将 &lt;em>JVM&lt;/em> 调至 &lt;em>6GB&lt;/em> 或更高。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h3 id="使用-4">使用&lt;/h3>
+&lt;p>该命令将分析 &lt;em>dump_live.hprof&lt;/em> 堆转储文件，并启动 &lt;em>Web&lt;/em> 服务，发布至本地 &lt;em>8081&lt;/em> 端口。&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jhat -port &lt;span class="m">8081&lt;/span> dump_live.hprof
+Reading from dump_live.hprof...
+Dump file created Thu Aug &lt;span class="m">19&lt;/span> 16:47:50 CST &lt;span class="m">2021&lt;/span>
+Snapshot read, resolving...
+Resolving &lt;span class="m">188752&lt;/span> objects...
+Chasing references, expect &lt;span class="m">37&lt;/span> dots.....................................
+Eliminating duplicate references.....................................
+Snapshot resolved.
+Started HTTP server on port &lt;span class="m">8081&lt;/span>
+Server is ready.
+&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>JVM 垃圾回收器 - G1 （一）</title><link>https://www.catfish.top/p/jvm-gc-g1-1/</link><pubDate>Mon, 09 Aug 2021 10:33:00 +0800</pubDate><guid>https://www.catfish.top/p/jvm-gc-g1-1/</guid><description>&lt;img src="https://www.catfish.top/p/jvm-gc-g1-1/jvm-black.jpeg" alt="Featured image of post JVM 垃圾回收器 - G1 （一）" />&lt;p>&lt;em>G1 GC&lt;/em>，全称 &lt;em>Garbage-First Garbage Collector&lt;/em>，通过 &lt;code>-XX:+UseG1GC&lt;/code>参数来启用。
 它是专门针对以下应用场景设计的:&lt;/p>
 &lt;ul>
 &lt;li>像 &lt;em>CMS&lt;/em> 收集器一样，能与应用程序线程并发执行。&lt;/li>
