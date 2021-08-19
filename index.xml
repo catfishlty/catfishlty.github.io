@@ -354,6 +354,8 @@ alt="After Copying/Cleanup Phase">
 >Java Hotspot G1 GC的一些关键技术&lt;/a>&lt;/li>
 &lt;li>&lt;a class="link" href="https://blog.didispace.com/step-by-step-g1/" target="_blank" rel="noopener"
 >一步步图解G1&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://github.com/authorNari/g1gc-impl-book" target="_blank" rel="noopener"
+>徹底解剖「G1GC」実装編&lt;/a>&lt;/li>
 &lt;li>&lt;a class="link" href="https://www.redhat.com/zh/blog/part-1-introduction-g1-garbage-collector" target="_blank" rel="noopener"
 >Part 1: Introduction to the G1 Garbage Collector&lt;/a>&lt;/li>
 &lt;li>&lt;a class="link" href="https://www.redhat.com/en/blog/collecting-and-reading-g1-garbage-collector-logs-part-2" target="_blank" rel="noopener"
