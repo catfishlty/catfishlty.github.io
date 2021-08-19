@@ -221,5 +221,6 @@ tags:
 3. [垃圾优先型垃圾回收器调优](https://www.oracle.com/cn/technical-resources/articles/java/g1gc.html)
 4. [Java Hotspot G1 GC的一些关键技术](https://tech.meituan.com/2016/09/23/g1.html)
 5. [一步步图解G1](https://blog.didispace.com/step-by-step-g1/)
-6. [Part 1: Introduction to the G1 Garbage Collector](https://www.redhat.com/zh/blog/part-1-introduction-g1-garbage-collector)
-7. [Collecting and reading G1 garbage collector logs - part 2](https://www.redhat.com/en/blog/collecting-and-reading-g1-garbage-collector-logs-part-2)
+6. [徹底解剖「G1GC」実装編](https://github.com/authorNari/g1gc-impl-book)
+7. [Part 1: Introduction to the G1 Garbage Collector](https://www.redhat.com/zh/blog/part-1-introduction-g1-garbage-collector)
+8. [Collecting and reading G1 garbage collector logs - part 2](https://www.redhat.com/en/blog/collecting-and-reading-g1-garbage-collector-logs-part-2)
