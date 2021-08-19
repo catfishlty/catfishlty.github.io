@@ -1,8 +1,8 @@
 ---
-title: JVM 垃圾回收器 - G1
+title: JVM 垃圾回收器 - G1 （一）
 description: JVM垃圾回收器 G1 介绍
 date: 2021-08-09T10:33:00+0800
-lastmod: '2021-08-09T10:33:00+0800'
+lastmod: '2021-08-19T10:35:00+0800'
 image: jvm-black.jpeg
 slug: jvm-gc-g1-1
 categories:
@@ -13,8 +13,6 @@ tags:
     - GC
     - G1
 ---
-
-# G1 GC
 
 *G1 GC*，全称 *Garbage-First Garbage Collector*，通过 `-XX:+UseG1GC`参数来启用。
 它是专门针对以下应用场景设计的: 
