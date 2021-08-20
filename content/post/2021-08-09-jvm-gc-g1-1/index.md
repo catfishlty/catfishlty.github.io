@@ -255,7 +255,7 @@ Heap after GC invocations=1 (full 0):
 | 参数 | 含义 |
 | :--- | :--- |
 | `-XX:+UseG1GC` | 启用*G1 GC* |
-| `-XX:G1HeapRegionSize=n | 设置Region大小，并非最终值 |
+| `-XX:G1HeapRegionSize=n` | 设置Region大小，并非最终值 |
 | `-XX:MaxGCPauseMillis=200` | 设置G1收集过程目标时间，默认值200ms，不是硬性条件|
 | `-XX:G1NewSizePercent=5` | 新生代最小值，默认值5%|
 | `-XX:G1MaxNewSizePercent=60` | 新生代最大值，默认值60% |
@@ -264,7 +264,7 @@ Heap after GC invocations=1 (full 0):
 | `-XX:InitiatingHeapOccupancyPercent=45` | 设置触发标记周期的 *Java* 堆占用率阈值。默认值是 *45%*。这里的 *Java* 堆占比指的是非 *Young Region* 的大小占比 ，包括 *Old* 与 *Humongous* |
 | `-XX:G1MixedGCLiveThresholdPercent=65` | 为混合垃圾回收周期中要包括的旧区域设置占用率阈值，默认占用率为 *65%* 。|
 | `-XX:G1HeapWastePercent=10`| 设置您愿意浪费的堆百分比。如果可回收百分比小于堆废物百分比，*Java HotSpot VM* 不会启动混合垃圾回收周期。默认值是 *10%*。|
-| `-XX:G1MixedGCCountTarget=8` | 设置标记周期完成后，对存活数据上限为 *G1MixedGCLIveThresholdPercent* 的旧区域执行混合垃圾回收的目标次数。默认值是 *8* 次混合垃圾回收，混合回收的目标是要控制在此目标次数以内。
+| `-XX:G1MixedGCCountTarget=8` | 设置标记周期完成后，对存活数据上限为 *G1MixedGCLIveThresholdPercent* 的旧区域执行混合垃圾回收的目标次数。默认值是 *8* 次混合垃圾回收，混合回收的目标是要控制在此目标次数以内。|
 | `-XX:G1OldCSetRegionThresholdPercent=10` | 设置混合垃圾回收期间要回收的最大旧区域数，默认值是 *Java* 堆的 *10%。*|
 | `-XX:G1ReservePercent=10` | 设置作为空闲空间的预留内存百分比，以降低目标空间溢出的风险,默认值是 *10%*。|
 
