@@ -1996,7 +1996,7 @@ alt="End of Young GC in G1">
 &lt;tr>
 &lt;td>再次标记&lt;/td>
 &lt;td>&lt;em>STW&lt;/em>&lt;/td>
-&lt;td>使用 &lt;em>SATB&lt;/em> 算法完成对堆中存对象的标记，该算法比 &lt;em>CMS&lt;/em> 中的算法更快。&lt;/td>
+&lt;td>使用 &lt;em>SATB&lt;/em> 算法完成对堆中存活对象的标记，该算法比 &lt;em>CMS&lt;/em> 中的算法更快。&lt;/td>
 &lt;/tr>
 &lt;tr>
 &lt;td>清理&lt;/td>
