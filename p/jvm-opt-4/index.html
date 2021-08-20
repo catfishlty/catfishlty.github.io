@@ -52,7 +52,7 @@ JVM调优 - Dump文件分析
 </header>
 <section class=article-content>
 <h2 id=简述>简述</h2>
-<p>Dump 文件中可能将某一时刻的 <em>Java Heap</em> 保存下来，便于分析问题，在 JVM 启动参数里，也可以通过添加 <code>-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=&lt;LOG_PATH></code> 来设置应用在发生 <em>OOM</em> 时将 <em>Java Heap</em> 保存下来，便于后面的问题分析与解决。</p>
+<p><em>Dump</em> 文件将某一时刻的 <em>Java Heap</em> 保存下来，便于分析问题。除了可以通过 <em>jmap</em> 命令手动触发 <em>Dump</em> 操作；也可以在 <em>JVM</em> 启动参数里，通过添加 <code>-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=&lt;LOG_PATH></code> 来设置应用在发生 <em>OOM</em> 时将 <em>Java Heap</em> 保存下来，便于后面的问题分析与解决。</p>
 <p>在服务器中可以很容易获得 <em>Dump</em> 文件，但是分析却是一个非常消耗服务器资源的操作。对内存的影响，在默认情况下启动 <em>jhat</em> 可能在打开 <em>3GB</em> 大小的 <em>Dump</em> 文件时因为内存不足发生 <em>OOM</em> 的问题，但如果给 <em>jhat</em> 分配过大的堆内存，可能会影响应用正常运行。对 <em>CPU</em> 的影响，分析时会大幅度占用 <em>CPU</em> 时间，可能会影响应用的正常运行。因此，需要将 <em>Dump</em> 文件放置到本地进行分析。</p>
 <h3 id=本地获取-dump-文件>本地获取 <em>Dump</em> 文件</h3>
 <h4 id=获取应用-pid>获取应用 <em>PID</em></h4>
@@ -290,6 +290,16 @@ Server is ready.
 </a>
 <figcaption>MAT - Overview</figcaption>
 </figure></p>
+<h5 id=mat-启动参数配置><em>MAT</em> 启动参数配置</h5>
+<p>通过打开 <em>MemoryAnalyzer.ini</em> 文件，进行参数配置。
+如图所示，加入 <code>-xmx6g</code> 指定 <em>MAT</em> 启动的堆内存最大为 <em>6G</em>，为防止 <em>MAT</em> 分析 <em>Dump</em> 文件抛出 <em>OOM</em> 错误</p>
+<p><figure style=flex-grow:143;flex-basis:343px>
+<a href=/p/jvm-opt-4/mat-5.png data-size=989x691><img src=/p/jvm-opt-4/mat-5.png srcset="/p/jvm-opt-4/mat-5_hu22703c6033b688c09866bbc49fe7c4c3_18544_480x0_resize_box_3.png 480w, /p/jvm-opt-4/mat-5_hu22703c6033b688c09866bbc49fe7c4c3_18544_1024x0_resize_box_3.png 1024w" width=989 height=691 loading=lazy alt="MAT - Config">
+</a>
+<figcaption>MAT - Config</figcaption>
+</figure></p>
+<h2 id=总结>总结</h2>
+<p><em>Dump</em> 文件保存了 <em>Java Heap</em> 的完整信息，能够有助于我们分析内存。除此之外，也应与其他工具相结合，从多个维度上分析内存结构，便于我们尽快获得答案。</p>
 </section>
 <footer class=article-footer>
 <section class=article-tags>
@@ -407,6 +417,7 @@ Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=
 </li>
 </ol>
 </li>
+<li><a href=#总结>总结</a></li>
 </ol>
 </nav>
 </div>

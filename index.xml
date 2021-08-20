@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Fri, 20 Aug 2021 09:34:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>JVM调优（四）</title><link>https://www.catfish.top/p/jvm-opt-4/</link><pubDate>Fri, 20 Aug 2021 09:34:00 +0800</pubDate><guid>https://www.catfish.top/p/jvm-opt-4/</guid><description>&lt;img src="https://www.catfish.top/p/jvm-opt-4/jvm-white.jpg" alt="Featured image of post JVM调优（四）" />&lt;h2 id="简述">简述&lt;/h2>
-&lt;p>Dump 文件中可能将某一时刻的 &lt;em>Java Heap&lt;/em> 保存下来，便于分析问题，在 JVM 启动参数里，也可以通过添加 &lt;code>-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=&amp;lt;LOG_PATH&amp;gt;&lt;/code> 来设置应用在发生 &lt;em>OOM&lt;/em> 时将 &lt;em>Java Heap&lt;/em> 保存下来，便于后面的问题分析与解决。&lt;/p>
+&lt;p>&lt;em>Dump&lt;/em> 文件将某一时刻的 &lt;em>Java Heap&lt;/em> 保存下来，便于分析问题。除了可以通过 &lt;em>jmap&lt;/em> 命令手动触发 &lt;em>Dump&lt;/em> 操作；也可以在 &lt;em>JVM&lt;/em> 启动参数里，通过添加 &lt;code>-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=&amp;lt;LOG_PATH&amp;gt;&lt;/code> 来设置应用在发生 &lt;em>OOM&lt;/em> 时将 &lt;em>Java Heap&lt;/em> 保存下来，便于后面的问题分析与解决。&lt;/p>
 &lt;p>在服务器中可以很容易获得 &lt;em>Dump&lt;/em> 文件，但是分析却是一个非常消耗服务器资源的操作。对内存的影响，在默认情况下启动 &lt;em>jhat&lt;/em> 可能在打开 &lt;em>3GB&lt;/em> 大小的 &lt;em>Dump&lt;/em> 文件时因为内存不足发生 &lt;em>OOM&lt;/em> 的问题，但如果给 &lt;em>jhat&lt;/em> 分配过大的堆内存，可能会影响应用正常运行。对 &lt;em>CPU&lt;/em> 的影响，分析时会大幅度占用 &lt;em>CPU&lt;/em> 时间，可能会影响应用的正常运行。因此，需要将 &lt;em>Dump&lt;/em> 文件放置到本地进行分析。&lt;/p>
 &lt;h3 id="本地获取-dump-文件">本地获取 &lt;em>Dump&lt;/em> 文件&lt;/h3>
 &lt;h4 id="获取应用-pid">获取应用 &lt;em>PID&lt;/em>&lt;/h4>
@@ -287,7 +287,22 @@ loading="lazy"
 alt="MAT - Overview">
 &lt;/a>
 &lt;figcaption>MAT - Overview&lt;/figcaption>
-&lt;/figure>&lt;/p></description></item><item><title>JVM调优（二）</title><link>https://www.catfish.top/p/jvm-opt-2/</link><pubDate>Thu, 19 Aug 2021 10:47:00 +0800</pubDate><guid>https://www.catfish.top/p/jvm-opt-2/</guid><description>&lt;img src="https://www.catfish.top/p/jvm-opt-2/jvm-white.jpg" alt="Featured image of post JVM调优（二）" />&lt;h2 id="简述">简述&lt;/h2>
+&lt;/figure>&lt;/p>
+&lt;h5 id="mat-启动参数配置">&lt;em>MAT&lt;/em> 启动参数配置&lt;/h5>
+&lt;p>通过打开 &lt;em>MemoryAnalyzer.ini&lt;/em> 文件，进行参数配置。
+如图所示，加入 &lt;code>-xmx6g&lt;/code> 指定 &lt;em>MAT&lt;/em> 启动的堆内存最大为 &lt;em>6G&lt;/em>，为防止 &lt;em>MAT&lt;/em> 分析 &lt;em>Dump&lt;/em> 文件抛出 &lt;em>OOM&lt;/em> 错误&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 143; flex-basis: 343px">
+&lt;a href="https://www.catfish.top/p/jvm-opt-4/mat-5.png" data-size="989x691">&lt;img src="https://www.catfish.top/p/jvm-opt-4/mat-5.png"
+srcset="https://www.catfish.top/p/jvm-opt-4/mat-5_hu22703c6033b688c09866bbc49fe7c4c3_18544_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-opt-4/mat-5_hu22703c6033b688c09866bbc49fe7c4c3_18544_1024x0_resize_box_3.png 1024w"
+width="989"
+height="691"
+loading="lazy"
+alt="MAT - Config">
+&lt;/a>
+&lt;figcaption>MAT - Config&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h2 id="总结">总结&lt;/h2>
+&lt;p>&lt;em>Dump&lt;/em> 文件保存了 &lt;em>Java Heap&lt;/em> 的完整信息，能够有助于我们分析内存。除此之外，也应与其他工具相结合，从多个维度上分析内存结构，便于我们尽快获得答案。&lt;/p></description></item><item><title>JVM调优（二）</title><link>https://www.catfish.top/p/jvm-opt-2/</link><pubDate>Thu, 19 Aug 2021 10:47:00 +0800</pubDate><guid>https://www.catfish.top/p/jvm-opt-2/</guid><description>&lt;img src="https://www.catfish.top/p/jvm-opt-2/jvm-white.jpg" alt="Featured image of post JVM调优（二）" />&lt;h2 id="简述">简述&lt;/h2>
 &lt;p>&lt;em>Java&lt;/em> 自带很多工具能够辅助我们完成对 &lt;em>Java&lt;/em> 应用的性能指标分析。
 本文将介绍下列 &lt;em>5&lt;/em> 种命令行工具。&lt;/p>
 &lt;ul>
