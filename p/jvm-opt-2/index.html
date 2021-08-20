@@ -6,7 +6,7 @@
 <meta property="og:description" content="JVM调优 - 分析工具">
 <meta property="og:url" content="https://www.catfish.top/p/jvm-opt-2/">
 <meta property="og:site_name" content="Catfish">
-<meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="JVM"><meta property="article:published_time" content="2021-08-19T10:47:00+08:00"><meta property="article:modified_time" content="2021-08-19T17:07:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/jvm-opt-2/jvm-white.jpg">
+<meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="JVM"><meta property="article:published_time" content="2021-08-19T10:47:00+08:00"><meta property="article:modified_time" content="2021-08-20T14:22:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/jvm-opt-2/jvm-white.jpg">
 <meta name=twitter:title content="JVM调优（二）">
 <meta name=twitter:description content="JVM调优 - 分析工具"><meta name=twitter:card content="summary_large_image">
 <meta name=twitter:image content="https://www.catfish.top/p/jvm-opt-2/jvm-white.jpg">
@@ -63,7 +63,9 @@ JVM调优 - 分析工具
 </ul>
 <h2 id=jps>jps</h2>
 <p><em>JPS</em> 全程 <em>Java Virtual Machine Process Status Tool</em>，是 <em>Java</em> 提供的一个显示当前所有 <em>Java</em> 进程 <em>PID</em> 的命令，适合简单查看当前 <em>Java</em> 进程的信息。</p>
-<p>详情见：<a class=link href=https://docs.oracle.com/javase/7/docs/technotes/tools/share/jps.html target=_blank rel=noopener>jps - Java Virtual Machine Process Status Tool</a></p>
+<ul>
+<li><a class=link href=https://docs.oracle.com/javase/7/docs/technotes/tools/share/jps.html target=_blank rel=noopener>jps - Java Virtual Machine Process Status Tool</a></li>
+</ul>
 <h3 id=运行格式>运行格式</h3>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>jps <span class=o>[</span> options <span class=o>]</span> <span class=o>[</span> hostid <span class=o>]</span>
 </code></pre></div><h3 id=参数介绍>参数介绍</h3>
@@ -127,8 +129,14 @@ $ jps -J-Xms48m -v
 <span class=m>30444</span> rest-service-0.0.1-SNAPSHOT.jar
 </code></pre></div><h2 id=jstat>jstat</h2>
 <p><em>jstat</em> 工具能够显示 <em>HotSpot Java</em> 虚拟机 (<em>JVM</em>) 的性能统计信息。目标 <em>JVM</em> 由其虚拟机标识符或下面描述的 <em>vmid</em> 参数来确定。</p>
-<p>JDK 1.7: <a class=link href=https://docs.oracle.com/javase/7/docs/technotes/tools/share/jstat.html target=_blank rel=noopener>jstat - Java Virtual Machine Statistics Monitoring Tool</a>
-JDK 1.8: <a class=link href=https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstat.html target=_blank rel=noopener>Java Platform, Standard Edition Tools Reference - jstat</a></p>
+<ul>
+<li>
+<p>JDK 1.7: <a class=link href=https://docs.oracle.com/javase/7/docs/technotes/tools/share/jstat.html target=_blank rel=noopener>jstat - Java Virtual Machine Statistics Monitoring Tool</a></p>
+</li>
+<li>
+<p>JDK 1.8: <a class=link href=https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstat.html target=_blank rel=noopener>Java Platform, Standard Edition Tools Reference - jstat</a></p>
+</li>
+</ul>
 <h3 id=运行格式-1>运行格式</h3>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>jstat <span class=o>[</span> generalOption <span class=p>|</span> outputOptions vmid <span class=o>[</span>interval<span class=o>[</span>s<span class=p>|</span>ms<span class=o>]</span> <span class=o>[</span>count<span class=o>]]</span> <span class=o>]</span>
 </code></pre></div><h3 id=输出参数>输出参数</h3>
@@ -188,7 +196,7 @@ JDK 1.8: <a class=link href=https://docs.oracle.com/javase/8/docs/technotes/tool
 </tr>
 <tr>
 <td style=text-align:left><code>-gcold</code></td>
-<td style=text-align:left>老年代和永久代的行为统计。(JDK 1.7); 老年代和元空间的行为统计。(JDK 1.8);</td>
+<td style=text-align:left>老年代和永久代的行为统计。(<strong>JDK 1.7</strong>); 老年代和元空间的行为统计。(<strong>JDK 1.8</strong>);</td>
 </tr>
 <tr>
 <td style=text-align:left><code>-gcoldcapacity</code></td>
@@ -196,11 +204,11 @@ JDK 1.8: <a class=link href=https://docs.oracle.com/javase/8/docs/technotes/tool
 </tr>
 <tr>
 <td style=text-align:left><code>-gcmetacapacity</code></td>
-<td style=text-align:left>元空间容量的统计。(JDK 1.8)</td>
+<td style=text-align:left>元空间容量的统计。(<strong>JDK 1.8</strong>)</td>
 </tr>
 <tr>
 <td style=text-align:left><code>-gcpermcapacity</code></td>
-<td style=text-align:left>永久代容量的统计。(JDK 1.7)</td>
+<td style=text-align:left>永久代容量的统计。(<strong>JDK 1.7</strong>)</td>
 </tr>
 <tr>
 <td style=text-align:left><code>-gcutil</code></td>
@@ -928,7 +936,9 @@ Compiled  Size  Type Method
 </table>
 <h2 id=jstack>jstack</h2>
 <p><em>jstack</em> 是 <em>Java</em> 虚拟机自带的一种堆栈跟踪工具。jstack 为给定的 <em>Java</em> 进程或核心文件或远程调试服务器打印 <em>Java</em> 线程的 <em>Java</em> 堆栈跟踪。对于每个 <em>Java</em> 框架，将打印完整的类名、方法名、<code>bci</code>（字节码索引）和行号（如果有）。使用 <code>-m</code> 选项，<em>jstack</em> 命令使用程序计数器 (<em>PC</em>) 打印所有线程的 <em>Java</em> 和本机帧。对于每个原生帧，打印最接近 <em>PC</em> 的原生符号（如果可用）。当指定的进程在 <em>64</em> 位 <em>Java</em> 虚拟机上运行时，您可能需要指定 <code>-J-d64</code> 选项，例如：<code>jstack -J-d64 -m pid</code>。</p>
-<p><a class=link href=https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstack.html target=_blank rel=noopener>Oracle - Java Documentation - jstack</a></p>
+<ul>
+<li><a class=link href=https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstack.html target=_blank rel=noopener>Oracle - Java Documentation - jstack</a></li>
+</ul>
 <h3 id=格式>格式</h3>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>jstack <span class=o>[</span> options <span class=o>]</span> pid
 
@@ -1293,7 +1303,9 @@ JNI global references: <span class=m>1315</span>
 </code></pre></div><h2 id=jmap>jmap</h2>
 <p>打印进程、核心文件或远程调试服务器的共享对象内存映射或堆内存详细信息。
 <em>jmap</em> 命令打印指定进程、核心文件或远程调试服务器的共享对象内存映射或堆内存详细信息。如果指定的进程在 <em>64</em> 位 <em>Java</em> 虚拟机 (<em>JVM</em>) 上运行，那么您可能需要指定 <code>-J-d64</code> 选项，例如：<code>jmap -J-d64 -heap pid</code>。</p>
-<p><a class=link href=https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jmap.html target=_blank rel=noopener>Oracle - Java Documentation - jmap</a></p>
+<ul>
+<li><a class=link href=https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jmap.html target=_blank rel=noopener>Oracle - Java Documentation - jmap</a></li>
+</ul>
 <h3 id=格式-1>格式</h3>
 <div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>jmap <span class=o>[</span> options <span class=o>]</span> pid
 
@@ -1572,7 +1584,9 @@ Dumping heap to E:<span class=se>\t</span>emp<span class=se>\d</span>ump_live.hp
 Heap dump file created
 </code></pre></div><h2 id=jhat>jhat</h2>
 <p><em>jhat</em> 命令解析 <em>Java</em> 堆转储文件并启动 <em>Web</em> 服务器。* jhat* 命令允许您使用您喜欢的 *Web* 浏览器浏览堆转储。 *jhat* 命令支持预先设计的查询，例如显示已知类 *MyClass* 和对象查询语言 (*OQL*) 的所有实例。除了查询堆转储之外，*OQL* 与 *SQL* 类似。可以从 *jhat* 命令显示的 *OQL* 帮助页面获得有关 *OQL* 的帮助。使用默认端口，可在 http://localhost:7000/oqlhelp/ 获得 *OQL* 帮助</p>
-<p><a class=link href=https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jhat.html target=_blank rel=noopener>Oracle - Java Documentation - jhat</a></p>
+<ul>
+<li><a class=link href=https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jhat.html target=_blank rel=noopener>Oracle - Java Documentation - jhat</a></li>
+</ul>
 <h3 id=参数-2>参数</h3>
 <table>
 <thead>
@@ -1647,7 +1661,7 @@ Server is ready.
 </section>
 <section class=article-lastmod><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
 <span>
-最后更新于 Aug 19, 2021 17:07 +0800
+最后更新于 Aug 20, 2021 14:22 +0800
 </span>
 </section></footer>
 </article>
