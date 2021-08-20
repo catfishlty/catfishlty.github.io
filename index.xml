@@ -2251,7 +2251,7 @@ class space used 4199K, capacity 4318K, committed 4352K, reserved 1048576K
 &lt;td style="text-align:left">启用&lt;em>G1 GC&lt;/em>&lt;/td>
 &lt;/tr>
 &lt;tr>
-&lt;td style="text-align:left">`-XX:G1HeapRegionSize=n&lt;/td>
+&lt;td style="text-align:left">&lt;code>-XX:G1HeapRegionSize=n&lt;/code>&lt;/td>
 &lt;td style="text-align:left">设置Region大小，并非最终值&lt;/td>
 &lt;/tr>
 &lt;tr>
