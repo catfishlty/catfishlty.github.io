@@ -180,6 +180,75 @@ tags:
 
 ### *GC* 日志
 
+#### 启动参数
+```bash
+java -jar gs-service-0.0.1-SNAPSHOT.jar -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintHeapAtGC -XX:+PrintTenuringDistribution -XX:+PrintGCApplicationStoppedTime -XX:+PrintReferenceGC -Xloggc:/home/logs/gc/gc-%t.log -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=20 -XX:GCLogFileSize=5M
+```
+
+| 参数 | 描述 |
+| :-- | :-- |
+| `-XX:+PrintGCDetails` | 打印 GC 详情 |
+| `-XX:+PrintGCDateStamps` | 打印 GC 时间戳|
+| `-XX:+PrintHeapAtGC` | 打印 GC 时的堆信息|
+| `-XX:+PrintTenuringDistribution` | 在每次 *Young GC* 时，打印出幸存区中对象的年龄分布 |
+| `-XX:+PrintGCApplicationStoppedTime` | 打印 GC 时应用停顿时间 |
+| `-XX:+PrintReferenceGC` | 记录回收了多少不同引用类型的引用 |
+| `-Xloggc:/home/logs/gc/gc-%t.log` | 指定 GC 日志位置与文件格式|
+| `-XX:+UseGCLogFileRotation`| 启用滚动日志|
+| `-XX:NumberOfGCLogFiles=20` | 最大日志数量 |
+| `-XX:GCLogFileSize=5M` | 单个日志最大大小 |
+
+#### 日志详情
+```
+{Heap before GC invocations=0 (full 0):
+ garbage-first heap   total 6291456K, used 313344K [0x0000000660800000, 0x0000000660a06000, 0x00000007e0800000)
+  region size 2048K, 153 young (313344K), 0 survivors (0K)
+ Metaspace       used 32143K, capacity 32576K, committed 33024K, reserved 1077248K
+  class space    used 4199K, capacity 4318K, committed 4352K, reserved 1048576K
+2021-08-04T17:09:15.956+0900: 4.167: [GC pause (G1 Evacuation Pause) (young), 0.0316564 secs]
+   [Parallel Time: 15.5 ms, GC Workers: 4]
+      [GC Worker Start (ms): Min: 4167.1, Avg: 4167.7, Max: 4168.1, Diff: 1.1]
+      [Ext Root Scanning (ms): Min: 1.4, Avg: 2.9, Max: 4.9, Diff: 3.5, Sum: 11.5]
+      [Update RS (ms): Min: 0.0, Avg: 0.0, Max: 0.0, Diff: 0.0, Sum: 0.0]
+         [Processed Buffers: Min: 0, Avg: 0.0, Max: 0, Diff: 0, Sum: 0]
+      [Scan RS (ms): Min: 0.0, Avg: 0.0, Max: 0.1, Diff: 0.1, Sum: 0.2]
+      [Code Root Scanning (ms): Min: 0.0, Avg: 0.8, Max: 2.3, Diff: 2.3, Sum: 3.4]
+      [Object Copy (ms): Min: 9.9, Avg: 10.6, Max: 12.4, Diff: 2.5, Sum: 42.5]
+      [Termination (ms): Min: 0.0, Avg: 0.5, Max: 0.6, Diff: 0.6, Sum: 1.9]
+         [Termination Attempts: Min: 1, Avg: 11.2, Max: 16, Diff: 15, Sum: 45]
+      [GC Worker Other (ms): Min: 0.0, Avg: 0.0, Max: 0.0, Diff: 0.0, Sum: 0.1]
+      [GC Worker Total (ms): Min: 14.4, Avg: 14.9, Max: 15.5, Diff: 1.0, Sum: 59.5]
+      [GC Worker End (ms): Min: 4182.5, Avg: 4182.5, Max: 4182.6, Diff: 0.0]
+   [Code Root Fixup: 0.1 ms]
+   [Code Root Purge: 0.0 ms]
+   [Clear CT: 0.2 ms]
+   [Other: 15.8 ms]
+      [Choose CSet: 0.0 ms]
+      [Ref Proc: 14.3 ms]
+      [Ref Enq: 0.1 ms]
+      [Redirty Cards: 0.1 ms]
+      [Humongous Register: 0.2 ms]
+      [Humongous Reclaim: 0.0 ms]
+      [Free CSet: 0.3 ms]
+   [Eden: 306.0M(306.0M)->0.0B(278.0M) Survivors: 0.0B->28672.0K Heap: 306.0M(6144.0M)->26902.6K(6144.0M)]
+Heap after GC invocations=1 (full 0):
+ garbage-first heap   total 6291456K, used 26902K [0x0000000660800000, 0x0000000660a06000, 0x00000007e0800000)
+  region size 2048K, 14 young (28672K), 14 survivors (28672K)
+ Metaspace       used 32143K, capacity 32576K, committed 33024K, reserved 1077248K
+  class space    used 4199K, capacity 4318K, committed 4352K, reserved 1048576K
+}
+```
+
+| 指标 | 值 | 解释 |
+| :-- | :-- | :-- |
+| *GC* 原因| GC pause (G1 Evacuation Pause) (young) | 发生 *Young GC* |
+| *GC* 时间 | 0.0316564 secs | |
+| *Eden* 区容量变化 | 306.0M -> 278.0M |
+| *Eden* 区大小变化 | 306.0M -> 0.0B |
+| *Survivor* 区容量变化 | 0.0B -> 28672.0K |
+| *Heap* 容量变化 | 6144.0M -> 6144.0M|
+| *Heap* 大小变化 | 306.0M -> 26902.6K|
+
 ## 参数调整
 ### 参数详解
 
