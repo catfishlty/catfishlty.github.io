@@ -2,7 +2,7 @@
 title: JVM调优（二）
 description: JVM调优 - 分析工具
 date: 2021-08-19T10:47:00+0800
-lastmod: '2021-08-19T17:07:00+0800'
+lastmod: '2021-08-20T14:22:00+0800'
 image: jvm-white.jpg
 slug: jvm-opt-2
 categories:
@@ -24,7 +24,7 @@ tags:
 ## jps
 *JPS* 全程 *Java Virtual Machine Process Status Tool*，是 *Java* 提供的一个显示当前所有 *Java* 进程 *PID* 的命令，适合简单查看当前 *Java* 进程的信息。
 
-详情见：[jps - Java Virtual Machine Process Status Tool](https://docs.oracle.com/javase/7/docs/technotes/tools/share/jps.html)
+- [jps - Java Virtual Machine Process Status Tool](https://docs.oracle.com/javase/7/docs/technotes/tools/share/jps.html)
 
 ### 运行格式
 
@@ -73,8 +73,9 @@ $ jps -J-Xms48m -v
 ## jstat
 *jstat* 工具能够显示 *HotSpot Java* 虚拟机 (*JVM*) 的性能统计信息。目标 *JVM* 由其虚拟机标识符或下面描述的 *vmid* 参数来确定。
 
-JDK 1.7: [jstat - Java Virtual Machine Statistics Monitoring Tool](https://docs.oracle.com/javase/7/docs/technotes/tools/share/jstat.html)
-JDK 1.8: [Java Platform, Standard Edition Tools Reference - jstat](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstat.html)
+- JDK 1.7: [jstat - Java Virtual Machine Statistics Monitoring Tool](https://docs.oracle.com/javase/7/docs/technotes/tools/share/jstat.html)
+
+- JDK 1.8: [Java Platform, Standard Edition Tools Reference - jstat](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstat.html)
 
 ### 运行格式
 
@@ -89,7 +90,7 @@ jstat [ generalOption | outputOptions vmid [interval[s|ms] [count]] ]
 | `-help` | 显示帮助信息 |
 | `-options` | 显示统计参数列表。 |
 
-| 参数 | 显示内容 | 
+| 参数 | 显示内容 |
 |  :-- | :-- |
 | `-class`	| 类加载器行为统计信息。 |
 | `-compiler`	| *HotSpot JIT* 编译器行为统计信息。 |
@@ -98,10 +99,10 @@ jstat [ generalOption | outputOptions vmid [interval[s|ms] [count]] ]
 | `-gccause` | 垃圾收集统计信息摘要（与 `-gcutil` 相同），以及上次和当前（如果适用）垃圾收集事件的原因。|
 | `-gcnew`	| 新生代行为统计。 |
 | `-gcnewcapacity`	| 新生代的大小及其对应的空间的统计信息。|
-| `-gcold`	| 老年代和永久代的行为统计。(JDK 1.7); 老年代和元空间的行为统计。(JDK 1.8);|
+| `-gcold`	| 老年代和永久代的行为统计。(**JDK 1.7**); 老年代和元空间的行为统计。(**JDK 1.8**); |
 | `-gcoldcapacity`	| 老年代容量的统计。 |
-| `-gcmetacapacity` | 元空间容量的统计。(JDK 1.8) |
-| `-gcpermcapacity`	| 永久代容量的统计。(JDK 1.7) |
+| `-gcmetacapacity` | 元空间容量的统计。(**JDK 1.8**) |
+| `-gcpermcapacity`	| 永久代容量的统计。(**JDK 1.7**) |
 | `-gcutil`	| 垃圾收集统计摘要。 |
 | `-printcompilation`	| HotSpot 编译方法统计。 |
 
@@ -392,7 +393,7 @@ Compiled  Size  Type Method
 ## jstack
 *jstack* 是 *Java* 虚拟机自带的一种堆栈跟踪工具。jstack 为给定的 *Java* 进程或核心文件或远程调试服务器打印 *Java* 线程的 *Java* 堆栈跟踪。对于每个 *Java* 框架，将打印完整的类名、方法名、`bci`（字节码索引）和行号（如果有）。使用 `-m` 选项，*jstack* 命令使用程序计数器 (*PC*) 打印所有线程的 *Java* 和本机帧。对于每个原生帧，打印最接近 *PC* 的原生符号（如果可用）。当指定的进程在 *64* 位 *Java* 虚拟机上运行时，您可能需要指定 `-J-d64` 选项，例如：`jstack -J-d64 -m pid`。
 
-[Oracle - Java Documentation - jstack](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstack.html)
+- [Oracle - Java Documentation - jstack](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstack.html)
 
 ### 格式
 ```bash
@@ -720,7 +721,7 @@ JNI global references: 1315
 打印进程、核心文件或远程调试服务器的共享对象内存映射或堆内存详细信息。
 *jmap* 命令打印指定进程、核心文件或远程调试服务器的共享对象内存映射或堆内存详细信息。如果指定的进程在 *64* 位 *Java* 虚拟机 (*JVM*) 上运行，那么您可能需要指定 `-J-d64` 选项，例如：`jmap -J-d64 -heap pid`。
 
-[Oracle - Java Documentation - jmap](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jmap.html)
+- [Oracle - Java Documentation - jmap](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jmap.html)
 
 ### 格式
 
@@ -967,7 +968,7 @@ Heap dump file created
 ## jhat
 *jhat* 命令解析 *Java* 堆转储文件并启动 *Web* 服务器。* jhat* 命令允许您使用您喜欢的 *Web* 浏览器浏览堆转储。 *jhat* 命令支持预先设计的查询，例如显示已知类 *MyClass* 和对象查询语言 (*OQL*) 的所有实例。除了查询堆转储之外，*OQL* 与 *SQL* 类似。可以从 *jhat* 命令显示的 *OQL* 帮助页面获得有关 *OQL* 的帮助。使用默认端口，可在 http://localhost:7000/oqlhelp/ 获得 *OQL* 帮助
 
-[Oracle - Java Documentation - jhat](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jhat.html)
+- [Oracle - Java Documentation - jhat](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jhat.html)
 
 ### 参数
 
