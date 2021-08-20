@@ -13,7 +13,7 @@ tags:
 
 ## 简述
 
-Dump 文件中可能将某一时刻的 *Java Heap* 保存下来，便于分析问题，在 JVM 启动参数里，也可以通过添加 `-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<LOG_PATH>` 来设置应用在发生 *OOM* 时将 *Java Heap* 保存下来，便于后面的问题分析与解决。
+*Dump* 文件将某一时刻的 *Java Heap* 保存下来，便于分析问题。除了可以通过 *jmap* 命令手动触发 *Dump* 操作；也可以在 *JVM* 启动参数里，通过添加 `-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<LOG_PATH>` 来设置应用在发生 *OOM* 时将 *Java Heap* 保存下来，便于后面的问题分析与解决。
 
 在服务器中可以很容易获得 *Dump* 文件，但是分析却是一个非常消耗服务器资源的操作。对内存的影响，在默认情况下启动 *jhat* 可能在打开 *3GB* 大小的 *Dump* 文件时因为内存不足发生  *OOM* 的问题，但如果给 *jhat* 分配过大的堆内存，可能会影响应用正常运行。对 *CPU* 的影响，分析时会大幅度占用 *CPU* 时间，可能会影响应用的正常运行。因此，需要将 *Dump* 文件放置到本地进行分析。
 
@@ -197,3 +197,14 @@ Server is ready.
     - 分析属于公共根包或类加载器的对象。
 
 ![MAT - Overview](mat-4.png)
+
+##### *MAT* 启动参数配置
+
+通过打开 *MemoryAnalyzer.ini* 文件，进行参数配置。
+如图所示，加入 `-xmx6g` 指定 *MAT* 启动的堆内存最大为 *6G*，为防止 *MAT* 分析 *Dump* 文件抛出 *OOM* 错误
+
+![MAT - Config](mat-5.png)
+
+## 总结
+
+*Dump* 文件保存了 *Java Heap* 的完整信息，能够有助于我们分析内存。除此之外，也应与其他工具相结合，从多个维度上分析内存结构，便于我们尽快获得答案。
