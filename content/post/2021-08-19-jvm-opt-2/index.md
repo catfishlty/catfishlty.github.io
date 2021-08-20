@@ -4,7 +4,7 @@ description: JVM调优 - 分析工具
 date: 2021-08-19T10:47:00+0800
 lastmod: '2021-08-19T17:07:00+0800'
 image: jvm-white.jpg
-slug: jvm-2
+slug: jvm-opt-2
 categories:
     - jvm
 tags:
