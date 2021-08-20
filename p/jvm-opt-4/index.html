@@ -1,0 +1,419 @@
+<!doctype html><html lang=zh-cn>
+<head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="JVM调优 - Dump文件分析"><title>JVM调优（四）</title>
+<link rel=canonical href=https://www.catfish.top/p/jvm-opt-4/>
+<link rel=stylesheet href=/scss/style.min.css><meta property="og:title" content="JVM调优（四）">
+<meta property="og:description" content="JVM调优 - Dump文件分析">
+<meta property="og:url" content="https://www.catfish.top/p/jvm-opt-4/">
+<meta property="og:site_name" content="Catfish">
+<meta property="og:type" content="article"><meta property="article:section" content="Post"><meta property="article:tag" content="JVM"><meta property="article:published_time" content="2021-08-20T09:34:00+08:00"><meta property="article:modified_time" content="2021-08-20T13:28:00+08:00"><meta property="og:image" content="https://www.catfish.top/p/jvm-opt-4/jvm-white.jpg">
+<meta name=twitter:title content="JVM调优（四）">
+<meta name=twitter:description content="JVM调优 - Dump文件分析"><meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://www.catfish.top/p/jvm-opt-4/jvm-white.jpg">
+<link rel="shortcut icon" href=/favicon.ico>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MPS4W3GMH8"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-MPS4W3GMH8')</script>
+</head>
+<body class="article-page has-toc">
+<script>(function(){const a='StackColorScheme';localStorage.getItem(a)||localStorage.setItem(a,"auto")})()</script><script>(function(){const b='StackColorScheme',a=localStorage.getItem(b),c=window.matchMedia('(prefers-color-scheme: dark)').matches===!0;a=='dark'||a==='auto'&&c?document.documentElement.dataset.scheme='dark':document.documentElement.dataset.scheme='light'})()</script>
+<div class="container main-container flex
+extended">
+<div id=article-toolbar>
+<a href=https://www.catfish.top class=back-home><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="15 6 9 12 15 18"/></svg>
+<span>返回</span>
+</a>
+</div>
+<main class="main full-width">
+<article class="has-image main-article">
+<header class=article-header>
+<div class=article-image>
+<a href=/p/jvm-opt-4/>
+<img src=/p/jvm-opt-4/jvm-white_hu06bdc8659dce216bb36458f3911d03ef_23035_800x0_resize_q75_box.jpg srcset="/p/jvm-opt-4/jvm-white_hu06bdc8659dce216bb36458f3911d03ef_23035_800x0_resize_q75_box.jpg 800w, /p/jvm-opt-4/jvm-white_hu06bdc8659dce216bb36458f3911d03ef_23035_1600x0_resize_q75_box.jpg 1600w" width=800 height=450 loading=lazy alt="Featured image of post JVM调优（四）">
+</a>
+</div>
+<div class=article-details>
+<header class=article-category>
+<a href=/categories/jvm/>
+JVM
+</a>
+</header>
+<h2 class=article-title>
+<a href=/p/jvm-opt-4/>JVM调优（四）</a>
+</h2>
+<h3 class=article-subtitle>
+JVM调优 - Dump文件分析
+</h3>
+<footer class=article-time>
+<div><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
+<time class=article-time--published>Aug 20, 2021</time>
+</div>
+</footer>
+</div>
+</header>
+<section class=article-content>
+<h2 id=简述>简述</h2>
+<p>Dump 文件中可能将某一时刻的 <em>Java Heap</em> 保存下来，便于分析问题，在 JVM 启动参数里，也可以通过添加 <code>-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=&lt;LOG_PATH></code> 来设置应用在发生 <em>OOM</em> 时将 <em>Java Heap</em> 保存下来，便于后面的问题分析与解决。</p>
+<p>在服务器中可以很容易获得 <em>Dump</em> 文件，但是分析却是一个非常消耗服务器资源的操作。对内存的影响，在默认情况下启动 <em>jhat</em> 可能在打开 <em>3GB</em> 大小的 <em>Dump</em> 文件时因为内存不足发生 <em>OOM</em> 的问题，但如果给 <em>jhat</em> 分配过大的堆内存，可能会影响应用正常运行。对 <em>CPU</em> 的影响，分析时会大幅度占用 <em>CPU</em> 时间，可能会影响应用的正常运行。因此，需要将 <em>Dump</em> 文件放置到本地进行分析。</p>
+<h3 id=本地获取-dump-文件>本地获取 <em>Dump</em> 文件</h3>
+<h4 id=获取应用-pid>获取应用 <em>PID</em></h4>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ jps
+<span class=m>30444</span> rest-service-0.0.1-SNAPSHOT.jar
+<span class=m>9460</span> Jps
+</code></pre></div><h4 id=获取-dump-文件>获取 <em>Dump</em> 文件</h4>
+<h5 id=所有对象>所有对象</h5>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ jmap -dump:format<span class=o>=</span>b,file<span class=o>=</span>./dump.hprof <span class=m>30444</span>
+Dumping heap to E:<span class=se>\t</span>emp<span class=se>\d</span>ump.hprof ...
+Heap dump file created
+</code></pre></div><h5 id=存活对象>存活对象</h5>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ jmap -dump:live,format<span class=o>=</span>b,file<span class=o>=</span>./dump_live.hprof <span class=m>30444</span>
+Dumping heap to E:<span class=se>\t</span>emp<span class=se>\d</span>ump_live.hprof ...
+Heap dump file created
+</code></pre></div><p>存活对象的 <em>Dump</em> 操作将会触发一次 <em>Full GC</em></p>
+<h4 id=将-dump-文件分割>将 <em>Dump</em> 文件分割</h4>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>$ split -b 100M -d dump.hprof
+$ ls
+dump.hprof x00 x01 x02
+</code></pre></div><h5 id=参数详情>参数详情</h5>
+<table>
+<thead>
+<tr>
+<th style=text-align:left>参数</th>
+<th style=text-align:left>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style=text-align:left><code>-b 100M</code></td>
+<td style=text-align:left>分割文件大小为 <em>100MB</em></td>
+</tr>
+<tr>
+<td style=text-align:left><code>-d</code></td>
+<td style=text-align:left>加上该参数后，分割后的文件将使用数字后缀；反之，分割文件名将是字母后缀。详情见下表。</td>
+</tr>
+</tbody>
+</table>
+<h5 id=分割文件格式>分割文件格式</h5>
+<table>
+<thead>
+<tr>
+<th style=text-align:left>类型</th>
+<th style=text-align:left>样例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style=text-align:left>数字后缀</td>
+<td style=text-align:left><em>x01</em> <em>x02</em> <em>x03</em></td>
+</tr>
+<tr>
+<td style=text-align:left>字母后缀</td>
+<td style=text-align:left><em>xaa</em> <em>xab</em> <em>xac</em></td>
+</tr>
+</tbody>
+</table>
+<h4 id=分割文件传输>分割文件传输</h4>
+<p>将分割文件传输至本地保存</p>
+<h4 id=分割文件合并>分割文件合并</h4>
+<p>该步骤样例在 <em>Windows 10</em> 上的 <em>CMD</em> 运行。（ * 使用 <em>PowerShell</em> 可能导致运行失败）</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-cmd data-lang=cmd>C<span class=p>:</span><span class=nl>\dump</span><span class=c1>&gt;copy /b x* dump.hprof</span>
+x00
+x01
+x02
+Copied       1 file
+C<span class=p>:</span><span class=nl>\dump</span><span class=c1>&gt;dir</span>
+dump.hprof x00 x01 x02
+</code></pre></div><p><strong>这样就在本地获得了服务器中的 <em>Dump</em> 文件</strong></p>
+<h3 id=dump-分析><em>Dump</em> 分析</h3>
+<h4 id=jhat><em>jhat</em></h4>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-cmd data-lang=cmd>C<span class=p>:</span><span class=nl>\dump</span><span class=c1>&gt;jhat -port 8081 dump_live.hprof</span>
+Reading from dump_live.hprof...
+Dump file created Thu Aug 19 16:47:50 CST 2021
+Snapshot read, resolving...
+Resolving 188752 objects...
+Chasing references, expect 37 dots.....................................
+Eliminating duplicate references.....................................
+Snapshot resolved.
+Started HTTP server on port 8081
+Server is ready.
+</code></pre></div><p>使用 <em>CMD</em> 启动 <em>jhat</em> 分析 <em>Dump</em> 文件，并可以在本地 <em>8081</em> 端口上查看分析结果。</p>
+<p><figure style=flex-grow:208;flex-basis:499px>
+<a href=/p/jvm-opt-4/jhat-1.png data-size=1817x873><img src=/p/jvm-opt-4/jhat-1.png srcset="/p/jvm-opt-4/jhat-1_hu65d83438c7e0234f078ea134ae204572_101074_480x0_resize_box_3.png 480w, /p/jvm-opt-4/jhat-1_hu65d83438c7e0234f078ea134ae204572_101074_1024x0_resize_box_3.png 1024w" width=1817 height=873 loading=lazy alt="jhat Heap Analysis">
+</a>
+<figcaption>jhat Heap Analysis</figcaption>
+</figure></p>
+<h4 id=visual-vm-by-oracle-jdk><em>Visual VM</em> by <em>Oracle JDK</em></h4>
+<p><em>Visual VM</em> 是仅包含在 <em>Oracle JDK</em> 中一款 <em>GUI</em> 工具，其功能主要能够完成 <em>JConsole</em> 的监控功能以及对 <em>Dump</em> 文件的可视化呈现。</p>
+<h5 id=打开-dump-文件选择框>打开 <em>Dump</em> 文件选择框</h5>
+<p>点击 <em>[文件] -> [装入]</em> 打开文件选择框</p>
+<p><figure style=flex-grow:164;flex-basis:394px>
+<a href=/p/jvm-opt-4/vvm-1.png data-size=1107x674><img src=/p/jvm-opt-4/vvm-1.png srcset="/p/jvm-opt-4/vvm-1_huabcbbab704de8066674d085f42353cff_35025_480x0_resize_box_3.png 480w, /p/jvm-opt-4/vvm-1_huabcbbab704de8066674d085f42353cff_35025_1024x0_resize_box_3.png 1024w" width=1107 height=674 loading=lazy alt="Visual VM - Open File Picker">
+</a>
+<figcaption>Visual VM - Open File Picker</figcaption>
+</figure></p>
+<h5 id=选择并打开-dump-文件>选择并打开 <em>Dump</em> 文件</h5>
+<ol>
+<li>选择文件类型为 <em>堆Dump （*.hprof）</em></li>
+<li>选择需要分析的 <em>Dump</em> 文件</li>
+<li>点击确定开始分析</li>
+</ol>
+<p><figure style=flex-grow:164;flex-basis:393px>
+<a href=/p/jvm-opt-4/vvm-2.png data-size=1104x673><img src=/p/jvm-opt-4/vvm-2.png srcset="/p/jvm-opt-4/vvm-2_hu084cb6f21dcfab6b4ef31d2a3b3eff9e_60936_480x0_resize_box_3.png 480w, /p/jvm-opt-4/vvm-2_hu084cb6f21dcfab6b4ef31d2a3b3eff9e_60936_1024x0_resize_box_3.png 1024w" width=1104 height=673 loading=lazy alt="Visual VM - Open Dump File">
+</a>
+<figcaption>Visual VM - Open Dump File</figcaption>
+</figure></p>
+<h5 id=查看-dump-文件概要>查看 <em>Dump</em> 文件概要</h5>
+<ol>
+<li>展示基本信息，包括文件名、日期、大小等文件基本信息和加载字节、类总数等堆内存基本信息。</li>
+<li>展示运行环境。</li>
+</ol>
+<p><figure style=flex-grow:164;flex-basis:393px>
+<a href=/p/jvm-opt-4/vvm-3.png data-size=1103x672><img src=/p/jvm-opt-4/vvm-3.png srcset="/p/jvm-opt-4/vvm-3_hu4b221303be4611c8c08e7cd69562ec66_43533_480x0_resize_box_3.png 480w, /p/jvm-opt-4/vvm-3_hu4b221303be4611c8c08e7cd69562ec66_43533_1024x0_resize_box_3.png 1024w" width=1103 height=672 loading=lazy alt="Visual VM - Overview">
+</a>
+<figcaption>Visual VM - Overview</figcaption>
+</figure></p>
+<h5 id=类分析>类分析</h5>
+<ol>
+<li>选择 <em>类</em> 选项卡</li>
+<li>可以获得各对象的类型、数量、大小信息，为分析提供数据支持。</li>
+</ol>
+<p><figure style=flex-grow:163;flex-basis:393px>
+<a href=/p/jvm-opt-4/vvm-4.png data-size=1101x672><img src=/p/jvm-opt-4/vvm-4.png srcset="/p/jvm-opt-4/vvm-4_hu28a80f5e6d5be39775ee8dae7e9cdf26_53389_480x0_resize_box_3.png 480w, /p/jvm-opt-4/vvm-4_hu28a80f5e6d5be39775ee8dae7e9cdf26_53389_1024x0_resize_box_3.png 1024w" width=1101 height=672 loading=lazy alt="Visual VM - Class Analysis">
+</a>
+<figcaption>Visual VM - Class Analysis</figcaption>
+</figure></p>
+<h5 id=oql><code>OQL</code></h5>
+<ol>
+<li>选择 <em>OQL</em> 选项卡</li>
+<li>输入 <em>OQL</em> 语句</li>
+<li>点击执行并等待执行完成</li>
+<li>在 “查询结果” 中查看结果</li>
+</ol>
+<p><figure style=flex-grow:164;flex-basis:393px>
+<a href=/p/jvm-opt-4/vvm-5.png data-size=1107x675><img src=/p/jvm-opt-4/vvm-5.png srcset="/p/jvm-opt-4/vvm-5_huc1f6a59865c275b0cf16245d020fb3e5_59087_480x0_resize_box_3.png 480w, /p/jvm-opt-4/vvm-5_huc1f6a59865c275b0cf16245d020fb3e5_59087_1024x0_resize_box_3.png 1024w" width=1107 height=675 loading=lazy alt="Visual VM - OQL">
+</a>
+<figcaption>Visual VM - OQL</figcaption>
+</figure></p>
+<h4 id=mat-by-eclipse><em>MAT</em> by <em>Eclipse</em></h4>
+<p><em>MAT</em> 全称为 <em>Memory Analyzer Tool</em> ，一个基于 <em>Eclipse</em> 的内存分析工具,是一个快速、功能丰富的 <em>JAVA heap</em> 分析工具,它可以帮助我们查找内存泄漏和减少内存消耗。</p>
+<p><em>MAT</em> 可以在 <a class=link href=https://www.eclipse.org/mat/ target=_blank rel=noopener>www.eclipse.org/mat/</a> 下载</p>
+<h5 id=打开-dump-文件>打开 <em>Dump</em> 文件</h5>
+<ol>
+<li>点击 <em>[File]</em></li>
+<li>点击 <em>[Open Heap Dump&mldr;]</em></li>
+<li>选择 <em>Dump</em> 文件</li>
+<li>点击确定开始分析</li>
+</ol>
+<p><figure style=flex-grow:161;flex-basis:386px>
+<a href=/p/jvm-opt-4/mat-1.png data-size=1274x791><img src=/p/jvm-opt-4/mat-1.png srcset="/p/jvm-opt-4/mat-1_hu85ca19aac5b583486902dd958c1a470e_25116_480x0_resize_box_3.png 480w, /p/jvm-opt-4/mat-1_hu85ca19aac5b583486902dd958c1a470e_25116_1024x0_resize_box_3.png 1024w" width=1274 height=791 loading=lazy alt="MAT - Open Dump File">
+</a>
+<figcaption>MAT - Open Dump File</figcaption>
+</figure></p>
+<p><figure style=flex-grow:160;flex-basis:386px>
+<a href=/p/jvm-opt-4/mat-2.png data-size=1278x794><img src=/p/jvm-opt-4/mat-2.png srcset="/p/jvm-opt-4/mat-2_hub71f9b671bcaa41c95b454d84e722dbc_39836_480x0_resize_box_3.png 480w, /p/jvm-opt-4/mat-2_hub71f9b671bcaa41c95b454d84e722dbc_39836_1024x0_resize_box_3.png 1024w" width=1278 height=794 loading=lazy alt="MAT - Open Dump File">
+</a>
+<figcaption>MAT - Open Dump File</figcaption>
+</figure></p>
+<h5 id=默认启动报告>默认启动报告</h5>
+<p>开始使用工具时，加载 Dump 文件完毕后将会有一个选择框弹出，可以选择一种默认的报告类型。
+默认报告为内存泄漏报告。</p>
+<p><figure style=flex-grow:160;flex-basis:386px>
+<a href=/p/jvm-opt-4/mat-3.png data-size=1278x794><img src=/p/jvm-opt-4/mat-3.png srcset="/p/jvm-opt-4/mat-3_hu5caef29324a2e8ea3a23f0a481ef69dc_59669_480x0_resize_box_3.png 480w, /p/jvm-opt-4/mat-3_hu5caef29324a2e8ea3a23f0a481ef69dc_59669_1024x0_resize_box_3.png 1024w" width=1278 height=794 loading=lazy alt="MAT - Startup">
+</a>
+<figcaption>MAT - Startup</figcaption>
+</figure></p>
+<h5 id=概览>概览</h5>
+<p>概览页中可以通过饼图查看大对象的分布。另外也有其他的多重功能。</p>
+<ul>
+<li>Actions
+<ul>
+<li>Histogram
+<ul>
+<li>直方图</li>
+<li>列出每个类的实例数。</li>
+</ul>
+</li>
+<li>Dominator Tree
+<ul>
+<li>支配树</li>
+<li>列出最大的类以及什么导致它们存活。</li>
+</ul>
+</li>
+<li>Top Comsumers
+<ul>
+<li>消费者 <em>Top</em> 列表</li>
+<li>打印按类和包分组的最大的对象。</li>
+</ul>
+</li>
+<li>Duplicate Classes
+<ul>
+<li>重复类</li>
+<li>检测由多个类加载器加载的类。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Reports
+<ul>
+<li>Leak Suspects
+<ul>
+<li>泄漏嫌疑</li>
+<li>包括泄漏嫌疑和系统概述。</li>
+</ul>
+</li>
+<li>Top Components
+<ul>
+<li>组件 <em>Top</em> 列表</li>
+<li>列出大于堆内存 <em>1%</em> 的组件。</li>
+</ul>
+</li>
+<li>Leak Suspects by Snapshot Comparison
+<ul>
+<li>通过快照比较检测泄漏</li>
+<li>比较两个快照展示泄漏嫌疑和系统概述。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Step By Step
+<ul>
+<li>Component Report
+<ul>
+<li>组件报告</li>
+<li>分析属于公共根包或类加载器的对象。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p><figure style=flex-grow:161;flex-basis:386px>
+<a href=/p/jvm-opt-4/mat-4.png data-size=1269x787><img src=/p/jvm-opt-4/mat-4.png srcset="/p/jvm-opt-4/mat-4_hu788e06cd1e6ae2dd17f9535913d6981d_49230_480x0_resize_box_3.png 480w, /p/jvm-opt-4/mat-4_hu788e06cd1e6ae2dd17f9535913d6981d_49230_1024x0_resize_box_3.png 1024w" width=1269 height=787 loading=lazy alt="MAT - Overview">
+</a>
+<figcaption>MAT - Overview</figcaption>
+</figure></p>
+</section>
+<footer class=article-footer>
+<section class=article-tags>
+<a href=/tags/jvm/>JVM</a>
+</section>
+<section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg>
+<span>Licensed under CC BY-NC-SA 4.0</span>
+</section>
+<section class=article-lastmod><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<span>
+最后更新于 Aug 20, 2021 13:28 +0800
+</span>
+</section></footer>
+</article>
+<aside class=related-contents--wrapper>
+<h2 class=section-title>相关文章</h2>
+<div class=related-contents>
+<div class="flex article-list--tile">
+<article class=has-image>
+<a href=/p/jvm-opt-2/>
+<div class=article-image>
+<img src=/p/jvm-opt-2/jvm-white.d67a4564541185256725d5208b902a63_hu06bdc8659dce216bb36458f3911d03ef_23035_250x150_fill_q75_box_smart1.jpg width=250 height=150 loading=lazy data-key=jvm-opt-2 data-hash="md5-1npFZFQRhSVnJdUgi5AqYw==">
+</div>
+<div class=article-details>
+<h2 class=article-title>JVM调优（二）</h2>
+</div>
+</a>
+</article>
+<article class=has-image>
+<a href=/p/jvm-gc-g1-1/>
+<div class=article-image>
+<img src=/p/jvm-gc-g1-1/jvm-black.2aa71b63d442eed681d6f33de639802d_hu477442ae6bda7bfc8bc3ac8fce34800c_43268_250x150_fill_q75_box_smart1.jpeg width=250 height=150 loading=lazy data-key=jvm-gc-g1-1 data-hash="md5-KqcbY9RC7taB1vM95jmALQ==">
+</div>
+<div class=article-details>
+<h2 class=article-title>JVM 垃圾回收器 - G1 （一）</h2>
+</div>
+</a>
+</article>
+</div>
+</div>
+</aside>
+<footer class=site-footer>
+<section class=copyright>
+&copy;
+2016 -
+2021 Catfish
+</section>
+<section class=powerby>
+Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a> <br>
+Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.1.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a>
+</section>
+</footer>
+<div class=pswp tabindex=-1 role=dialog aria-hidden=true>
+<div class=pswp__bg></div>
+<div class=pswp__scroll-wrap>
+<div class=pswp__container>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+<div class=pswp__item></div>
+</div>
+<div class="pswp__ui pswp__ui--hidden">
+<div class=pswp__top-bar>
+<div class=pswp__counter></div>
+<button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+<div class=pswp__preloader>
+<div class=pswp__preloader__icn>
+<div class=pswp__preloader__cut>
+<div class=pswp__preloader__donut></div>
+</div>
+</div>
+</div>
+</div>
+<div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+<div class=pswp__share-tooltip></div>
+</div>
+<button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+</button>
+<div class=pswp__caption>
+<div class=pswp__caption__center></div>
+</div>
+</div>
+</div>
+</div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css integrity="sha256-c0uckgykQ9v5k+IqViZOZKc47Jn7KQil4/MP3ySA3F8=" crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE=" crossorigin=anonymous>
+</main>
+<aside class="sidebar right-sidebar sticky">
+<section class="widget archives">
+<div class=widget-icon><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/><line x1="11" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="13" y2="20"/></svg>
+</div>
+<h2 class="widget-title section-title">目录</h2>
+<div class=widget--toc>
+<nav id=TableOfContents>
+<ol>
+<li><a href=#简述>简述</a>
+<ol>
+<li><a href=#本地获取-dump-文件>本地获取 <em>Dump</em> 文件</a>
+<ol>
+<li><a href=#获取应用-pid>获取应用 <em>PID</em></a></li>
+<li><a href=#获取-dump-文件>获取 <em>Dump</em> 文件</a></li>
+<li><a href=#将-dump-文件分割>将 <em>Dump</em> 文件分割</a></li>
+<li><a href=#分割文件传输>分割文件传输</a></li>
+<li><a href=#分割文件合并>分割文件合并</a></li>
+</ol>
+</li>
+<li><a href=#dump-分析><em>Dump</em> 分析</a>
+<ol>
+<li><a href=#jhat><em>jhat</em></a></li>
+<li><a href=#visual-vm-by-oracle-jdk><em>Visual VM</em> by <em>Oracle JDK</em></a></li>
+<li><a href=#mat-by-eclipse><em>MAT</em> by <em>Eclipse</em></a></li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</nav>
+</div>
+</section>
+</aside>
+</div>
+<script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g=" crossorigin=anonymous defer></script><script type=text/javascript src=/ts/main.js defer></script>
+<script>(function(){const a=document.createElement('link');a.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",a.type="text/css",a.rel="stylesheet",document.head.appendChild(a)})()</script>
+</body>
+</html>

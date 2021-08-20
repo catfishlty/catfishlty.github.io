@@ -1,4 +1,293 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Thu, 19 Aug 2021 10:47:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>JVM调优（二）</title><link>https://www.catfish.top/p/jvm-opt-2/</link><pubDate>Thu, 19 Aug 2021 10:47:00 +0800</pubDate><guid>https://www.catfish.top/p/jvm-opt-2/</guid><description>&lt;img src="https://www.catfish.top/p/jvm-opt-2/jvm-white.jpg" alt="Featured image of post JVM调优（二）" />&lt;h2 id="简述">简述&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Catfish</title><link>https://www.catfish.top/</link><description>Recent content on Catfish</description><generator>Hugo -- gohugo.io</generator><language>zh-CN</language><lastBuildDate>Fri, 20 Aug 2021 09:34:00 +0800</lastBuildDate><atom:link href="https://www.catfish.top/index.xml" rel="self" type="application/rss+xml"/><item><title>JVM调优（四）</title><link>https://www.catfish.top/p/jvm-opt-4/</link><pubDate>Fri, 20 Aug 2021 09:34:00 +0800</pubDate><guid>https://www.catfish.top/p/jvm-opt-4/</guid><description>&lt;img src="https://www.catfish.top/p/jvm-opt-4/jvm-white.jpg" alt="Featured image of post JVM调优（四）" />&lt;h2 id="简述">简述&lt;/h2>
+&lt;p>Dump 文件中可能将某一时刻的 &lt;em>Java Heap&lt;/em> 保存下来，便于分析问题，在 JVM 启动参数里，也可以通过添加 &lt;code>-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=&amp;lt;LOG_PATH&amp;gt;&lt;/code> 来设置应用在发生 &lt;em>OOM&lt;/em> 时将 &lt;em>Java Heap&lt;/em> 保存下来，便于后面的问题分析与解决。&lt;/p>
+&lt;p>在服务器中可以很容易获得 &lt;em>Dump&lt;/em> 文件，但是分析却是一个非常消耗服务器资源的操作。对内存的影响，在默认情况下启动 &lt;em>jhat&lt;/em> 可能在打开 &lt;em>3GB&lt;/em> 大小的 &lt;em>Dump&lt;/em> 文件时因为内存不足发生 &lt;em>OOM&lt;/em> 的问题，但如果给 &lt;em>jhat&lt;/em> 分配过大的堆内存，可能会影响应用正常运行。对 &lt;em>CPU&lt;/em> 的影响，分析时会大幅度占用 &lt;em>CPU&lt;/em> 时间，可能会影响应用的正常运行。因此，需要将 &lt;em>Dump&lt;/em> 文件放置到本地进行分析。&lt;/p>
+&lt;h3 id="本地获取-dump-文件">本地获取 &lt;em>Dump&lt;/em> 文件&lt;/h3>
+&lt;h4 id="获取应用-pid">获取应用 &lt;em>PID&lt;/em>&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jps
+&lt;span class="m">30444&lt;/span> rest-service-0.0.1-SNAPSHOT.jar
+&lt;span class="m">9460&lt;/span> Jps
+&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="获取-dump-文件">获取 &lt;em>Dump&lt;/em> 文件&lt;/h4>
+&lt;h5 id="所有对象">所有对象&lt;/h5>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jmap -dump:format&lt;span class="o">=&lt;/span>b,file&lt;span class="o">=&lt;/span>./dump.hprof &lt;span class="m">30444&lt;/span>
+Dumping heap to E:&lt;span class="se">\t&lt;/span>emp&lt;span class="se">\d&lt;/span>ump.hprof ...
+Heap dump file created
+&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="存活对象">存活对象&lt;/h5>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ jmap -dump:live,format&lt;span class="o">=&lt;/span>b,file&lt;span class="o">=&lt;/span>./dump_live.hprof &lt;span class="m">30444&lt;/span>
+Dumping heap to E:&lt;span class="se">\t&lt;/span>emp&lt;span class="se">\d&lt;/span>ump_live.hprof ...
+Heap dump file created
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>存活对象的 &lt;em>Dump&lt;/em> 操作将会触发一次 &lt;em>Full GC&lt;/em>&lt;/p>
+&lt;h4 id="将-dump-文件分割">将 &lt;em>Dump&lt;/em> 文件分割&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">$ split -b 100M -d dump.hprof
+$ ls
+dump.hprof x00 x01 x02
+&lt;/code>&lt;/pre>&lt;/div>&lt;h5 id="参数详情">参数详情&lt;/h5>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">参数&lt;/th>
+&lt;th style="text-align:left">描述&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-b 100M&lt;/code>&lt;/td>
+&lt;td style="text-align:left">分割文件大小为 &lt;em>100MB&lt;/em>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;code>-d&lt;/code>&lt;/td>
+&lt;td style="text-align:left">加上该参数后，分割后的文件将使用数字后缀；反之，分割文件名将是字母后缀。详情见下表。&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h5 id="分割文件格式">分割文件格式&lt;/h5>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">类型&lt;/th>
+&lt;th style="text-align:left">样例&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">数字后缀&lt;/td>
+&lt;td style="text-align:left">&lt;em>x01&lt;/em> &lt;em>x02&lt;/em> &lt;em>x03&lt;/em>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">字母后缀&lt;/td>
+&lt;td style="text-align:left">&lt;em>xaa&lt;/em> &lt;em>xab&lt;/em> &lt;em>xac&lt;/em>&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="分割文件传输">分割文件传输&lt;/h4>
+&lt;p>将分割文件传输至本地保存&lt;/p>
+&lt;h4 id="分割文件合并">分割文件合并&lt;/h4>
+&lt;p>该步骤样例在 &lt;em>Windows 10&lt;/em> 上的 &lt;em>CMD&lt;/em> 运行。（ * 使用 &lt;em>PowerShell&lt;/em> 可能导致运行失败）&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-cmd" data-lang="cmd">C&lt;span class="p">:&lt;/span>&lt;span class="nl">\dump&lt;/span>&lt;span class="c1">&amp;gt;copy /b x* dump.hprof&lt;/span>
+x00
+x01
+x02
+Copied 1 file
+C&lt;span class="p">:&lt;/span>&lt;span class="nl">\dump&lt;/span>&lt;span class="c1">&amp;gt;dir&lt;/span>
+dump.hprof x00 x01 x02
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;strong>这样就在本地获得了服务器中的 &lt;em>Dump&lt;/em> 文件&lt;/strong>&lt;/p>
+&lt;h3 id="dump-分析">&lt;em>Dump&lt;/em> 分析&lt;/h3>
+&lt;h4 id="jhat">&lt;em>jhat&lt;/em>&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-cmd" data-lang="cmd">C&lt;span class="p">:&lt;/span>&lt;span class="nl">\dump&lt;/span>&lt;span class="c1">&amp;gt;jhat -port 8081 dump_live.hprof&lt;/span>
+Reading from dump_live.hprof...
+Dump file created Thu Aug 19 16:47:50 CST 2021
+Snapshot read, resolving...
+Resolving 188752 objects...
+Chasing references, expect 37 dots.....................................
+Eliminating duplicate references.....................................
+Snapshot resolved.
+Started HTTP server on port 8081
+Server is ready.
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>使用 &lt;em>CMD&lt;/em> 启动 &lt;em>jhat&lt;/em> 分析 &lt;em>Dump&lt;/em> 文件，并可以在本地 &lt;em>8081&lt;/em> 端口上查看分析结果。&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 208; flex-basis: 499px">
+&lt;a href="https://www.catfish.top/p/jvm-opt-4/jhat-1.png" data-size="1817x873">&lt;img src="https://www.catfish.top/p/jvm-opt-4/jhat-1.png"
+srcset="https://www.catfish.top/p/jvm-opt-4/jhat-1_hu65d83438c7e0234f078ea134ae204572_101074_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-opt-4/jhat-1_hu65d83438c7e0234f078ea134ae204572_101074_1024x0_resize_box_3.png 1024w"
+width="1817"
+height="873"
+loading="lazy"
+alt="jhat Heap Analysis">
+&lt;/a>
+&lt;figcaption>jhat Heap Analysis&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h4 id="visual-vm-by-oracle-jdk">&lt;em>Visual VM&lt;/em> by &lt;em>Oracle JDK&lt;/em>&lt;/h4>
+&lt;p>&lt;em>Visual VM&lt;/em> 是仅包含在 &lt;em>Oracle JDK&lt;/em> 中一款 &lt;em>GUI&lt;/em> 工具，其功能主要能够完成 &lt;em>JConsole&lt;/em> 的监控功能以及对 &lt;em>Dump&lt;/em> 文件的可视化呈现。&lt;/p>
+&lt;h5 id="打开-dump-文件选择框">打开 &lt;em>Dump&lt;/em> 文件选择框&lt;/h5>
+&lt;p>点击 &lt;em>[文件] -&amp;gt; [装入]&lt;/em> 打开文件选择框&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 164; flex-basis: 394px">
+&lt;a href="https://www.catfish.top/p/jvm-opt-4/vvm-1.png" data-size="1107x674">&lt;img src="https://www.catfish.top/p/jvm-opt-4/vvm-1.png"
+srcset="https://www.catfish.top/p/jvm-opt-4/vvm-1_huabcbbab704de8066674d085f42353cff_35025_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-opt-4/vvm-1_huabcbbab704de8066674d085f42353cff_35025_1024x0_resize_box_3.png 1024w"
+width="1107"
+height="674"
+loading="lazy"
+alt="Visual VM - Open File Picker">
+&lt;/a>
+&lt;figcaption>Visual VM - Open File Picker&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h5 id="选择并打开-dump-文件">选择并打开 &lt;em>Dump&lt;/em> 文件&lt;/h5>
+&lt;ol>
+&lt;li>选择文件类型为 &lt;em>堆Dump （*.hprof）&lt;/em>&lt;/li>
+&lt;li>选择需要分析的 &lt;em>Dump&lt;/em> 文件&lt;/li>
+&lt;li>点击确定开始分析&lt;/li>
+&lt;/ol>
+&lt;p>&lt;figure style="flex-grow: 164; flex-basis: 393px">
+&lt;a href="https://www.catfish.top/p/jvm-opt-4/vvm-2.png" data-size="1104x673">&lt;img src="https://www.catfish.top/p/jvm-opt-4/vvm-2.png"
+srcset="https://www.catfish.top/p/jvm-opt-4/vvm-2_hu084cb6f21dcfab6b4ef31d2a3b3eff9e_60936_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-opt-4/vvm-2_hu084cb6f21dcfab6b4ef31d2a3b3eff9e_60936_1024x0_resize_box_3.png 1024w"
+width="1104"
+height="673"
+loading="lazy"
+alt="Visual VM - Open Dump File">
+&lt;/a>
+&lt;figcaption>Visual VM - Open Dump File&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h5 id="查看-dump-文件概要">查看 &lt;em>Dump&lt;/em> 文件概要&lt;/h5>
+&lt;ol>
+&lt;li>展示基本信息，包括文件名、日期、大小等文件基本信息和加载字节、类总数等堆内存基本信息。&lt;/li>
+&lt;li>展示运行环境。&lt;/li>
+&lt;/ol>
+&lt;p>&lt;figure style="flex-grow: 164; flex-basis: 393px">
+&lt;a href="https://www.catfish.top/p/jvm-opt-4/vvm-3.png" data-size="1103x672">&lt;img src="https://www.catfish.top/p/jvm-opt-4/vvm-3.png"
+srcset="https://www.catfish.top/p/jvm-opt-4/vvm-3_hu4b221303be4611c8c08e7cd69562ec66_43533_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-opt-4/vvm-3_hu4b221303be4611c8c08e7cd69562ec66_43533_1024x0_resize_box_3.png 1024w"
+width="1103"
+height="672"
+loading="lazy"
+alt="Visual VM - Overview">
+&lt;/a>
+&lt;figcaption>Visual VM - Overview&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h5 id="类分析">类分析&lt;/h5>
+&lt;ol>
+&lt;li>选择 &lt;em>类&lt;/em> 选项卡&lt;/li>
+&lt;li>可以获得各对象的类型、数量、大小信息，为分析提供数据支持。&lt;/li>
+&lt;/ol>
+&lt;p>&lt;figure style="flex-grow: 163; flex-basis: 393px">
+&lt;a href="https://www.catfish.top/p/jvm-opt-4/vvm-4.png" data-size="1101x672">&lt;img src="https://www.catfish.top/p/jvm-opt-4/vvm-4.png"
+srcset="https://www.catfish.top/p/jvm-opt-4/vvm-4_hu28a80f5e6d5be39775ee8dae7e9cdf26_53389_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-opt-4/vvm-4_hu28a80f5e6d5be39775ee8dae7e9cdf26_53389_1024x0_resize_box_3.png 1024w"
+width="1101"
+height="672"
+loading="lazy"
+alt="Visual VM - Class Analysis">
+&lt;/a>
+&lt;figcaption>Visual VM - Class Analysis&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h5 id="oql">&lt;code>OQL&lt;/code>&lt;/h5>
+&lt;ol>
+&lt;li>选择 &lt;em>OQL&lt;/em> 选项卡&lt;/li>
+&lt;li>输入 &lt;em>OQL&lt;/em> 语句&lt;/li>
+&lt;li>点击执行并等待执行完成&lt;/li>
+&lt;li>在 “查询结果” 中查看结果&lt;/li>
+&lt;/ol>
+&lt;p>&lt;figure style="flex-grow: 164; flex-basis: 393px">
+&lt;a href="https://www.catfish.top/p/jvm-opt-4/vvm-5.png" data-size="1107x675">&lt;img src="https://www.catfish.top/p/jvm-opt-4/vvm-5.png"
+srcset="https://www.catfish.top/p/jvm-opt-4/vvm-5_huc1f6a59865c275b0cf16245d020fb3e5_59087_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-opt-4/vvm-5_huc1f6a59865c275b0cf16245d020fb3e5_59087_1024x0_resize_box_3.png 1024w"
+width="1107"
+height="675"
+loading="lazy"
+alt="Visual VM - OQL">
+&lt;/a>
+&lt;figcaption>Visual VM - OQL&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h4 id="mat-by-eclipse">&lt;em>MAT&lt;/em> by &lt;em>Eclipse&lt;/em>&lt;/h4>
+&lt;p>&lt;em>MAT&lt;/em> 全称为 &lt;em>Memory Analyzer Tool&lt;/em> ，一个基于 &lt;em>Eclipse&lt;/em> 的内存分析工具,是一个快速、功能丰富的 &lt;em>JAVA heap&lt;/em> 分析工具,它可以帮助我们查找内存泄漏和减少内存消耗。&lt;/p>
+&lt;p>&lt;em>MAT&lt;/em> 可以在 &lt;a class="link" href="https://www.eclipse.org/mat/" target="_blank" rel="noopener"
+>www.eclipse.org/mat/&lt;/a> 下载&lt;/p>
+&lt;h5 id="打开-dump-文件">打开 &lt;em>Dump&lt;/em> 文件&lt;/h5>
+&lt;ol>
+&lt;li>点击 &lt;em>[File]&lt;/em>&lt;/li>
+&lt;li>点击 &lt;em>[Open Heap Dump&amp;hellip;]&lt;/em>&lt;/li>
+&lt;li>选择 &lt;em>Dump&lt;/em> 文件&lt;/li>
+&lt;li>点击确定开始分析&lt;/li>
+&lt;/ol>
+&lt;p>&lt;figure style="flex-grow: 161; flex-basis: 386px">
+&lt;a href="https://www.catfish.top/p/jvm-opt-4/mat-1.png" data-size="1274x791">&lt;img src="https://www.catfish.top/p/jvm-opt-4/mat-1.png"
+srcset="https://www.catfish.top/p/jvm-opt-4/mat-1_hu85ca19aac5b583486902dd958c1a470e_25116_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-opt-4/mat-1_hu85ca19aac5b583486902dd958c1a470e_25116_1024x0_resize_box_3.png 1024w"
+width="1274"
+height="791"
+loading="lazy"
+alt="MAT - Open Dump File">
+&lt;/a>
+&lt;figcaption>MAT - Open Dump File&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 160; flex-basis: 386px">
+&lt;a href="https://www.catfish.top/p/jvm-opt-4/mat-2.png" data-size="1278x794">&lt;img src="https://www.catfish.top/p/jvm-opt-4/mat-2.png"
+srcset="https://www.catfish.top/p/jvm-opt-4/mat-2_hub71f9b671bcaa41c95b454d84e722dbc_39836_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-opt-4/mat-2_hub71f9b671bcaa41c95b454d84e722dbc_39836_1024x0_resize_box_3.png 1024w"
+width="1278"
+height="794"
+loading="lazy"
+alt="MAT - Open Dump File">
+&lt;/a>
+&lt;figcaption>MAT - Open Dump File&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h5 id="默认启动报告">默认启动报告&lt;/h5>
+&lt;p>开始使用工具时，加载 Dump 文件完毕后将会有一个选择框弹出，可以选择一种默认的报告类型。
+默认报告为内存泄漏报告。&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 160; flex-basis: 386px">
+&lt;a href="https://www.catfish.top/p/jvm-opt-4/mat-3.png" data-size="1278x794">&lt;img src="https://www.catfish.top/p/jvm-opt-4/mat-3.png"
+srcset="https://www.catfish.top/p/jvm-opt-4/mat-3_hu5caef29324a2e8ea3a23f0a481ef69dc_59669_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-opt-4/mat-3_hu5caef29324a2e8ea3a23f0a481ef69dc_59669_1024x0_resize_box_3.png 1024w"
+width="1278"
+height="794"
+loading="lazy"
+alt="MAT - Startup">
+&lt;/a>
+&lt;figcaption>MAT - Startup&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;h5 id="概览">概览&lt;/h5>
+&lt;p>概览页中可以通过饼图查看大对象的分布。另外也有其他的多重功能。&lt;/p>
+&lt;ul>
+&lt;li>Actions
+&lt;ul>
+&lt;li>Histogram
+&lt;ul>
+&lt;li>直方图&lt;/li>
+&lt;li>列出每个类的实例数。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Dominator Tree
+&lt;ul>
+&lt;li>支配树&lt;/li>
+&lt;li>列出最大的类以及什么导致它们存活。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Top Comsumers
+&lt;ul>
+&lt;li>消费者 &lt;em>Top&lt;/em> 列表&lt;/li>
+&lt;li>打印按类和包分组的最大的对象。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Duplicate Classes
+&lt;ul>
+&lt;li>重复类&lt;/li>
+&lt;li>检测由多个类加载器加载的类。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Reports
+&lt;ul>
+&lt;li>Leak Suspects
+&lt;ul>
+&lt;li>泄漏嫌疑&lt;/li>
+&lt;li>包括泄漏嫌疑和系统概述。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Top Components
+&lt;ul>
+&lt;li>组件 &lt;em>Top&lt;/em> 列表&lt;/li>
+&lt;li>列出大于堆内存 &lt;em>1%&lt;/em> 的组件。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Leak Suspects by Snapshot Comparison
+&lt;ul>
+&lt;li>通过快照比较检测泄漏&lt;/li>
+&lt;li>比较两个快照展示泄漏嫌疑和系统概述。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Step By Step
+&lt;ul>
+&lt;li>Component Report
+&lt;ul>
+&lt;li>组件报告&lt;/li>
+&lt;li>分析属于公共根包或类加载器的对象。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;p>&lt;figure style="flex-grow: 161; flex-basis: 386px">
+&lt;a href="https://www.catfish.top/p/jvm-opt-4/mat-4.png" data-size="1269x787">&lt;img src="https://www.catfish.top/p/jvm-opt-4/mat-4.png"
+srcset="https://www.catfish.top/p/jvm-opt-4/mat-4_hu788e06cd1e6ae2dd17f9535913d6981d_49230_480x0_resize_box_3.png 480w, https://www.catfish.top/p/jvm-opt-4/mat-4_hu788e06cd1e6ae2dd17f9535913d6981d_49230_1024x0_resize_box_3.png 1024w"
+width="1269"
+height="787"
+loading="lazy"
+alt="MAT - Overview">
+&lt;/a>
+&lt;figcaption>MAT - Overview&lt;/figcaption>
+&lt;/figure>&lt;/p></description></item><item><title>JVM调优（二）</title><link>https://www.catfish.top/p/jvm-opt-2/</link><pubDate>Thu, 19 Aug 2021 10:47:00 +0800</pubDate><guid>https://www.catfish.top/p/jvm-opt-2/</guid><description>&lt;img src="https://www.catfish.top/p/jvm-opt-2/jvm-white.jpg" alt="Featured image of post JVM调优（二）" />&lt;h2 id="简述">简述&lt;/h2>
 &lt;p>&lt;em>Java&lt;/em> 自带很多工具能够辅助我们完成对 &lt;em>Java&lt;/em> 应用的性能指标分析。
 本文将介绍下列 &lt;em>5&lt;/em> 种命令行工具。&lt;/p>
 &lt;ul>
